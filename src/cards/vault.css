@@ -1,0 +1,58 @@
+.card-vault { color:#eff3f7; margin-bottom:48px; }
+.vault-mast { position:relative; overflow:hidden; display:flex; align-items:center; justify-content:space-between; gap:30px; padding:clamp(22px,4vw,54px); border:1px solid #c4d1dd32; border-radius:24px; isolation:isolate; background:linear-gradient(112deg,#101722 4%,#151e29 62%,#0a0e16 100%); }
+.vault-mast::before { content:''; position:absolute; z-index:-1; inset:0; background:linear-gradient(93deg,#101722 22%,#0d131ba6 55%,#0a121de8 100%),url('/art/planet.webp') 77% 45% / cover; opacity:.73; }
+.vault-mast h2 { margin:10px 0; font-size:clamp(26px,3.3vw,46px); letter-spacing:-.055em; font-weight:550; }
+.vault-mast p { margin:0; color:#c5ced6; }
+.vault-mast .vault-overline { display:flex; align-items:center; gap:8px; color:#c3d6b4; font-size:11px; font-weight:600; letter-spacing:.19em; }
+.vault-counter { display:grid; min-width:170px; gap:6px; color:#bcc7d1; font-size:13px; }
+.vault-counter strong { color:white; font-size:38px; line-height:1.05; font-weight:450; }
+.vault-counter progress { width:100%; height:4px; border:0; border-radius:4px; background:#ffffff24; appearance:none; }
+.vault-counter progress::-webkit-progress-bar { background:#ffffff12; border-radius:4px; }
+.vault-counter progress::-webkit-progress-value { background:#d3e6bf; border-radius:4px; }
+.vault-counter progress::-moz-progress-bar { background:#d3e6bf; }
+.vault-pending,.lab-supply { display:flex; align-items:center; gap:16px; padding:16px 20px; margin:14px 0; border:1px solid #b6c3d132; border-radius:16px; background:#101720; }
+.vault-pending>svg,.lab-supply>svg { color:#c1d6ae; flex:none; }
+.vault-pending>div,.lab-supply>div { flex:1; min-width:0; }
+.vault-pending small,.lab-supply small { display:block; color:#a8b5c2; margin-top:3px; }
+.vault-controls,.vault-filter,.vault-galaxies { display:flex; align-items:center; flex-wrap:wrap; gap:8px; }
+.vault-controls { justify-content:space-between; gap:16px; margin:24px 0 18px; }
+.vault-owned,.vault-galaxies button { min-height:44px; padding:8px 13px; border:1px solid #acbbcd30; border-radius:22px; color:#bbc6cf; background:#0e151e; cursor:pointer; }
+.vault-owned { display:flex; align-items:center; gap:6px; }
+.vault-owned[aria-pressed=true],.vault-galaxies [aria-pressed=true] { border-color:#c8dab5a1; color:#deefd2; background:#19231f; }
+.vault-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(min(156px,100%),1fr)); gap:12px; }
+.vault-tile { text-align:left; position:relative; isolation:isolate; overflow:hidden; display:flex; flex-direction:column; align-items:stretch; gap:8px; border-radius:15px; border:1px solid #91a0b02b; padding:13px; min-width:0; background:linear-gradient(157deg,#141a23,#0b1017 65%); color:#9aa5b1; cursor:pointer; }
+.vault-id { display:flex; justify-content:space-between; align-items:center; font:10px ui-monospace,consolas,monospace; letter-spacing:.12em; }
+.vault-emblem { position:relative; align-self:center; display:grid; place-items:center; color:#536273; width:min(92px,95%); aspect-ratio:1; }
+.vault-emblem i { position:absolute; inset:20% 3%; border:1px solid currentColor; border-radius:50%; opacity:.52; transform:rotate(-34deg); }
+.vault-emblem i+i { transform:rotate(55deg); inset:10% 17%; }
+.vault-card-info { display:grid; gap:5px; }
+.vault-card-info small { color:#a3aebd; font-size:10px; }
+.vault-card-info strong { color:#b5c0cb; font-size:15px; font-weight:550; line-height:1.45; }
+.vault-card-info>span { display:flex; align-items:center; gap:3px; font-size:11px; line-height:1.5; }
+.vault-card-info svg { flex:none; }
+.vault-tile.is-owned { --foil:#b8cab9; transform:perspective(700px) var(--lean, rotateY(0deg)); transition:transform .15s ease-out; border-color:color-mix(in srgb,var(--foil) 55%,#19212b); background:linear-gradient(145deg,color-mix(in srgb,var(--foil) 22%,#0b1120),#0e1721 60%,#1c2632); }
+.vault-tile.is-owned::before { content:''; pointer-events:none; position:absolute; z-index:-1; inset:-40%; background:linear-gradient(115deg,transparent 37%,#cce9ff33 50%,transparent 62%); transform:translateX(var(--shine,-45%)); }
+.vault-tile.is-owned .vault-emblem,.vault-tile.is-owned .vault-id { color:var(--foil); }
+.vault-tile.is-owned strong { color:#f0f4f9; }
+.vault-tile[data-finish=reverse] { --foil:#b5c9d7; }
+.vault-tile[data-finish=cosmos] { --foil:#8bc6e5; }
+.vault-tile[data-finish=crosshatch] { --foil:#9de4cc; }
+.vault-tile[data-finish=rainbow] { --foil:#c0abe3; }
+.vault-tile[data-finish=gold] { --foil:#ebcd85; }
+.vault-tile.is-owned .vault-emblem::before { content:''; position:absolute; z-index:-1; inset:-16% -25%; opacity:.42; mask-image:radial-gradient(ellipse,#000 10%,transparent 68%); }
+.vault-tile[data-finish=standard] .vault-emblem::before { background:radial-gradient(#bdcebc 0 .6px,transparent 1px) 0 0 / 4px 5px; }
+.vault-tile[data-finish=reverse] .vault-emblem::before { background:repeating-linear-gradient(110deg,#9aaebd99 0 1px,transparent 1px 3px); }
+.vault-tile[data-finish=cosmos] .vault-emblem::before { background:radial-gradient(circle at 32% 46%,#7fc4fa 0 1px,transparent 3px),radial-gradient(circle at 65% 42%,#a1d5f055,transparent 35%),radial-gradient(#cedfff 0 1px,transparent 1.8px) 0 0 / 17px 21px; }
+.vault-tile[data-finish=crosshatch] .vault-emblem::before { background:repeating-linear-gradient(45deg,#a5ead280 0 1px,transparent 1px 7px),repeating-linear-gradient(-45deg,#c4dde96e 0 1px,transparent 1px 7px); }
+.vault-tile[data-finish=rainbow] .vault-emblem::before { background:repeating-linear-gradient(110deg,#9ce0ce,#a7c8f1 13%,#eab1d9 21%,#f0dba5 29%,#9ce0ce 40%); }
+.vault-tile[data-finish=gold] .vault-emblem::before { background:repeating-radial-gradient(ellipse at 50% 50%,#ebcd85a8 0 1px,transparent 1px 5px); }
+.vault-empty { display:flex; align-items:center; gap:12px; padding:30px; color:#aebbc8; }
+@media(max-width:650px) {
+  .vault-mast { flex-direction:column; align-items:stretch; gap:20px; }
+  .vault-counter { min-width:0; width:min(100%,220px); }
+  .vault-grid { grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+  .vault-galaxies { gap:4px; }
+  .vault-galaxies button { padding:7px 10px; }
+  .vault-pending,.lab-supply { flex-wrap:wrap; gap:10px; padding:14px; }
+  .vault-pending .button,.lab-supply .button { min-height:44px; }
+}

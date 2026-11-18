@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<!-- Blob workers inherit this policy within the frame's opaque origin. -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' 'unsafe-eval' blob:; worker-src blob:; connect-src 'none'; form-action 'none'; base-uri 'none'">
+<script>
+  addEventListener('message', ({ data, source, origin }) => {
+    if (source !== parent || data?.kind !== 'start') return;
+
+    const { token, workerSource, input, assets } = data;
+    function send(payload) {
+      source.postMessage({ ...payload, token }, origin);
+    }
+
+    const workerURL = URL.createObjectURL(new Blob([workerSource], { type: 'text/javascript' }));
+    let worker;
+    try {
+      worker = new Worker(workerURL);
+    } catch (error) {
+      URL.revokeObjectURL(workerURL);
+      send({ kind: 'failure', message: error.message });
+      return;
+    }
+
+    function dispose() {
+      worker.terminate();
+      URL.revokeObjectURL(workerURL);
+    }
+
+    addEventListener('pagehide', dispose, { once: true });
+    addEventListener('message', ({ data, source }) => {
+      if (source === parent && data?.kind === 'stop' && data.token === token) dispose();
+    });
+    worker.onmessage = ({ data }) => {
+      if (data?.token !== token) return;
+      send(data);
+      if (data.kind === 'done' || data.kind === 'failure') dispose();
+    };
+    worker.onerror = ({ message }) => {
+      send({ kind: 'failure', message });
+      dispose();
+    };
+    worker.postMessage({ input, assets, token });
+  }, { once: true });
+</script>

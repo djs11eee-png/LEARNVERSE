@@ -1,0 +1,18 @@
+LEARNVERSE 浏览器运行环境
+
+Pyodide 314.0.8
+许可证：pyodide-314.0.8.txt（MPL 2.0）
+对应版本源代码：https://github.com/pyodide/pyodide/tree/314.0.8
+
+CPython 3.14.2（由 Pyodide 提供）
+许可证：python-3.14.0.txt（与 3.14.2 上游许可证文本相同）
+对应版本源代码：https://github.com/python/cpython/tree/v3.14.2
+
+sql.js 1.16.0
+许可证：sql.js-1.16.0.txt（MIT）
+对应版本源代码：https://github.com/sql-js/sql.js/tree/v1.16.0
+SQLite 公共领域声明：https://sqlite.org/copyright.html
+
+Acorn 8.19.0
+许可证：acorn-8.19.0.txt（MIT）
+项目源代码：https://github.com/acornjs/acorn
