@@ -66,7 +66,7 @@ function CardFaces({ card, back, note, onNote, choice, choose }: {
       <div className="holo-frame">
         <header className="holo-card-top"><span>LEARNVERSE</span><span>{card.number}</span></header>
         <div className="holo-card-name"><p>{slotNames[card.slot - 1]} · {card.subtitle}</p><h3 id={titleId}>{card.title}</h3></div>
-        <div className="holo-art"><Plate galaxy={card.galaxy} slot={card.slot} cardNumber={card.number}/></div>
+        <div className="holo-art"><Plate galaxy={card.galaxy} slot={card.slot} cardNumber={card.number} gold={card.finish === 'gold'}/></div>
         <div className="holo-copy" tabIndex={0} aria-label="卡片内容">
           {card.body !== quiz?.question && <p>{card.body}</p>}
           {card.code && <pre><code>{card.code}</code></pre>}

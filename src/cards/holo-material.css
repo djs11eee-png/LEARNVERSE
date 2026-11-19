@@ -1,0 +1,88 @@
+.lv-plate {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background: #101b20;
+}
+.lv-plate-paper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  --plate-dark: #0a131c;
+  --plate-shade: #1b3541;
+  --plate-mid: #527788;
+  --plate-light: #b9e3d9;
+  --plate-pearl: #fcffe4;
+}
+.lv-plate-paper[data-series=c] {
+  --plate-dark: #0a101e;
+  --plate-shade: #162641;
+  --plate-mid: #576b9f;
+  --plate-light: #adcfef;
+  --plate-pearl: #f4f4ff;
+}
+.lv-plate-paper[data-series=algorithms] {
+  --plate-dark: #171419;
+  --plate-shade: #342b38;
+  --plate-mid: #937281;
+  --plate-light: #dec2ac;
+  --plate-pearl: #fff3d4;
+}
+.lv-plate-paper svg, .lv-plate-canvas { display: block; width: 100%; height: 100%; }
+.lv-plate-caption {
+  position: absolute;
+  left: 5.8%;
+  right: 5.8%;
+  bottom: 7%;
+  display: flex;
+  justify-content: space-between;
+  font: 600 clamp(5px,.64vw,8px)/1 Consolas, monospace;
+  letter-spacing: .15em;
+  color: var(--plate-light);
+}
+.lv-plate-canvas {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+.lv-plate[data-renderer] .lv-plate-canvas { opacity: 1; }
+.holo-finish-gold .holo-art { filter: none; }
+.lv-plate-paper[data-series][data-gold] {
+  --plate-dark: #15130e;
+  --plate-shade: #3a2b21;
+  --plate-mid: #a07841;
+  --plate-light: #e8c987;
+  --plate-pearl: #fff5c7;
+}
+.holo-finish-gold .holo-art { border-color: #d2ae6d; }
+.holo-finish-gold .holo-frame {
+  background: radial-gradient(ellipse at 8% 0%,#564128 0%,transparent 53%),linear-gradient(125deg,#282018,#0d1012 58%,#23221d);
+  box-shadow: inset 0 0 0 1px #dbb46b88, inset 0 0 0 3px #17120f;
+}
+.holo-finish-gold .holo-front { background: linear-gradient(124deg,#7d542a,#e7c482 9%,#8d683b 19%,#ffe9a3 26%,#976d34 38%,#e4c277 44%,#654621 61%,#e2b974 75%,#fff0b2 84%,#967039); }
+.holo-finish-gold .holo-card-name h3 {
+  color: #ffe4a8;
+  text-shadow: 0 1px 0 #372414,0 2px 2px #000a;
+}
+.holo-card-name p { margin: 0; }
+.holo-front .holo-copy { padding-right: 3px; }
+.holo-front .holo-fx { mask-image:linear-gradient(#000 47%,#0009 55%,#0003 65% 88%,#000b); }
+.holo-front:has(.holo-copy > p:only-child) .holo-art { flex-basis:42%; }
+.holo-finish-gold .holo-prism {
+  opacity:calc(.26 + var(--h-gain) * .23);
+  background-image: linear-gradient(116deg,transparent 20%,#b8884655 37%,#ffe7a5c2 45%,#aa723729 51%,transparent 68%);
+}
+.holo-finish-gold .holo-frame::after {
+  content:'';
+  position:absolute;
+  pointer-events:none;
+  width:45%;
+  aspect-ratio:1;
+  right:-15%;
+  bottom:5%;
+  opacity:.24;
+  background:repeating-radial-gradient(ellipse at center,transparent 0 4px,#ae8c4a77 4.3px 4.7px,transparent 5px);
+  mask-image:linear-gradient(120deg,transparent 12%,black 95%);
+}

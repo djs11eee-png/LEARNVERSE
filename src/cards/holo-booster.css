@@ -162,7 +162,6 @@
   --etch:repeating-linear-gradient(0deg,transparent 0 3px,#fff3ce9c 4px,transparent 5px),repeating-linear-gradient(90deg,transparent 0 3px,#fff3ce6e 4px,transparent 5px); --gloss:.49; --ink-pattern:.16; }
 .holo-finish-gold[data-galaxy] { --galaxy:#f1d694; --galaxy-dark:#2d291d; --surface:#10110e; }
 .holo-finish-gold .holo-card-name h3 { color:#f9de9f; text-shadow:0 1px #322613,0 -1px #fff1cc88; }
-.holo-finish-gold .holo-art { filter:sepia(.82) saturate(1.4); }
 .holo-face {
   overflow:hidden; display:flex; padding:5px; border:1px solid var(--edge); border-radius:16px; backface-visibility:hidden; -webkit-backface-visibility:hidden;
   background:linear-gradient(125deg,var(--foil-a),#425258 13%,var(--foil-b) 28%,#98968f 39%,#535c67 61%,var(--foil-c) 80%,var(--foil-b));

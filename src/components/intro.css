@@ -3,9 +3,9 @@
   padding: 0; border: 0; overflow: hidden; isolation: isolate; background: #05070c;
   color: #f2f4f3;
 }
-.intro-dialog[open] { display: grid; place-items: center; animation: intro-out .53s 4.37s both; }
+.intro-dialog[open] { display: grid; place-items: center; animation: intro-out .32s 2.08s both; }
 .intro-dialog::backdrop { background: transparent; }
-.intro-nebula { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 49%, #2944599e, #0d192599 32%, #05070c 70%); animation: nebula-in 2.6s ease-out both; }
+.intro-nebula { position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 49%, #2944599e, #0d192599 32%, #05070c 70%); animation: nebula-in 1.4s ease-out both; }
 .intro-stars {
   position: absolute; inset: -12%;
   background:
@@ -16,7 +16,7 @@
     radial-gradient(1px 1px at 68% 57%, #e1ecff, transparent),
     radial-gradient(1px 1px at 81% 16%, #a6bedb, transparent),
     radial-gradient(1px 1px at 77% 75%, #c7dcf1, transparent);
-  animation: intro-stars 4.9s ease-out both;
+  animation: intro-stars 2.4s ease-out both;
 }
 .intro-art {
   position: absolute; width: min(150vh, 1450px); aspect-ratio: 3 / 2;
@@ -26,9 +26,9 @@
     radial-gradient(ellipse at 63% 47%, #000 18%, #000d 42%, transparent 78%),
     linear-gradient(to right, transparent, #000 22%, #000 90%, transparent);
   mask-composite: intersect;
-  animation: intro-planet 4.9s cubic-bezier(.28,.58,.2,1) both;
+  animation: intro-planet 2.4s cubic-bezier(.28,.58,.2,1) both;
 }
-.intro-orbits { position: absolute; width: min(66vw, 660px); height: min(45vh, 390px); left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-26deg); animation: intro-orbits 4.5s ease-out both; }
+.intro-orbits { position: absolute; width: min(66vw, 660px); height: min(45vh, 390px); left: 50%; top: 50%; transform: translate(-50%, -50%) rotate(-26deg); animation: intro-orbits 2.1s ease-out both; }
 .intro-orbits i { position: absolute; inset: 18% 3%; border: 1px solid #b4cef15a; border-top-color: #b4cef11a; border-radius: 50%; }
 .intro-orbits i:nth-child(2) { inset: 10% 0; border-color: #b4cef122; }
 .intro-orbits b { position: absolute; left: 48%; top: 82%; width: 5px; height: 5px; border-radius: 100%; background: #d5edb9; box-shadow: 0 0 14px #d5edb9; }
@@ -37,11 +37,11 @@
 .space-field { position: absolute; inset: 0; pointer-events: none; }
 .space-field canvas { display: block; width: 100%; height: 100%; }
 .space-field canvas[hidden] { display: none; }
-.intro-dialog > .space-field { animation: intro-orbits 4.5s .05s ease-out both; transform: none; }
+.intro-dialog > .space-field { animation: intro-orbits 2.1s .05s ease-out both; transform: none; }
 .intro-copy {
   position: relative; z-index: 2; display: grid; justify-items: center; gap: 11px; padding: 25px;
   text-align: center; text-shadow: 0 1px 30px #0b1628, 0 0 12px #000c;
-  animation: intro-copy 4.9s cubic-bezier(.16,.69,.24,1) both;
+  animation: intro-copy 2.4s cubic-bezier(.16,.69,.24,1) both;
 }
 .intro-copy > svg { width: 36px; height: 36px; margin-bottom: 5px; color: var(--accent); }
 .intro-copy strong { font-size: clamp(1.9rem, 7vw, 7.1rem); line-height: 1; letter-spacing: .12em; font-weight: 380; }

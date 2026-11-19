@@ -111,7 +111,7 @@ export function mountSpaceScene(container: HTMLElement, kind: 'intro' | 'hero') 
   let pointer = 0
   let lean = 0
   const origin = performance.now()
-  const duration = intro ? 4900 : 1350
+  const duration = intro ? 2400 : 1350
 
   function tick(now: number) {
     frame = 0

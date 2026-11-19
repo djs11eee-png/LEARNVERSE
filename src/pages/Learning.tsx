@@ -1,7 +1,7 @@
 import {
   ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Binary, BookOpen, Bookmark,
   Braces, Check, CircleDot, Clock3, Code2, Compass, Flame, GitBranch,
-  Layers3, Orbit, Radio, Search, Sparkles, Target, Terminal, Trophy,
+  Layers3, Radio, Search, Sparkles, Target, Terminal, Trophy,
 } from 'lucide-react';
 import type { CSSProperties, FormEvent, ReactNode } from 'react';
 import { lazy, Suspense, useRef, useState } from 'react';
@@ -29,6 +29,11 @@ const domainVisuals = [
   { icon: Terminal, x: 16, y: 51 },
 ];
 const difficulties = ['Beginner', 'Intermediate', 'Advanced'] as const;
+const courseSymbols: Record<string, string> = {
+  Python: 'Py', JavaScript: 'JS', 'Computer Science': 'CS', 'C Language': 'C',
+  Algorithms: 'O(n)', 'Frontend Development': '</>', Java: 'Java',
+  'Backend Development': 'HTTP', 'AI & LLM': 'LLM', 'ROS2 & Robotics': 'ROS 2',
+};
 const sourceDateFormatter = new Intl.DateTimeFormat('zh-CN', {
   year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
 });
@@ -62,16 +67,17 @@ function resolveResources(ids: string[], lookup: (id: string) => Resource | unde
   return ids.map(lookup).filter((resource): resource is Resource => Boolean(resource));
 }
 
-function Screen({ children }: { children: ReactNode }) {
-  return <div className="learn-screen">{children}</div>;
+function Screen({ children, view }: { children: ReactNode; view?: 'map' | 'course' | 'resource' | 'universe' }) {
+  return <div className="learn-screen" data-view={view}>{children}</div>;
 }
 
-function PageHeader({ title, copy, children }: { title: string; copy: string; children?: ReactNode }) {
+function PageHeader({ title, copy, children, count, unit }: { title: string; copy: string; children?: ReactNode; count?: number; unit?: string }) {
   return (
     <header className="learn-header">
       {children}
       <h1>{title}</h1>
       <p>{copy}</p>
+      {count !== undefined && <div className="learn-header-count"><strong>{String(count).padStart(2, '0')}</strong><span>{unit}</span></div>}
     </header>
   );
 }
@@ -97,13 +103,13 @@ function CourseCard({ course }: { course: Resource }) {
   const isComplete = completed.includes(course.id);
   return (
     <article className="learn-card learn-course-card">
-      <div className="learn-card-top">
-        <div className="learn-icon"><BookOpen size={19} aria-hidden="true" /></div>
-        <DifficultyBadge value={course.difficulty} />
+      <div className="course-plate" data-subject={course.category} aria-hidden="true">
+        <span>{courseSymbols[course.category] ?? '</>'}</span><i /><i /><i />
       </div>
-      <p className="learn-meta">{categoryLabels[course.category]} <span aria-hidden="true">·</span> {languageLabels[course.language]} <span aria-hidden="true">·</span> {course.source}</p>
+      <div className="learn-card-top"><span className="course-category">{categoryLabels[course.category]}</span><DifficultyBadge value={course.difficulty} /></div>
       <h3>{course.title}</h3>
       <p>{course.description}</p>
+      <p className="learn-meta">{languageLabels[course.language]} <span aria-hidden="true">·</span> {course.source}</p>
       <Link className="learn-card-action" to={`/academy/${course.id}`}>
         {isComplete ? '复习课程' : started.includes(course.id) ? '继续学习' : '查看课程'}
         {isComplete ? <Check size={15} aria-hidden="true" /> : <ArrowUpRight size={15} aria-hidden="true" />}
@@ -117,15 +123,7 @@ function ResourceCard({ resource }: { resource: Resource }) {
   const saved = favorites.includes(resource.id);
   return (
     <article className="learn-card learn-resource-card">
-      <div className="learn-card-top">
-        <div className="learn-icon"><Layers3 size={19} aria-hidden="true" /></div>
-        <div className="learn-card-tools">
-          <DifficultyBadge value={resource.difficulty} />
-          <button className="learn-icon learn-bookmark" type="button" aria-label={`收藏 ${resource.title}`} aria-pressed={saved} onClick={() => toggleFavorite(resource.id)}>
-            <Bookmark size={18} aria-hidden="true" />
-          </button>
-        </div>
-      </div>
+      <div className="resource-info">
       <p className="learn-meta">{categoryLabels[resource.category]} <span aria-hidden="true">·</span> {languageLabels[resource.language]} <span aria-hidden="true">·</span> {resource.source}</p>
       <h3>{resource.title}</h3>
       <p>{resource.description}</p>
@@ -140,9 +138,18 @@ function ResourceCard({ resource }: { resource: Resource }) {
           <div><dt>核验日期</dt><dd><time dateTime={resource.updatedAt}>{sourceDateFormatter.format(new Date(resource.updatedAt))}</time></dd></div>
         </dl>
       </details>
+      </div>
+      <div className="resource-side">
+        <div className="learn-card-tools">
+          <DifficultyBadge value={resource.difficulty} />
+          <button className="learn-icon learn-bookmark" type="button" aria-label={`收藏 ${resource.title}`} aria-pressed={saved} onClick={() => toggleFavorite(resource.id)}>
+            <Bookmark size={18} aria-hidden="true" />
+          </button>
+        </div>
       <div className="learn-resource-actions">
         <a className="learn-card-action" href={resource.sourceUrl} target="_blank" rel="noreferrer">访问官方资源 <ArrowUpRight size={15} aria-hidden="true" /></a>
         {resource.githubUrl && <a className="learn-card-action learn-card-action--neutral" href={resource.githubUrl} target="_blank" rel="noreferrer"><GitBranch size={15} aria-hidden="true" /> GitHub</a>}
+      </div>
       </div>
     </article>
   );
@@ -178,7 +185,7 @@ function DomainDetail({ domain }: { domain: KnowledgeDomain }) {
           <p>{route.description}</p>
           <RouteCourses route={route} />
           {activeRoute === route.id
-            ? <Link to="/my-universe" className="learn-button"><Check size={17} aria-hidden="true" /> 查看我的路线</Link>
+            ? <Link to="/my-universe#study" className="learn-button"><Check size={17} aria-hidden="true" /> 查看我的路线</Link>
             : <button className="learn-button" type="button" onClick={() => chooseRoute(route.id)}>设为我的学习路线 <ArrowRight size={17} aria-hidden="true" /></button>}
         </section>}
         <aside className="learn-card learn-prereq">
@@ -209,8 +216,9 @@ export function Explore() {
   }
 
   return (
-    <Screen>
-      <PageHeader title="知识星图" copy="选择一个领域，查看入门要求、学习路线和推荐资源。" />
+    <Screen view="map">
+      <div className="explore-observatory">
+      <PageHeader title="知识星图" copy="选择星图上的领域，查看学习路线、入门要求和推荐资源。" count={domains.length} unit="个知识领域" />
       <section aria-label="知识领域" className="learn-map">
         <div className="learn-map-art" aria-hidden="true">
           <div className="learn-map-ring" />
@@ -233,7 +241,7 @@ export function Explore() {
               );
             })}
           </svg>
-          <div className="learn-map-core"><Orbit size={46} strokeWidth={0.8} /></div>
+          <div className="learn-map-core" />
         </div>
         <ul className="learn-map-nodes">
           {domains.map((domain, index) => {
@@ -246,6 +254,7 @@ export function Explore() {
           })}
         </ul>
       </section>
+      </div>
       <section className="learn-section">
         <SectionHeading title="精选路线" />
         <div className="learn-grid">
@@ -303,10 +312,10 @@ function Catalog({ mode }: { mode: 'course' | 'resource' }) {
   }
 
   return (
-    <Screen>
+    <Screen view={mode}>
       <PageHeader title={isLibrary ? '资源库' : '学习学院'} copy={isLibrary
         ? '查找公开课程、练习和技术指南。每项资源都链接到原始发布方。'
-        : '选择课程，在站内阅读章节、完成练习并记录进度。'} />
+        : '选择课程，在站内阅读章节、完成练习并记录进度。'} count={catalog.length} unit={isLibrary ? '项外部资源' : '门站内课程'} />
       <section aria-label={isLibrary ? '资源目录' : '课程目录'}>
         <div className="learn-filters">
           <label className="learn-search">
@@ -499,7 +508,7 @@ export function Dashboard() {
   ];
 
   return (
-    <Screen>
+    <Screen view="universe">
       <PageHeader title="我的宇宙" copy="在这台设备上收藏知识卡片，回顾自己的学习记录。" />
       <nav className="universe-switch" aria-label="我的宇宙视图">
         <Link to="/my-universe" aria-current={section === 'vault' ? 'page' : undefined}><Layers3 size={16} /> 知识图鉴</Link>

@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, Circle, Clipboard, Orbit } from 'lucide-react'
+import { ArrowLeft, ArrowRight, BookOpen, Check, ChevronDown, Clipboard, List } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, Navigate, useNavigate, useParams } from 'react-router-dom'
 import { workspaceCourses } from '../data/workspaceCourses'
@@ -78,6 +78,7 @@ export function Workspace() {
 function CourseWorkspace({ course, lessonId }: { course: WorkspaceCourse; lessonId?: string }) {
   const station = usePackStation()
   const { record, update, storageError } = useLessonRecord(course)
+  const [chaptersOpen, setChaptersOpen] = useState(false)
   const { startCourse, completeCourse } = useProgress()
   const lesson = course.lessons.find((item) => item.id === lessonId)
 
@@ -109,20 +110,21 @@ function CourseWorkspace({ course, lessonId }: { course: WorkspaceCourse; lesson
   const index = course.lessons.indexOf(lesson)
   return (
     <div className="workspace">
-      <div key={lesson.id} className="workspace-particles" aria-hidden="true" />
       <header className="workspace-header">
-        <Link className="workspace-back" to={`/academy/${course.id}`}><ArrowLeft size={16} /> 返回课程</Link>
-        <div className="workspace-brand"><Orbit size={17} /> LEARNVERSE / LEARNING</div>
-        <div className="workspace-meta">{course.title} <span>·</span> {record.completed.length} / {course.lessons.length} 章已完成</div>
+        <Link className="workspace-back" to={`/academy/${course.id}`}><ArrowLeft size={16} aria-hidden="true" /> 返回课程</Link>
+        <div className="workspace-meta">{course.title}</div>
       </header>
       <div className="workspace-layout">
         <aside className="workspace-sidebar" aria-label="课程章节">
-          <h2>{course.title}</h2>
-          <p>完成章节练习后记录进度</p>
+          <h2><BookOpen size={17} aria-hidden="true" />课程章节</h2>
+          <button className="workspace-chapter-toggle" type="button" aria-expanded={chaptersOpen} aria-controls="course-chapters" onClick={() => setChaptersOpen(!chaptersOpen)}>
+            <List size={17} aria-hidden="true" />课程章节<ChevronDown size={16} aria-hidden="true" />
+          </button>
+          <p>已完成 {record.completed.length} / {course.lessons.length} 章</p>
           <div className="workspace-progress" role="progressbar" aria-label="课程进度" aria-valuemin={0} aria-valuemax={course.lessons.length} aria-valuenow={record.completed.length}><span style={{ width: `${record.completed.length / course.lessons.length * 100}%` }} /></div>
-          <ol>{course.lessons.map((item, lessonIndex) => (
-            <li key={item.id}><Link className={`workspace-chapter${item.id === lesson.id ? ' workspace-chapter-active' : ''}${record.completed.includes(item.id) ? ' workspace-chapter-done' : ''}`} aria-current={item.id === lesson.id ? 'step' : undefined} to={`/academy/${course.id}/lesson/${item.id}`}>
-              {record.completed.includes(item.id) ? <Check size={16} /> : <Circle size={15} />} <span>{lessonIndex + 1}. {item.title}</span>
+          <ol id="course-chapters" data-open={chaptersOpen}>{course.lessons.map((item, lessonIndex) => (
+            <li key={item.id}><Link className={`workspace-chapter${item.id === lesson.id ? ' workspace-chapter-active' : ''}${record.completed.includes(item.id) ? ' workspace-chapter-done' : ''}`} aria-current={item.id === lesson.id ? 'step' : undefined} onClick={() => setChaptersOpen(false)} to={`/academy/${course.id}/lesson/${item.id}`}>
+              <span className="workspace-chapter-index">{String(lessonIndex + 1).padStart(2, '0')}</span><span>{item.title}</span>{record.completed.includes(item.id) && <Check size={14} aria-label="已完成" />}
             </Link></li>
           ))}</ol>
         </aside>
@@ -189,9 +191,23 @@ function Lesson({ course, lesson, index, done, onComplete }: { course: Workspace
 
   return (
     <article className="workspace-article">
-      <p className="workspace-eyebrow"><Orbit size={15} /> LEARNING SPACE <span>·</span> 第 {index + 1} 章 / 共 {course.lessons.length} 章</p>
-      <h1 className="workspace-title">{lesson.title}</h1>
-      <p className="workspace-lead">{lesson.summary}</p>
+      <header className="workspace-lesson-head">
+        <p className="workspace-eyebrow">第 {index + 1} 章 <span>/</span> 共 {course.lessons.length} 章</p>
+        <h1 className="workspace-title">{lesson.title}</h1>
+        <p className="workspace-lead">{lesson.summary}</p>
+      </header>
+      {expansion && <details className="workspace-outline">
+        <summary>本章目录</summary>
+        <nav aria-label="本章目录">
+          <ol>
+            {primer && <li><a href="#lesson-primer">先认识本章用到的词和写法</a></li>}
+            {sections.map((section, sectionIndex) => <li key={sectionIndex}><a href={`#lesson-section-${sectionIndex + 1}`}>{section.heading}</a></li>)}
+            <li><a href="#lesson-pitfalls">常见易错点</a></li>
+            <li><a href="#lesson-practice">动手练习</a></li>
+            <li><a href="#quiz-heading">章节练习</a></li>
+          </ol>
+        </nav>
+      </details>}
       {primer && <section className="workspace-primer" aria-labelledby="lesson-primer">
         <h2 id="lesson-primer">先用大白话理解</h2>
         <p>{primer.lead}</p>
@@ -204,18 +220,6 @@ function Lesson({ course, lesson, index, done, onComplete }: { course: Workspace
           <h2 id="lesson-objectives">学完这一章，你能</h2>
           <ul>{expansion.objectives.map((item) => <li key={item}>{item}</li>)}</ul>
         </section>
-        <details className="workspace-outline">
-          <summary>本章目录</summary>
-          <nav aria-label="本章目录">
-            <ol>
-              {primer && <li><a href="#lesson-primer">先认识本章用到的词和写法</a></li>}
-              {sections.map((section, sectionIndex) => <li key={sectionIndex}><a href={`#lesson-section-${sectionIndex + 1}`}>{section.heading}</a></li>)}
-              <li><a href="#lesson-pitfalls">常见易错点</a></li>
-              <li><a href="#lesson-practice">动手练习</a></li>
-              <li><a href="#quiz-heading">章节练习</a></li>
-            </ol>
-          </nav>
-        </details>
       </div>}
       <div className="workspace-copy">
         {sections.map((section, sectionIndex) => (
@@ -263,7 +267,6 @@ function Lesson({ course, lesson, index, done, onComplete }: { course: Workspace
         </section>
       </>}
       <section className="workspace-quiz" aria-labelledby="quiz-heading">
-        <p className="workspace-eyebrow">KNOWLEDGE CHECK</p>
         <h2 id="quiz-heading">章节练习</h2>
         <p>完成本章的全部题目，答对后即可记录进度。</p>
         {questions.map((question, questionIndex) => (

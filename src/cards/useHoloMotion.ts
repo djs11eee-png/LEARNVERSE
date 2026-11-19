@@ -39,6 +39,7 @@ export function useHoloMotion() {
       css.setProperty('--h-rx', `${reduced.current ? 0 : (.5 - frame.y) * 19 * frame.gain}deg`)
       css.setProperty('--h-ry', `${reduced.current ? 0 : (frame.x - .5) * 24 * frame.gain}deg`)
       css.setProperty('--h-turn', `${frame.turn}deg`)
+      stage.current.dispatchEvent(new CustomEvent('plate-light', { detail: frame }))
       const nextBack = Math.cos(frame.turn * Math.PI / 180) < 0
       if (nextBack !== facingBack.current) { facingBack.current = nextBack; setBack(nextBack) }
       if (pending) animate()

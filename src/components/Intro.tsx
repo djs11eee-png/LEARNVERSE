@@ -16,7 +16,7 @@ export function Intro({ onFinish }: { onFinish: () => void }) {
     if (!element) return
     element.showModal()
     const motion = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const timeout = window.setTimeout(complete, motion.matches ? 1050 : 4900)
+    const timeout = window.setTimeout(complete, motion.matches ? 600 : 2400)
     const onMotionChange = () => { if (motion.matches) complete() }
     motion.addEventListener('change', onMotionChange)
     const previousOverflow = document.body.style.overflow

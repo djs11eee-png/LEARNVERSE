@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
-  ArrowDown, ArrowRight, BarChart3, ChevronDown,
+  ArrowRight, BarChart3, ChevronDown, Code2, ListChecks,
   FlaskConical, Orbit, PackageOpen, Pause, Play, RotateCcw, Shuffle, SkipBack, SkipForward,
 } from 'lucide-react';
 import { algorithms, projects, questions, traceBinarySearch, traceBubbleSort } from '../data/lab';
@@ -28,20 +28,22 @@ function FreePractice() {
   const [language, setLanguage] = useState<keyof typeof labSamples>('python');
   const sample = labSamples[language];
   return (
-    <section className="lab-panel lab-free-practice" id="lab-code" aria-labelledby="lab-free-title">
-      <h2 id="lab-free-title">自由练习</h2>
-      <p>选一门语言，改一行示例，再按「运行」。结果或报错会显示在编辑器下面。</p>
-      <ThemeSelect compact label="编程语言" value={language} onChange={(value) => setLanguage(value as keyof typeof labSamples)}
-        options={Object.entries(labSamples).map(([value, { label }]) => ({ value, label }))} />
+    <section className="lab-free-practice" id="lab-code" aria-labelledby="lab-free-title">
+      <div className="lab-free-copy">
+        <h2 id="lab-free-title">自由练习</h2>
+        <p>选一门语言，改一行示例，再运行代码。你可以在编辑器下方查看结果。</p>
+        <ThemeSelect compact label="编程语言" value={language} onChange={(value) => setLanguage(value as keyof typeof labSamples)}
+          options={Object.entries(labSamples).map(([value, { label }]) => ({ value, label }))} />
+        <details className="lab-setup">
+          <summary>需要安装什么？</summary>
+          <ul>
+            <li>Python、JavaScript、SQL 和 HTML/CSS 预览只需要现代浏览器。第一次运行 Python 会先加载运行环境。</li>
+            <li>在 Windows 上从项目目录双击 <strong>安装并启动实验室.cmd</strong>。它会检查并安装缺少的 Node.js、MSYS2 GCC 与 Java JDK，再打开本机实验室。</li>
+            <li>C 和 Java 在本机执行，只运行你自己编写或确认来源的代码。手机上仍可以编辑与查看参考解法。</li>
+          </ul>
+        </details>
+      </div>
       <CodeWorkbench title="代码编辑器" draftKey="lab/free" language={language} starter={sample.code} stdin={language === 'python' ? '' : undefined} />
-      <details className="lab-setup">
-        <summary>需要安装什么？</summary>
-        <ul>
-          <li>Python、JavaScript、SQL 和 HTML/CSS 预览只需要现代浏览器。第一次运行 Python 会先加载运行环境。</li>
-          <li>在 Windows 上从项目目录双击 <strong>安装并启动实验室.cmd</strong>。它会检查并安装缺少的 Node.js、MSYS2 GCC 与 Java JDK，再打开本机实验室。</li>
-          <li>C 和 Java 在本机执行，只运行你自己编写或确认来源的代码。手机上仍可以编辑与查看参考解法。</li>
-        </ul>
-      </details>
     </section>
   );
 }
@@ -225,19 +227,19 @@ export function Lab() {
   return (
     <div className="lab-page">
       <header className="lab-intro" data-enter>
-        <div className="lab-intro-orbits" aria-hidden="true"><i /><i /><i /></div>
+        <div className="lab-moon" aria-hidden="true"><img src="/art/near-moon.webp" alt="" /></div>
         <div className="lab-intro-copy">
-          <span className="lab-kicker" lang="en">LAB</span>
+          <span className="lab-kicker" lang="en">LEARNVERSE / LAB</span>
           <h1>学习<em>实验室</em></h1>
           <p><span>写一段程序，</span><span>运行并查看结果，</span><span>也可以单步观察算法。</span></p>
-          <a href="#lab-code" className="lab-jump">打开代码编辑器 <ArrowDown size={15} aria-hidden="true" /></a>
         </div>
       </header>
-      <div className="lab-supply">
-        <PackageOpen size={24} aria-hidden="true" /><div><strong>知识补给包</strong><small>{station.pending.length ? station.pending.length + ' 个待拆封' : '完成章节或今日知识自测，可再领取一包。'}</small></div>
-        {station.pending.length ? <button type="button" className="button button-light" onClick={() => station.showPack(station.pending[0])}>拆开补给包</button>
-          : <Link className="button" to="/my-universe">查看图鉴 <ArrowRight size={15} /></Link>}
-      </div>
+      <nav className="lab-directory" aria-label="实验室导航">
+        <a href="#lab-code"><Code2 size={17} aria-hidden="true" />打开代码编辑器</a>
+        <a href="#lab-algorithms"><BarChart3 size={17} aria-hidden="true" />算法演示</a>
+        <a href="#lab-quiz"><ListChecks size={17} aria-hidden="true" />知识自测</a>
+        <a href="#lab-projects"><Orbit size={17} aria-hidden="true" />实战练习</a>
+      </nav>
       <FreePractice />
       <AlgorithmBench />
       <div className="lab-workspace lab-practice">
@@ -245,7 +247,7 @@ export function Lab() {
           const key = earnDaily();
           station.showPack(key);
         }} />
-        <section className="lab-panel lab-projects" aria-labelledby="lab-projects-title">
+        <section className="lab-panel lab-projects" id="lab-projects" aria-labelledby="lab-projects-title">
           <div className="lab-panel-header">
             <h2 id="lab-projects-title"><Orbit size={17} aria-hidden="true" /> 实战练习</h2>
           </div>
@@ -260,6 +262,11 @@ export function Lab() {
             </details>
           ))}
         </section>
+      </div>
+      <div className="lab-supply">
+        <PackageOpen size={24} aria-hidden="true" /><div><strong>知识补给包</strong><small>{station.pending.length ? station.pending.length + ' 个待拆封' : '完成章节或今日知识自测，可再领取一包。'}</small></div>
+        {station.pending.length ? <button type="button" className="button button-light" onClick={() => station.showPack(station.pending[0])}>拆开补给包</button>
+          : <Link className="button" to="/my-universe">查看图鉴 <ArrowRight size={15} /></Link>}
       </div>
       {station.stage}
     </div>

@@ -1,4 +1,4 @@
-import { ArrowUpRight, AudioLines, ChevronDown, Menu, Orbit, Play, Search, UserRound, X } from 'lucide-react'
+import { ArrowUpRight, AudioLines, BookOpen, ChevronDown, Compass, FlaskConical, Library as LibraryIcon, Menu, Orbit, Play, Search, Telescope, UserRound, X } from 'lucide-react'
 import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { brand } from './brand'
@@ -23,6 +23,7 @@ const destinations = [
   { path: '/lab', name: '实验室', keywords: '算法 编辑器 练习 项目 lab algorithm editor practice projects' },
   { path: '/my-universe', name: '我的宇宙', keywords: '个人中心 进度 收藏 universe dashboard progress favorites' },
 ]
+const sectionIcons = [Telescope, Compass, BookOpen, LibraryIcon, FlaskConical, Orbit]
 
 function shouldPlayIntro() {
   try {
@@ -44,6 +45,34 @@ export function App() {
   const [query, setQuery] = useState('')
   const location = useLocation()
   const previousPath = useRef(pathname)
+
+  const openSearch = useCallback(() => {
+    if (document.querySelector('dialog[open]')) return
+    setMenu(false)
+    if (account.current) account.current.open = false
+    setQuery('')
+    search.current?.showModal()
+  }, [])
+
+  useEffect(() => {
+    function shortcut(event: KeyboardEvent) {
+      if (event.key.toLowerCase() !== 'k' || !(event.ctrlKey || event.metaKey)) return
+      if (document.querySelector('dialog[open]')) return
+      event.preventDefault()
+      openSearch()
+    }
+    window.addEventListener('keydown', shortcut)
+    return () => window.removeEventListener('keydown', shortcut)
+  }, [openSearch])
+
+  useEffect(() => {
+    if (!menu) return
+    function dismiss(event: PointerEvent) {
+      if (event.target instanceof Node && !navigation.current?.contains(event.target) && !menuToggle.current?.contains(event.target)) setMenu(false)
+    }
+    document.addEventListener('pointerdown', dismiss)
+    return () => document.removeEventListener('pointerdown', dismiss)
+  }, [menu])
 
   useEffect(() => {
     if (menu) navigation.current?.querySelector('a')?.focus({ preventScroll: true })
@@ -73,11 +102,6 @@ export function App() {
     setIntro(true)
   }
 
-  function openSearch() {
-    setQuery('')
-    search.current?.showModal()
-  }
-
   const normalizedQuery = query.trim().normalize('NFKC').toLowerCase()
   const results = destinations.filter(({ name, keywords }) => `${name} ${keywords}`.toLowerCase().includes(normalizedQuery))
   const courseResults = normalizedQuery ? courseSummaries.filter((course) =>
@@ -105,12 +129,13 @@ export function App() {
           </Link>
           <nav className={menu ? 'site-nav is-open' : 'site-nav'} id="site-navigation" aria-label="主导航" ref={navigation}>
             <NavPill path={pathname} open={menu} />
-            {destinations.map(({ path, name }) => (
-              <NavLink key={path} to={path} end={path === '/'} onClick={() => { clickNav(); setMenu(false) }}>{name}</NavLink>
-            ))}
+            {destinations.map(({ path, name }, index) => {
+              const Icon = sectionIcons[index]
+              return <NavLink key={path} to={path} end={path === '/'} onClick={() => { clickNav(); setMenu(false) }}><Icon size={16} aria-hidden />{name}</NavLink>
+            })}
           </nav>
           <div className="header-actions">
-            <button className="icon-button" type="button" aria-label="全站搜索" onClick={openSearch}><Search size={18} /></button>
+            <button className="icon-button" type="button" aria-label="全站搜索" aria-keyshortcuts="Control+k Meta+k" title="全站搜索（Ctrl / ⌘ + K）" onClick={openSearch}><Search size={18} /></button>
             <details className="account" ref={account}>
               <summary aria-label="个人菜单">
                 <span className="account-avatar"><UserRound size={16} strokeWidth={1.6} /></span>
@@ -154,6 +179,7 @@ export function App() {
         </main>
         <footer className="site-footer">
           <Link className="brand" to="/" lang="en"><Orbit size={21} strokeWidth={1.5} />{brand.wordmark}</Link>
+          <nav aria-label="学习快捷方式"><Link to="/academy">课程目录</Link><Link to="/lab">实验室</Link><Link to="/my-universe#study">学习记录</Link></nav>
           <button className="text-button" type="button" onClick={replayIntro}><AudioLines size={16} /> 重播开场</button>
         </footer>
       </div>
@@ -168,7 +194,9 @@ export function App() {
             <button className="icon-button" aria-label="关闭搜索" onClick={() => search.current?.close()}><X size={18} /></button>
           </div>
           <div className="search-results">
+            {results.length > 0 && <small>站内导航</small>}
             {results.map(({ path, name }) => <Link to={path} key={path} onClick={() => { search.current?.close(); setMenu(false) }}>{name}<ArrowUpRight size={15} /></Link>)}
+            {courseResults.length > 0 && <small>课程</small>}
             {courseResults.map((course) => <Link to={`/academy/${course.id}`} key={course.id} onClick={() => { search.current?.close(); setMenu(false) }}>{course.title}<ArrowUpRight size={15} /></Link>)}
             {normalizedQuery && <Link to={librarySearch} onClick={() => { search.current?.close(); setMenu(false) }}>在资源库搜索「{query.trim()}」<ArrowUpRight size={15} /></Link>}
           </div>

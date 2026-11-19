@@ -254,7 +254,7 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
             {copyStatus === 'copied' ? <Check size={15} aria-hidden="true" /> : <Copy size={15} aria-hidden="true" />}
             {copyStatus === 'copied' ? '已复制' : '复制代码'}
           </button>
-          <button type="button" disabled={running || (draft.code === starter && draft.input === stdin && !result && execution.kind === 'idle')} onClick={restore}>
+          <button type="button" disabled={running || (draft.code === starter && draft.input === initialDraft.input && !result && execution.kind === 'idle')} onClick={restore}>
             <RotateCcw size={15} aria-hidden="true" /> 恢复示例
           </button>
           {canRun && (
@@ -294,9 +294,12 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
           onScroll={(event) => syncLineNumbers(event.currentTarget.scrollTop)}
         />
       </div>
+      <div className="code-workbench-editor-footer">
+        <span>{lines.length} 行</span>
+        {canRun && <span id={`${id}-shortcut`}>运行快捷键 <kbd>Ctrl / ⌘</kbd> + <kbd>Enter</kbd></span>}
+      </div>
       <span className="code-workbench-sr-only" role="status">{copyStatus === 'copied' ? '代码已复制。' : ''}</span>
       {copyStatus === 'unavailable' && <p className="code-workbench-note" role="status">无法访问剪贴板，请手动选中并复制代码。</p>}
-      {canRun && <span id={`${id}-shortcut`} className="code-workbench-sr-only">按 Ctrl 或 Command 加 Enter 运行。</span>}
       {!canRun && (
         <p className="code-workbench-note" id={`${id}-availability`} role="status">
           {language === 'text' ? '可以在这里编辑或复制文本。'
@@ -324,7 +327,7 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
         </div>
       )}
       {canRun && (
-        <div className="code-workbench-output" role="group" aria-label="运行结果">
+        <div className="code-workbench-output" role="group" aria-label="运行结果" data-state={stale ? 'stale' : errors.length ? 'error' : execution.kind}>
           <div className="code-workbench-output-title"><Terminal size={15} aria-hidden="true" /><strong>{language === 'html' ? '网页预览' : '运行结果'}</strong></div>
           <p className="code-workbench-note" role="status">{statusText}</p>
           {result?.preview !== undefined && <iframe sandbox="" referrerPolicy="no-referrer" title="网页预览" srcDoc={result.preview} />}

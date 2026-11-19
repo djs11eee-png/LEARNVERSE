@@ -1,8 +1,9 @@
-import { useId } from 'react'
+import { useEffect, useId, useRef } from 'react'
+import { mountPlateRenderer, nativePlateTextures } from './plateRenderer'
 import type { HoloCard } from './types'
 import './holo-material.css'
 
-type PrintProps = { galaxy: HoloCard['galaxy']; slot: number; pack?: boolean; cardNumber?: string }
+type PrintProps = { galaxy: HoloCard['galaxy']; slot: number; pack?: boolean; cardNumber?: string; gold?: boolean }
 const tau = Math.PI * 2
 const ink = (id: string, name: string) => 'url(#' + id + '-' + name + ')'
 const fixed = (value: number) => Number(value.toFixed(2))
@@ -92,14 +93,14 @@ function NodeAtlas({ id, variant }: { id: string; variant: number }) {
   </g>
 }
 
-export function HoloPrint({ galaxy, slot, pack = false, cardNumber }: PrintProps) {
+function Engraving({ galaxy, slot, cardNumber }: PrintProps) {
   const id=useId().replace(/:/g,'')
   let variant = slot
   for(const char of cardNumber ?? '') variant = (variant*31 + char.charCodeAt(0)) % 991
   const stars = Array.from({length:44},(_,i)=>({
     x:(i*163 + 19*variant + i*i)%300, y:(i*79 + 11*variant + i*i*3)%144,
   }))
-  return <svg className={'holo-print lv-plate' + (pack ? ' holo-print--pack' : '')} data-series={galaxy} viewBox="0 0 300 144" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+  return <svg viewBox="0 0 300 144" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <defs>
       <radialGradient id={id+'-field'} cx=".47" cy=".48" r=".74"><stop stopColor="var(--plate-shade)"/><stop offset=".7" stopColor="var(--plate-dark)"/><stop offset="1" stopColor="#06090f"/></radialGradient>
       <linearGradient id={id+'-metal'} x1="0" y1=".85" x2="1" y2=".2"><stop stopColor="var(--plate-mid)"/><stop offset=".26" stopColor="var(--plate-light)"/><stop offset=".45" stopColor="var(--plate-pearl)"/><stop offset=".54" stopColor="var(--plate-mid)"/><stop offset=".77" stopColor="var(--plate-light)"/><stop offset="1" stopColor="var(--plate-shade)"/></linearGradient>
@@ -117,4 +118,29 @@ export function HoloPrint({ galaxy, slot, pack = false, cardNumber }: PrintProps
     <g className="lv-plate-stars"><Star x={36+variant%21} y={34+variant%15} size={2.8}/><Star x={239+variant%18} y={90+variant%19} size={3.8}/></g>
     <g stroke="var(--plate-light)" opacity=".67"><path d="M18 118h20m-20 3h12m222-98h15m-8 3h8" strokeWidth=".7"/><circle cx="60" cy="82" r="1" fill="var(--plate-pearl)" /></g>
   </svg>
+}
+
+const printTitles = { python: 'RING SYSTEM', c: 'SILICON DIE', algorithms: 'NODE ATLAS' }
+
+function PlatePaper(props: PrintProps) {
+  return <div className="lv-plate-paper" data-series={props.galaxy} data-gold={props.gold || undefined} {...{ drawable: '' }}>
+    <Engraving {...props}/>
+    <div className="lv-plate-caption"><span>{printTitles[props.galaxy]}</span><span>{props.cardNumber}</span></div>
+  </div>
+}
+
+export function HoloPrint(props: PrintProps) {
+  const surface = useRef<HTMLDivElement>(null)
+  const native = nativePlateTextures()
+  useEffect(() => {
+    if (!surface.current) return
+    return mountPlateRenderer(surface.current, native)
+  }, [native, props.cardNumber, props.galaxy, props.gold, props.pack, props.slot])
+
+  return <div ref={surface} className={'holo-print lv-plate' + (props.pack ? ' holo-print--pack' : '')} aria-hidden="true">
+    <PlatePaper {...props}/>
+    <canvas className="lv-plate-canvas" {...(native === 'modern' ? { content: 'drawable' } : native === 'legacy' ? { layoutsubtree: '' } : {})}>
+      {native && <PlatePaper {...props}/>}
+    </canvas>
+  </div>
 }
