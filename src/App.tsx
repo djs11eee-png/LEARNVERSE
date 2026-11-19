@@ -3,6 +3,7 @@ import { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import { Link, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
 import { brand } from './brand'
 import { Intro } from './components/Intro'
+import { RouteAtmosphere } from './components/RouteAtmosphere'
 import { NavPill, clickNav } from './components/NavPill'
 import { courseSummaries } from './data/courseCatalog'
 import { categoryLabels } from './data/resources'
@@ -161,6 +162,7 @@ export function App() {
         </header>
 
         <main id="main-content" tabIndex={-1} className="site-main">
+          <RouteAtmosphere path={pathname} paused={intro} />
           <Suspense fallback={<div className="route-loading" role="status"><Orbit size={20} /> 正在加载页面…</div>}>
             <Routes location={location}>
               <Route index element={<Home onReplay={replayIntro} introActive={intro} />} />

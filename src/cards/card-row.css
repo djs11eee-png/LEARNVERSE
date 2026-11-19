@@ -1,0 +1,101 @@
+.holo-stage.is-row { min-width: 0; width: 100%; }
+.is-row .holo-object { width: 100%; min-width: 0; aspect-ratio: auto; perspective: none; }
+.capsule-row {
+  --row-gap: clamp(8px,1vw,18px);
+  --card-width: min(calc((94vw - 4 * var(--row-gap)) / 5),35dvh,295px);
+  position: relative;
+  display: flex;
+  justify-content: safe center;
+  align-items: center;
+  gap: var(--row-gap);
+  width: 100%;
+  padding: 54px 3vw 58px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+  scrollbar-color: #697e7970 transparent;
+}
+.capsule-row-slot {
+  position: relative;
+  flex: 0 0 var(--card-width);
+  aspect-ratio: .65;
+  perspective: 1000px;
+  scroll-snap-align: center;
+  isolation: isolate;
+  animation: capsule-place .66s cubic-bezier(.18,.76,.22,1) both;
+  animation-delay: calc(var(--slot) * 78ms);
+}
+@keyframes capsule-place {
+  0% { opacity: 0; transform: translateY(-9%) scale(.93); }
+  34% { opacity: 1; }
+  100% { opacity: 1; transform: none; }
+}
+.capsule-row-slot .holo-card-holder { touch-action: pan-x pan-y; transition: translate .25s ease; }
+.capsule-row-slot[data-selected="true"] { z-index: 2; }
+.capsule-row-slot[data-selected="true"] .holo-card-holder { translate: 0 -7px; }
+.capsule-row-slot[data-selected="false"] {
+  --h-turn: 0deg;
+  --h-ry: 0deg;
+  --h-rx: 0deg;
+  --h-gain: 0;
+  --h-shift-x: 0%;
+  --h-shift-y: -2%;
+}
+.capsule-row-slot::after {
+  content: '';
+  position: absolute;
+  bottom: -13px;
+  left: 35%;
+  width: 30%;
+  height: 2px;
+  border-radius: 2px;
+  pointer-events: none;
+  background: var(--rim);
+  box-shadow: 0 0 9px color-mix(in srgb,var(--rim) 42%,transparent);
+  opacity: 0;
+  transition: opacity .22s ease;
+}
+.capsule-row-slot[data-selected="true"]::after { opacity: 1; }
+.capsule-row .holo-face { box-shadow:0 0 0 1px #03080c,0 12px 21px #0007,inset 0 0 0 1px #fffffe8c; }
+.capsule-row .holo-front { border-color: var(--rim); }
+.capsule-row .holo-preview-front { transform: rotateY(0deg); }
+.capsule-row :is(.holo-copy,.holo-back-scroll) { overscroll-behavior-x: auto; }
+.capsule-pick {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  border-radius: 15px;
+  touch-action: pan-x pan-y;
+}
+@media (hover:hover) {
+  .capsule-row-slot:has(.capsule-pick:hover) .holo-card-holder { translate: 0 -4px; }
+}
+@media (min-width:1024px) {
+  .capsule-row .holo-frame { padding: 10px 10px 8px; }
+  .capsule-row .holo-card-name { margin: 7px 0 6px; }
+  .capsule-row .holo-card-name h3 { font-size: clamp(16px,1.5vw,21px); }
+  .capsule-row :is(.holo-copy,.holo-back-scroll) { font-size: clamp(11px,.93vw,13px); }
+  .capsule-row .holo-card-name p { font-size: 8px; }
+}
+@media (max-width:1023px) {
+  .capsule-row {
+    --card-width: min(76vw,51dvh,370px);
+    --row-gap: clamp(12px,3vw,24px);
+    justify-content: flex-start;
+    padding-inline: calc((100% - var(--card-width)) / 2);
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  .capsule-row::-webkit-scrollbar { display: none; }
+  .capsule-row::after { content:''; flex:0 0 0; margin-left:calc(-1 * var(--row-gap)); }
+  .capsule-row-slot[data-selected="true"] .holo-card-holder { translate: none; }
+}
+@media (prefers-reduced-motion:reduce) {
+  .capsule-row-slot { animation:none; }
+}

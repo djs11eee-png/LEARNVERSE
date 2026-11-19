@@ -228,3 +228,10 @@
   .capsule-break-light,.capsule-gold-corona,.holo-sparks {display:none}
   .holo-packet {transform:none}
 }
+.foil-particles { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 8; }
+.is-tearing .holo-tear-gap { background: linear-gradient(0deg, var(--foil-ink) 1%, #090e17 22%, #050711 75%, var(--foil-ink)); }
+.is-tearing .holo-sparks i { background: var(--foil-ink); box-shadow: 0 0 6px var(--foil-ink); }
+.holo-tear-edge::before {
+  content: ''; position: absolute; left: 0; bottom: 0; height: 3px; width: 65%;
+  background: var(--seam-spectrum); clip-path: inset(0 max(0%, calc(100% - var(--rip) * 154%)) 0 0);
+}

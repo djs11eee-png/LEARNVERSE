@@ -2,11 +2,13 @@ import { memo, useId, useLayoutEffect, useRef, useState } from 'react'
 import type { CSSProperties, PointerEvent as ReactPointerEvent } from 'react'
 import { ArrowLeft, ArrowRight, Check, Layers3, RotateCcw, ScanLine, Smartphone, Sparkles, Volume2, VolumeX, X } from 'lucide-react'
 import { HoloPrint } from './HoloPrint'
+import { foilColors, FoilParticles, type FoilEmitter } from './FoilParticles'
 import { clamp, createFoilSound, useHoloMotion } from './useHoloMotion'
 import type { HoloCard } from './types'
 import { finishNames, slotNames } from './types'
 import './holo-booster.css'
 import './foil-sequence.css'
+import './card-row.css'
 
 type Props = {
   cards: HoloCard[]
@@ -54,15 +56,15 @@ function FoilLayers() {
   return <span className="holo-fx" aria-hidden="true"><i className="holo-prism"/><i className="holo-texture"/><i className="holo-specular"/></span>
 }
 
-function CardFaces({ card, back, note, onNote, choice, choose }: {
+function CardFaces({ card, back, note, onNote, choice, choose, preview = false }: {
   card: HoloCard; back: boolean; note: string; onNote: (v: string) => void
-  choice: number | undefined; choose: (v: number) => void
+  choice: number | undefined; choose: (v: number) => void; preview?: boolean
 }) {
   const quiz = card.quiz
   const titleId = useId()
   const noteId = useId()
   return <div className={`holo-card holo-finish-${card.finish}`} data-galaxy={card.galaxy} aria-label={card.title}>
-    <article className="holo-face holo-front" inert={back} aria-hidden={back} aria-labelledby={titleId}>
+    <article className={'holo-face ' + (preview ? 'holo-preview-front' : 'holo-front')} inert={back || preview} aria-hidden={back || preview} aria-labelledby={titleId}>
       <div className="holo-frame">
         <header className="holo-card-top"><span>LEARNVERSE</span><span>{card.number}</span></header>
         <div className="holo-card-name"><p>{slotNames[card.slot - 1]} · {card.subtitle}</p><h3 id={titleId}>{card.title}</h3></div>
@@ -70,7 +72,8 @@ function CardFaces({ card, back, note, onNote, choice, choose }: {
         <div className="holo-copy" tabIndex={0} aria-label="卡片内容">
           {card.body !== quiz?.question && <p>{card.body}</p>}
           {card.code && <pre><code>{card.code}</code></pre>}
-          {quiz && <fieldset className="holo-quiz"><legend>{quiz.question}</legend>
+          {quiz && preview && <p>{quiz.question}</p>}
+          {quiz && !preview && <fieldset className="holo-quiz"><legend>{quiz.question}</legend>
             {quiz.options.map((option, i) => <button key={i} type="button" aria-pressed={choice === i} data-state={choice === i ? (i === quiz.answer ? 'correct' : 'wrong') : undefined} onClick={() => choose(i)}>
               <span>{String.fromCharCode(65 + i)}</span>{option}{choice === i && i === quiz.answer && <Check size={14}/>}
             </button>)}
@@ -81,7 +84,7 @@ function CardFaces({ card, back, note, onNote, choice, choose }: {
       </div>
       <FoilLayers/>
     </article>
-    <article className="holo-face holo-back" inert={!back} aria-hidden={!back} aria-label={`${card.title}的背面`}>
+    {!preview && <article className="holo-face holo-back" inert={!back} aria-hidden={!back} aria-label={`${card.title}的背面`}>
       <div className="holo-frame">
         <header className="holo-card-top"><span>LEARNVERSE</span><span>{card.number}</span></header>
         <div className="holo-back-title"><ScanLine size={25} strokeWidth={1.2}/><p>{card.title}</p><h3>知识速查</h3></div>
@@ -92,7 +95,7 @@ function CardFaces({ card, back, note, onNote, choice, choose }: {
         <footer className="holo-card-foot"><span>{seriesNames[card.galaxy]}</span><span>FIELD NOTES</span></footer>
       </div>
       <FoilLayers/>
-    </article>
+    </article>}
   </div>
 }
 
@@ -101,25 +104,24 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
   const [index, setIndex] = useState(0)
   const [answers, setAnswers] = useState<Record<string, number>>({})
   const [tearing, setTearing] = useState(false)
-  const [direction, setDirection] = useState(1)
-  const [dealing, setDealing] = useState(false)
   const [soundOn, setSoundOn] = useState(() => {
     try { return localStorage.getItem(audioPreference) !== 'off' } catch { return true }
   })
   const chimes = useRef<AudioContext | null>(null)
   const dealtGold = useRef(new Set<string>())
   const [goldArrival, setGoldArrival] = useState(false)
-  const [leaving, setLeaving] = useState(false)
-  const exiting = useRef(false)
   const opened = useRef(false)
   const tear = useRef<Gesture | null>(null)
   const sound = useRef<ReturnType<typeof createFoilSound>>(undefined)
   const progress = useRef(0)
+  const emitter = useRef<FoilEmitter>(null)
+  const seal = useRef<HTMLButtonElement>(null)
   const sequence = useRef<HTMLDivElement>(null)
   const curl = useRef<SVGPathElement>(null)
   const crest = useRef<SVGPathElement>(null)
   const recoil = useRef(0)
-  const hand = useRef<HTMLDivElement>(null)
+  const row = useRef<HTMLDivElement>(null)
+  const scrollSettled = useRef(0)
   const drag = useRef<Gesture | null>(null)
   const dialog = useRef<HTMLDialogElement>(null)
   const closeButton = useRef<HTMLButtonElement>(null)
@@ -147,6 +149,7 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
     closeButton.current?.focus({ preventScroll: true })
     return () => {
       timers.current.forEach(window.clearTimeout)
+      window.clearTimeout(scrollSettled.current)
       cancelAnimationFrame(recoil.current)
       if (chimes.current && chimes.current.state !== 'closed') void chimes.current.close().catch(() => {})
       chimes.current = null
@@ -194,6 +197,8 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
 
   function setRip(amount: number) {
     progress.current = amount
+    const band = cards[Math.min(cards.length - 1, Math.floor(amount / .65 * cards.length))]
+    if (band) sequence.current?.style.setProperty('--foil-ink', foilColors[band.finish])
     sequence.current?.style.setProperty('--rip', String(amount))
     sequence.current?.style.setProperty('--rip-left', amount * 100 + '%')
     const shape = curlShape(amount)
@@ -208,6 +213,8 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
     tear.current = null
     setTearing(false)
     setRip(1)
+    const edge = seal.current?.getBoundingClientRect()
+    if (edge) emitter.current?.scatter(edge.left + edge.width * .55, edge.bottom, cards.map(card => foilColors[card.finish]), true)
     setPhase('opening')
     motion.light(.46, .36, 0)
     const effect = sound.current ?? (soundOn ? createFoilSound() : undefined)
@@ -219,30 +226,36 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
       timers.current.push(window.setTimeout(() => flipButton.current?.focus({ preventScroll: true }), 0))
     }, motion.reduced.current ? 0 : 1770))
   }
-  function navigate(next: number) {
-    if (exiting.current || next === index || next < 0 || next >= cards.length || phase !== 'cards') return
+  function navigate(next: number, scroll = true) {
+    if (next === index || next < 0 || next >= cards.length || phase !== 'cards') return
     drag.current = null
-    setDirection(next > index ? 1 : -1)
     primeChimes()
-    const arrive = () => {
-      const gold = mode === 'pack' && cards[next].finish === 'gold' && !dealtGold.current.has(cards[next].id)
-      if (gold) {
-        dealtGold.current.add(cards[next].id)
-        goldTone()
-        if (!motion.reduced.current) try { navigator.vibrate?.([22, 36, 58]) } catch { /* Optional haptics. */ }
-      }
-      setGoldArrival(gold)
-      setLeaving(false)
-      exiting.current = false
-      setDealing(true)
-      setIndex(next)
-      motion.turn(0, true)
-      motion.light(.46, .36, 0)
+    const gold = mode === 'pack' && cards[next].finish === 'gold' && !dealtGold.current.has(cards[next].id)
+    if (gold) {
+      dealtGold.current.add(cards[next].id)
+      goldTone()
+      if (!motion.reduced.current) try { navigator.vibrate?.([22, 36, 58]) } catch { /* Optional haptics. */ }
     }
-    if (mode === 'inspect' || motion.reduced.current) { arrive(); return }
-    exiting.current = true
-    setLeaving(true)
-    timers.current.push(window.setTimeout(arrive, 180))
+    setGoldArrival(gold)
+    setIndex(next)
+    motion.turn(0, true)
+    motion.light(.46, .36, 0)
+    const strip = row.current
+    if (scroll && strip && strip.scrollWidth > strip.clientWidth + 1) {
+      const slot = strip.children[next] as HTMLElement
+      strip.scrollTo({ left: slot.offsetLeft - (strip.clientWidth - slot.offsetWidth) / 2,
+        behavior: motion.reduced.current ? 'instant' : 'smooth' })
+    }
+  }
+  function selectCenteredCard() {
+    const strip = row.current
+    if (!strip || strip.scrollWidth <= strip.clientWidth + 1) return
+    const center = strip.scrollLeft + strip.clientWidth / 2
+    const distances = Array.from(strip.children, element => {
+      const slot = element as HTMLElement
+      return Math.abs(slot.offsetLeft + slot.offsetWidth / 2 - center)
+    })
+    navigate(distances.indexOf(Math.min(...distances)), false)
   }
   function flip() {
     motion.turn((Math.round(motion.aim.current.turn / 180) + 1) * 180)
@@ -273,6 +286,10 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
     const distance = amount - progress.current
     if (distance > .001) sound.current?.pulse(amount, distance)
     setRip(amount)
+    if (Math.abs(distance) > .002) {
+      const band = cards[Math.min(cards.length - 1, Math.floor(amount / .65 * cards.length))]
+      if (band) emitter.current?.scatter(e.clientX, e.clientY, [foilColors[band.finish]], false)
+    }
     if (amount >= .65) openPack()
   }
   function cancelTear() {
@@ -306,26 +323,18 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
     const dy = e.clientY - gesture.y
     if (Math.abs(dx) > 6 && Math.abs(dx) > Math.abs(dy)) {
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.setPointerCapture(e.pointerId)
-      if (mode === 'inspect') motion.turn(gesture.angle + dx / gesture.width * 360)
-      else if (!motion.reduced.current && !exiting.current) {
-        const atEdge = dx > 0 ? index === 0 : index === cards.length - 1
-        const pull = clamp(dx / gesture.width, -.8, .8) * (atEdge ? .17 : 1)
-        hand.current?.style.setProperty('--hand-pull', String(pull))
-        hand.current?.setAttribute('data-gripped', '')
-      }
+      motion.turn(gesture.angle + dx / gesture.width * 360)
     }
     pointAt(e)
   }
-  function endCard(e: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = drag.current
+  function endCard() {
     drag.current = null
-    hand.current?.removeAttribute('data-gripped')
-    hand.current?.style.removeProperty('--hand-pull')
-    if (!gesture || gesture.id !== e.pointerId) return
-    const dx = e.clientX - gesture.x
-    const dy = e.clientY - gesture.y
-    if (mode === 'pack' && Math.abs(dx) > 38 && Math.abs(dx) > Math.abs(dy) * 1.2) navigate(index + (dx < 0 ? 1 : -1))
     motion.light(.46, .36, 0)
+  }
+  function faces(card: HoloCard, preview = false) {
+    return <CardFaces card={card} back={!preview && motion.back} preview={preview}
+      note={notes[card.id] ?? ''} onNote={value => onNote(card.id, value)}
+      choice={answers[card.id]} choose={value => setAnswers(previous => ({ ...previous, [card.id]: value }))}/>
   }
   const supportedSensor = typeof window !== 'undefined' && 'DeviceOrientationEvent' in window && window.matchMedia('(pointer: coarse)').matches
   return <dialog className="holo-dialog" ref={dialog} aria-labelledby={heading} onCancel={e => { e.preventDefault(); onClose() }} onKeyDown={e => {
@@ -339,6 +348,7 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
     }
   }}>
     <div className="holo-room" ref={motion.stage} data-inspect={mode === 'inspect' || undefined}>
+      {mode === 'pack' && <FoilParticles ref={emitter}/>}
       <header className="holo-topbar">
         <div className="holo-room-title"><span className="holo-room-mark"><Layers3 size={21} strokeWidth={1.35}/></span><div><small className={pack && sourceLabel ? 'holo-source' : undefined}>{pack && sourceLabel ? '补给来源 · ' + sourceLabel : 'LEARNVERSE / COLLECTION'}</small><h2 id={heading}>{mode === 'inspect' ? '卡片检视台' : '知识补给包'}</h2></div></div>
         <div className="holo-top-actions">
@@ -349,10 +359,11 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
       </header>
       {motion.sensorMessage && <p className="holo-sensor-status" role="status">{motion.sensorMessage}</p>}
       {active ? <>
-        <div className={`holo-stage ${pack ? 'is-pack' : 'is-card'}`} data-phase={phase}>
+        <div className={`holo-stage ${pack ? 'is-pack' : mode === 'pack' ? 'is-card is-row' : 'is-card'}`} data-phase={phase}>
           <span className="holo-orbit-floor" aria-hidden="true"/>
           <div className="holo-object">
-            {pack ? <div ref={sequence} className={`holo-sequence ${phase === 'opening' ? 'is-opening' : ''}`}>
+            {pack ? <div ref={sequence} className={`holo-sequence ${phase === 'opening' ? 'is-opening' : ''}`}
+              style={{ '--seam-spectrum': `linear-gradient(90deg, ${cards.map(card => foilColors[card.finish]).join(', ')})` } as CSSProperties}>
               {phase === 'opening' && <><span className="capsule-break-light" aria-hidden="true"/><div className="capsule-extraction" aria-hidden="true">{cards.map((c, i) =>
                 <div key={c.id} className="capsule-extracted" style={{ '--i': i, '--fan': i - (cards.length - 1) / 2, zIndex:cards.length - i } as CSSProperties}><CardBack card={c}/></div>)}</div></>}
               <div className={`holo-packet ${tearing ? 'is-tearing' : ''}`} onPointerMove={e => { if (phase === 'sealed') pointAt(e) }} onPointerLeave={() => { if (!tear.current && !motion.sensor) motion.light(.46, .36, 0) }}>
@@ -366,7 +377,7 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
                   <div className="holo-wrinkle"/><div className="holo-bag-shine"/>
                   <div className="capsule-tension-lines" aria-hidden="true"/><div className="holo-bottom-crimp"/>
                 </div>
-                <button type="button" className="holo-tear" aria-label="向右拖动封口，或按回车撕开卡包" disabled={phase !== 'sealed'}
+                <button ref={seal} type="button" className="holo-tear" aria-label="向右拖动封口，或按回车撕开卡包" disabled={phase !== 'sealed'}
                   onPointerDown={startTear} onPointerMove={moveTear} onPointerUp={cancelTear} onPointerCancel={cancelTear} onLostPointerCapture={cancelTear} onClick={e => { if (e.detail === 0) openPack() }}>
                   <span className="holo-tear-strip"><span>TEAR HERE</span><span>→ → →</span></span>
                   <span className="holo-tear-gap"/><span className="holo-tear-edge"/>
@@ -380,27 +391,42 @@ export function HoloBoosterPack({ cards, mode, sourceLabel, onOpen, onClose, not
                   {tearing && <span className="holo-sparks" aria-hidden="true">{Array.from({ length: 7 }, (_, n) => <i key={n} style={{ '--n': n } as CSSProperties}/>)}</span>}
                 </button>
               </div>
-            </div> :
-              <div className="capsule-hand" data-pack={mode === 'pack' || undefined} data-gold={active.finish === 'gold' || undefined}>
-              {mode === 'pack' && <div className="capsule-remaining" aria-hidden="true">{cards.slice(index + 1, index + 4).map((c,i) =>
-                <div key={c.id} style={{ '--depth':i + 1, zIndex:3 - i } as CSSProperties}><CardBack card={c}/></div>)}</div>}
-              {goldArrival && <div className="capsule-gold-corona" aria-hidden="true"><i/><i/><i/>{Array.from({length:12},(_,n) =>
-                <span key={n} style={{'--ray':(n * 30 + 8) + 'deg','--lag':((n%3)*38) + 'ms'} as CSSProperties}/>)}</div>}
-              <div ref={hand} key={active.id} className={`holo-card-holder ${dealing ? 'is-dealing' : ''} ${leaving ? 'is-leaving' : ''}`} data-gold={active.finish === 'gold' || undefined} style={{ '--direction': direction } as CSSProperties}
-                onPointerDown={startCard} onPointerMove={moveCard} onPointerUp={endCard} onPointerCancel={() => { drag.current = null; hand.current?.removeAttribute('data-gripped'); hand.current?.style.removeProperty('--hand-pull'); motion.light(.46, .36, 0) }}
+            </div> : mode === 'pack' ?
+              <div className="capsule-row" ref={row} onScrollEnd={selectCenteredCard} onScroll={e => {
+                if ('onscrollend' in e.currentTarget) return
+                window.clearTimeout(scrollSettled.current)
+                scrollSettled.current = window.setTimeout(selectCenteredCard, 130)
+              }} role="group" aria-label="本包卡片">
+                {cards.map((card, slot) => <div key={card.id} className="capsule-row-slot" data-selected={slot === index}
+                  style={{ '--slot':slot, '--rim':foilColors[card.finish] } as CSSProperties}>
+                  {goldArrival && slot === index && <div className="capsule-gold-corona" aria-hidden="true"><i/><i/><i/>{Array.from({length:12},(_,n) =>
+                    <span key={n} style={{'--ray':(n * 30 + 8) + 'deg','--lag':((n%3)*38) + 'ms'} as CSSProperties}/>)}</div>}
+                  <div className="holo-card-holder" onPointerMove={e => { if (slot === index && e.pointerType !== 'touch') pointAt(e) }}
+                    onPointerLeave={() => { if (slot === index && !motion.sensor) motion.light(.46, .36, 0) }}>
+                    {faces(card, slot !== index)}
+                  </div>
+                  {slot !== index && <button className="capsule-pick" type="button" aria-label={`查看第 ${slot + 1} 张，${card.title}`} onClick={e => {
+                    navigate(slot)
+                    if (e.detail === 0) flipButton.current?.focus({ preventScroll: true })
+                  }}/>}
+                </div>)}
+              </div> :
+              <div className="capsule-hand">
+              <div key={active.id} className="holo-card-holder" data-gold={active.finish === 'gold' || undefined}
+                onPointerDown={startCard} onPointerMove={moveCard} onPointerUp={endCard} onPointerCancel={endCard}
                 onPointerLeave={() => { if (!drag.current && !motion.sensor) motion.light(.46, .36, 0) }}>
-                <CardFaces card={active} back={motion.back} note={notes[active.id] ?? ''} onNote={value => onNote(active.id, value)} choice={answers[active.id]} choose={v => setAnswers(a => ({ ...a, [active.id]: v }))}/>
+                {faces(active)}
               </div></div>}
           </div>
         </div>
         <div className="holo-dock">
           {pack ? <><p className="holo-instruction" aria-live="polite">{phase === 'opening' ? '正在展开卡片…' : '从封口左端向右撕开'}</p>
             <button type="button" className="holo-open-btn" disabled={phase === 'opening'} onClick={openPack}>撕开卡包 <ArrowRight size={16}/></button></> :
-            <><p className="holo-instruction">{mode === 'inspect' ? '左右拖动，360° 检视卡片' : '左右滑动切换卡片'}</p>
-              <div className="holo-controls"><button type="button" className="holo-icon" aria-label={inspectingOne ? '向左旋转' : '上一张'} disabled={leaving || (!inspectingOne && index === 0)} onClick={() => stepCard(-1)}><ArrowLeft size={19}/></button>
+            <><p className="holo-instruction">{mode === 'inspect' ? '左右拖动，360° 检视卡片' : '点选卡片阅读，或用箭头切换'}</p>
+              <div className="holo-controls"><button type="button" className="holo-icon" aria-label={inspectingOne ? '向左旋转' : '上一张'} disabled={!inspectingOne && index === 0} onClick={() => stepCard(-1)}><ArrowLeft size={19}/></button>
                 <span className="holo-count" aria-live="polite">{inspectingOne ? active.number : <>{String(index + 1).padStart(2, '0')} <b>/ {String(cards.length).padStart(2, '0')}</b></>}</span>
                 <button type="button" ref={flipButton} className="holo-flip" onClick={flip}><RotateCcw size={15}/>{motion.back ? '翻回正面' : '查看背面'}</button>
-                <button type="button" className="holo-icon" aria-label={inspectingOne ? '向右旋转' : '下一张'} disabled={leaving || (!inspectingOne && index >= cards.length - 1)} onClick={() => stepCard(1)}><ArrowRight size={19}/></button>
+                <button type="button" className="holo-icon" aria-label={inspectingOne ? '向右旋转' : '下一张'} disabled={!inspectingOne && index >= cards.length - 1} onClick={() => stepCard(1)}><ArrowRight size={19}/></button>
               </div></>}
         </div>
       </> : <p className="holo-empty">这里还没有可检视的卡片。</p>}

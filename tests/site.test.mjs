@@ -414,6 +414,7 @@ test('a short touch drag reseals the pack and a full drag reveals the five cards
     await seam.waitFor()
     const bounds = await seam.boundingBox()
     const touch = await page.context().newCDPSession(page)
+    const colors = new Set()
     async function dragSeam(fraction) {
       for (let step = 0; step <= 10; step++) {
         const x = bounds.x + 8 + bounds.width * fraction * step / 10
@@ -421,12 +422,27 @@ test('a short touch drag reseals the pack and a full drag reveals the five cards
           type: step === 0 ? 'touchStart' : 'touchMove',
           touchPoints: [{ x, y: bounds.y + bounds.height / 2 }],
         })
+        const ink = await page.locator('.holo-sequence').evaluateAll(nodes => nodes[0]?.style.getPropertyValue('--foil-ink'))
+        if (ink) colors.add(ink)
       }
       await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
     }
     await dragSeam(.3)
     assert.equal(await page.locator('.holo-stage').getAttribute('data-phase'), 'sealed')
     await dragSeam(.82)
+    assert.ok(colors.size >= 4, 'the tear crosses the finishes of the cards in this pack')
+    const slots = page.locator('.capsule-row-slot')
+    await slots.first().waitFor()
+    await slots.evaluateAll(nodes => Promise.all(nodes.flatMap(node => node.getAnimations().map(animation => animation.finished))))
+    const boxes = await slots.evaluateAll(nodes => nodes.map(node => {
+      const { x, right, y } = node.getBoundingClientRect()
+      return { x, right, y }
+    }))
+    assert.equal(boxes.length, 5)
+    for (let i = 1; i < boxes.length; i++) {
+      assert.ok(boxes[i].x >= boxes[i - 1].right)
+      assert.ok(Math.abs(boxes[i].y - boxes[0].y) < 3)
+    }
     for (let number = 1; number <= 5; number++) {
       await page.locator('.holo-count').filter({ hasText: '0' + number + ' / 05' }).waitFor()
       if (number < 5) await page.getByRole('button', { name: '下一张' }).click()
