@@ -406,6 +406,37 @@ test('five-card supply, notes, filters and daily rewards survive normal mobile n
   } finally { await page.close() }
 })
 
+test('a short touch drag reseals the pack and a full drag reveals the five cards', async () => {
+  const page = await browser.newPage({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+  try {
+    await page.goto(url + '/lab')
+    const seam = page.locator('.holo-tear')
+    await seam.waitFor()
+    const bounds = await seam.boundingBox()
+    const touch = await page.context().newCDPSession(page)
+    async function dragSeam(fraction) {
+      for (let step = 0; step <= 10; step++) {
+        const x = bounds.x + 8 + bounds.width * fraction * step / 10
+        await touch.send('Input.dispatchTouchEvent', {
+          type: step === 0 ? 'touchStart' : 'touchMove',
+          touchPoints: [{ x, y: bounds.y + bounds.height / 2 }],
+        })
+      }
+      await touch.send('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] })
+    }
+    await dragSeam(.3)
+    assert.equal(await page.locator('.holo-stage').getAttribute('data-phase'), 'sealed')
+    await dragSeam(.82)
+    for (let number = 1; number <= 5; number++) {
+      await page.locator('.holo-count').filter({ hasText: '0' + number + ' / 05' }).waitFor()
+      if (number < 5) await page.getByRole('button', { name: '下一张' }).click()
+    }
+    await page.getByRole('button', { name: '查看背面' }).click()
+    await page.getByRole('button', { name: '翻回正面' }).waitFor()
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth), 390)
+  } finally { await page.close() }
+})
+
 test('the JSON import example, chapter rewards and all 90 collection entries are reachable', async () => {
   const page = await browser.newPage()
   try {
