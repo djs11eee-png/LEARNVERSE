@@ -3,7 +3,7 @@ import { mountPlateRenderer, nativePlateTextures } from './plateRenderer'
 import type { HoloCard } from './types'
 import './holo-material.css'
 
-type PrintProps = { galaxy: HoloCard['galaxy']; slot: number; pack?: boolean; cardNumber?: string; gold?: boolean }
+type PrintProps = { galaxy: HoloCard['galaxy']; slot: number; pack?: boolean; cardNumber?: string; gold?: boolean; paperOnly?: boolean; prism?: boolean }
 const tau = Math.PI * 2
 const ink = (id: string, name: string) => 'url(#' + id + '-' + name + ')'
 const fixed = (value: number) => Number(value.toFixed(2))
@@ -66,7 +66,13 @@ function SiliconDie({ id, variant }: { id: string; variant: number }) {
 }
 
 /** Depth-sorted faces of an icosahedron. Highlight one route across its vertices. */
-function NodeAtlas({ id, variant }: { id: string; variant: number }) {
+const facetColors = [
+  ['#181c65', '#6454fa', '#78ecff'], ['#085879', '#27dfcf', '#e5ffb7'],
+  ['#55358b', '#fa55ad', '#ffcec0'], ['#283787', '#5487ee', '#e3a9ff'],
+  ['#a63f6c', '#ffaf62', '#fff6bd'], ['#265694', '#4bc6fb', '#e7fcff'],
+]
+
+function NodeAtlas({ id, variant, prism }: { id: string; variant: number; prism?: boolean }) {
   const angle = .15 + variant * .22
   const points = [[0,1,0], ...Array.from({length:10},(_,i)=>{
     const a = i % 5 * tau / 5 + (i >= 5 ? tau / 10 : 0)
@@ -86,14 +92,42 @@ function NodeAtlas({ id, variant }: { id: string; variant: number }) {
   const route = [0,1 + variant % 5,6 + variant % 5,11]
   const line = (indices:number[]) => indices.map(i=>points[i].x + ',' + points[i].y).join(' ')
   return <g>
+    {prism && <>
+      <defs>{facetColors.map(([deep, color, flash], i) =>
+        <linearGradient key={deep} id={id + '-facet' + i} x1="0" y1={i % 2} x2="1" y2={1 - i % 2}>
+          <stop stopColor={deep}/><stop offset=".53" stopColor={color}/><stop offset=".86" stopColor={flash}/><stop offset="1" stopColor={color}/>
+        </linearGradient>)}
+        <linearGradient id={id + '-beam'} x1="0" y1="1" x2="1" y2="0">
+          <stop stopColor="#f4fbff" stopOpacity=".85"/><stop offset=".48" stopColor="#d9d7ff" stopOpacity=".4"/>
+          <stop offset="1" stopColor="#dad4ff" stopOpacity="0"/>
+        </linearGradient>
+        <mask id={id + '-beam-fade'}><rect x="155" width="145" height="144" fill={ink(id, 'beam')}/></mask>
+      </defs>
+      <path d="M0 129 135 77 0 118Z" fill="#b6d8ff" opacity=".22"/>
+      <path d="M0 124 137 75" stroke="#f5f9ff" opacity=".82" strokeWidth=".9"/>
+      <g mask={ink(id, 'beam-fade')}>{facetColors.map(([,color], i) =>
+        <path key={color} d={`M160 68 300 ${-15 + i * 12} V${-6 + i * 12}Z`} fill={color}/>)}</g>
+    </>}
     <ellipse cx="150" cy="73" rx="93" ry="29" fill="none" stroke={ink(id,'metal')} strokeWidth=".75" transform="rotate(-18 150 73)" />
-    {faces.map(face=><polygon key={face.join('-')} points={line(face)} fill={depth(face) > .38 ? ink(id,'metal') : 'var(--plate-shade)'} fillOpacity={depth(face) > .38 ? .48 : .68} stroke="var(--plate-light)" strokeOpacity={depth(face) > 0 ? .8 : .3} strokeWidth=".9"/>)}
+    {faces.map((face, i) => <polygon key={face.join('-')} points={line(face)}
+      fill={prism ? ink(id, 'facet' + i % facetColors.length) : depth(face) > .38 ? ink(id,'metal') : 'var(--plate-shade)'}
+      fillOpacity={prism ? .96 : depth(face) > .38 ? .48 : .68}
+      stroke="var(--plate-light)" strokeOpacity={depth(face) > 0 ? .8 : .3} strokeWidth=".9"/>)}
+    {prism && faces.filter(face => depth(face) > .14).map(([a,b,c], i) => {
+      const one = points[a], two = points[b], three = points[c]
+      const x = fixed(one.x * .18 + two.x * .52 + three.x * .3)
+      const y = fixed(one.y * .18 + two.y * .52 + three.y * .3)
+      return <g key={i}>
+        <path d={`M${one.x} ${one.y}L${two.x} ${two.y} ${x} ${y}Z`} fill={ink(id, 'facet' + (i + 3) % facetColors.length)} opacity=".78"/>
+        <path d={`M${two.x} ${two.y}L${x} ${y} ${three.x} ${three.y}`} fill="none" stroke="#e9ffff" strokeWidth=".45" opacity=".84"/>
+      </g>
+    })}
     <polyline points={line(route)} stroke="var(--plate-pearl)" strokeWidth="1.9" fill="none"/>
     {points.map((p,i)=><g key={i}><circle cx={p.x} cy={p.y} r={2.5 + Math.max(0,p.depth)*1.6} fill="var(--plate-dark)" stroke="var(--plate-light)" strokeWidth=".9"/><circle cx={p.x} cy={p.y} r="1.15" fill="var(--plate-pearl)"/></g>)}
   </g>
 }
 
-function Engraving({ galaxy, slot, cardNumber }: PrintProps) {
+function Engraving({ galaxy, slot, cardNumber, prism }: PrintProps) {
   const id=useId().replace(/:/g,'')
   let variant = slot
   for(const char of cardNumber ?? '') variant = (variant*31 + char.charCodeAt(0)) % 991
@@ -103,8 +137,15 @@ function Engraving({ galaxy, slot, cardNumber }: PrintProps) {
   return <svg viewBox="0 0 300 144" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
     <defs>
       <radialGradient id={id+'-field'} cx=".47" cy=".48" r=".74"><stop stopColor="var(--plate-shade)"/><stop offset=".7" stopColor="var(--plate-dark)"/><stop offset="1" stopColor="#06090f"/></radialGradient>
-      <linearGradient id={id+'-metal'} x1="0" y1=".85" x2="1" y2=".2"><stop stopColor="var(--plate-mid)"/><stop offset=".26" stopColor="var(--plate-light)"/><stop offset=".45" stopColor="var(--plate-pearl)"/><stop offset=".54" stopColor="var(--plate-mid)"/><stop offset=".77" stopColor="var(--plate-light)"/><stop offset="1" stopColor="var(--plate-shade)"/></linearGradient>
-      <radialGradient id={id+'-limb'} cx=".27" cy=".22" r=".85"><stop stopColor="var(--plate-pearl)"/><stop offset=".34" stopColor="var(--plate-light)"/><stop offset=".73" stopColor="var(--plate-mid)"/><stop offset="1" stopColor="var(--plate-dark)"/></radialGradient>
+      <linearGradient id={id+'-metal'} x1="0" y1=".85" x2="1" y2=".2">
+        <stop stopColor="var(--plate-mid)"/><stop offset=".26" stopColor={prism ? '#62eff3' : 'var(--plate-light)'}/>
+        <stop offset=".45" stopColor="var(--plate-pearl)"/><stop offset=".54" stopColor={prism ? '#ed80ed' : 'var(--plate-mid)'}/>
+        <stop offset=".77" stopColor={prism ? '#ffcf86' : 'var(--plate-light)'}/><stop offset="1" stopColor="var(--plate-shade)"/>
+      </linearGradient>
+      <radialGradient id={id+'-limb'} cx=".27" cy=".22" r=".85">
+        <stop stopColor="var(--plate-pearl)"/><stop offset=".34" stopColor={prism ? '#70eedf' : 'var(--plate-light)'}/>
+        <stop offset=".73" stopColor={prism ? '#8265f2' : 'var(--plate-mid)'}/><stop offset="1" stopColor="var(--plate-dark)"/>
+      </radialGradient>
       <linearGradient id={id+'-shadow'} x1="0" x2="1" y1=".1" y2=".9"><stop offset=".24" stopColor="var(--plate-dark)" stopOpacity="0"/><stop offset=".68" stopColor="var(--plate-dark)" stopOpacity=".32"/><stop offset="1" stopColor="var(--plate-dark)" stopOpacity=".96"/></linearGradient>
       <clipPath id={id+'-disc'}><circle cx="151" cy="71" r="42"/></clipPath>
     </defs>
@@ -114,13 +155,25 @@ function Engraving({ galaxy, slot, cardNumber }: PrintProps) {
       {[58,65,88].map(r=><circle key={r} cx="150" cy="72" r={r} strokeDasharray={r===65 ? '1 4' : undefined} opacity={r===58 ? .9 : .6}/>)}
       <path d="M8 11h10m-10 0v10m284-10h-10m10 0v10M8 133h10m-10 0v-10m284 10h-10m10 0v-10M23 99h15l22-17h18m144-42h14l16-12h24" />
     </g>
-    <g className="lv-plate-subject">{galaxy === 'python' ? <RingWorld id={id} variant={variant}/> : galaxy === 'c' ? <SiliconDie id={id} variant={variant}/> : <NodeAtlas id={id} variant={variant}/>}</g>
+    <g className="lv-plate-subject">{galaxy === 'python' || galaxy === 'web'
+      ? <RingWorld id={id} variant={variant}/>
+      : galaxy === 'c' || galaxy === 'systems'
+        ? <SiliconDie id={id} variant={variant}/>
+        : <NodeAtlas id={id} variant={variant} prism={prism}/>}</g>
     <g className="lv-plate-stars"><Star x={36+variant%21} y={34+variant%15} size={2.8}/><Star x={239+variant%18} y={90+variant%19} size={3.8}/></g>
     <g stroke="var(--plate-light)" opacity=".67"><path d="M18 118h20m-20 3h12m222-98h15m-8 3h8" strokeWidth=".7"/><circle cx="60" cy="82" r="1" fill="var(--plate-pearl)" /></g>
   </svg>
 }
 
-const printTitles = { python: 'RING SYSTEM', c: 'SILICON DIE', algorithms: 'NODE ATLAS' }
+const printTitles: Record<HoloCard['galaxy'], string> = {
+  python: 'RING SYSTEM',
+  c: 'SILICON DIE',
+  algorithms: 'NODE ATLAS',
+  web: 'DOM MATRIX',
+  backend: 'SERVICE MESH',
+  systems: 'SYSTEM CORE',
+  robotics: 'TELEMETRY LINK',
+}
 
 function PlatePaper(props: PrintProps) {
   return <div className="lv-plate-paper" data-series={props.galaxy} data-gold={props.gold || undefined} {...{ drawable: '' }}>
@@ -133,14 +186,14 @@ export function HoloPrint(props: PrintProps) {
   const surface = useRef<HTMLDivElement>(null)
   const native = nativePlateTextures()
   useEffect(() => {
-    if (!surface.current) return
+    if (props.paperOnly || !surface.current) return
     return mountPlateRenderer(surface.current, native)
-  }, [native, props.cardNumber, props.galaxy, props.gold, props.pack, props.slot])
+  }, [native, props.cardNumber, props.galaxy, props.gold, props.pack, props.slot, props.paperOnly])
 
   return <div ref={surface} className={'holo-print lv-plate' + (props.pack ? ' holo-print--pack' : '')} aria-hidden="true">
     <PlatePaper {...props}/>
-    <canvas className="lv-plate-canvas" {...(native === 'modern' ? { content: 'drawable' } : native === 'legacy' ? { layoutsubtree: '' } : {})}>
+    {!props.paperOnly && <canvas className="lv-plate-canvas" {...(native === 'modern' ? { content: 'drawable' } : native === 'legacy' ? { layoutsubtree: '' } : {})}>
       {native && <PlatePaper {...props}/>}
-    </canvas>
+    </canvas>}
   </div>
 }

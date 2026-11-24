@@ -3,6 +3,16 @@ import { useState } from 'react'
 import { ThemeSelect } from '../components/ThemeSelect'
 import { algorithms, traceBinarySearch } from '../data/lab'
 import type { WorkspaceLesson } from '../data/workspaceCourses'
+import {
+  BinaryCarryDemo,
+  BitmaskFrameDemo,
+  BubbleSortDemo,
+  CPointerDemo,
+  CpuCycleDemo,
+  IotGatewayDemo,
+  LruCacheDemo,
+  StackQueueDemo,
+} from './workspaceDemosExtra'
 
 export function WorkspaceDemo({ demo }: { demo: NonNullable<WorkspaceLesson['demo']> }) {
   return (
@@ -11,6 +21,14 @@ export function WorkspaceDemo({ demo }: { demo: NonNullable<WorkspaceLesson['dem
       {demo === 'range' && <RangeDemo />}
       {demo === 'search' && <SearchDemo />}
       {demo === 'publish-subscribe' && <TopicDemo />}
+      {demo === 'binary-carry' && <BinaryCarryDemo />}
+      {demo === 'bitmask-frame' && <BitmaskFrameDemo />}
+      {demo === 'c-pointer' && <CPointerDemo />}
+      {demo === 'bubble-sort' && <BubbleSortDemo />}
+      {demo === 'stack-queue' && <StackQueueDemo />}
+      {demo === 'lru-cache' && <LruCacheDemo />}
+      {demo === 'cpu-cycle' && <CpuCycleDemo />}
+      {demo === 'iot-gateway' && <IotGatewayDemo />}
     </section>
   )
 }
@@ -51,20 +69,36 @@ function SearchDemo() {
   const frames = traceBinarySearch(values, target)
   const frame = frames[step]
   const lastStep = frames.length - 1
+  const leftPtr = frame.range?.length ? frame.range[0] : -1
+  const rightPtr = frame.range?.length ? frame.range[frame.range.length - 1] : -1
+  const midPtr = frame.active[0] ?? -1
+
   return (
     <>
-      <p>选一个目标值，每次推进一步，观察哪些数字还在查找范围里。</p>
+      <p>选一个目标值，每次推进一步，观察左边界 <code>L</code>、中点 <code>M</code> 与右边界 <code>R</code> 如何把候选区每次折半。</p>
       <div className="workspace-demo-controls">
         <ThemeSelect label="目标值" value={String(target)} onChange={(value) => { setTarget(Number(value)); setStep(0) }} options={
           [...values, 99].map((value) => ({ value: String(value), label: String(value) }))
         } />
-        <button type="button" className="workspace-button" onClick={() => setStep(step + 1)} disabled={step === lastStep}>推进一步 <ArrowRight size={16} aria-hidden="true" /></button>
+        <button type="button" className="workspace-button workspace-primary" onClick={() => setStep(step + 1)} disabled={step === lastStep}>推进一步 <ArrowRight size={16} aria-hidden="true" /></button>
         <button type="button" className="workspace-button" onClick={() => setStep(0)} disabled={step === 0}><RotateCcw size={15} aria-hidden="true" /> 重置</button>
       </div>
-      <ol className="workspace-demo-values" aria-label="正在查找的数组">
-        {values.map((value, index) => <li key={value} data-search-state={frame.active.includes(index) ? 'active' : frame.range?.includes(index) ? 'candidate' : 'discarded'}>
-          {value}<span className="workspace-sr-only">（{frame.active.includes(index) ? '正在比较' : frame.range?.includes(index) ? '候选' : '已排除'}）</span>
-        </li>)}
+      <ol className="workspace-demo-values workspace-demo-values--ptrs" aria-label="正在查找的数组">
+        {values.map((value, index) => {
+          const tags = [
+            index === leftPtr ? 'L' : '',
+            index === midPtr ? 'M' : '',
+            index === rightPtr ? 'R' : '',
+          ].filter(Boolean).join('/')
+          return (
+            <li key={value} data-search-state={frame.active.includes(index) ? 'active' : frame.range?.includes(index) ? 'candidate' : 'discarded'}>
+              <span className="wd-ptr-tag" aria-hidden="true">{tags || '\u00a0'}</span>
+              <strong>{value}</strong>
+              <small>[{index}]</small>
+              <span className="workspace-sr-only">（{frame.active.includes(index) ? '正在比较' : frame.range?.includes(index) ? '候选' : '已排除'}）</span>
+            </li>
+          )
+        })}
       </ol>
       <output className="workspace-demo-output">{frame.message}</output>
     </>
@@ -99,4 +133,3 @@ function TopicDemo() {
     </>
   )
 }
-

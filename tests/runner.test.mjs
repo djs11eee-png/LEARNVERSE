@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict'
-import { spawn } from 'node:child_process'
 import { setTimeout as delay } from 'node:timers/promises'
 import { after, before, test } from 'node:test'
 import { chromium } from 'playwright'
+import { startTestServer } from './helpers/vite.mjs'
 
 const origin = process.env.LEARNVERSE_TEST_ORIGIN ?? 'http://127.0.0.1:4177'
 let server
@@ -10,12 +10,9 @@ let browser
 
 before(async () => {
   if (!process.env.LEARNVERSE_TEST_ORIGIN) {
-    server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', '--host', '127.0.0.1', '--port', '4177', '--strictPort'], {
-      stdio: 'ignore',
-    })
+    server = await startTestServer(4177)
   }
   for (let attempt = 0; attempt < 100; attempt++) {
-    if (server?.exitCode != null) throw new Error('Vite could not start on port 4177')
     if (await fetch(origin).then((response) => response.ok).catch(() => false)) break
     if (attempt === 99) throw new Error(`Timed out waiting for ${origin}`)
     await delay(125)
@@ -24,14 +21,16 @@ before(async () => {
 })
 
 after(async () => {
-  await browser?.close()
-  server?.kill()
+  try { await browser?.close() }
+  finally { await server?.close() }
 })
 
 async function withPage(callback) {
   const page = await browser.newPage({ reducedMotion: 'reduce', viewport: { width: 390, height: 844 }, isMobile: true })
   try {
-    await page.goto(origin)
+    const harness = `${origin}/runner-test-host`
+    await page.route(harness, (route) => route.fulfill({ contentType: 'text/html', body: '<!doctype html><title>Runner test host</title><body></body>' }))
+    await page.goto(harness)
     await callback(page)
   } finally {
     await page.close()
@@ -56,7 +55,7 @@ test('JavaScript executes in a browser worker and reports syntax, runtime errors
 }))
 
 test('Python uses real input, the standard library, and traceback locations', () => withPage(async (page) => {
-  const result = await run(page, { language: 'python', stdin: 'Ada\n5', code: 'import math, warnings\nname = input("Name? ")\nprint(name, math.sqrt(int(input())+4))\nwarnings.warn("check")\ndef validate():\n    raise ValueError("broken")\nvalidate()' })
+  const result = await run(page, { language: 'python', stdin: 'Ada\r\n5', code: 'import math, warnings\nname = input("Name? ")\nprint(name, math.sqrt(int(input())+4))\nwarnings.warn("check")\ndef validate():\n    raise ValueError("broken")\nvalidate()' })
   assert.equal(result.output.trim(), 'Name? Ada 3.0', JSON.stringify(result))
   assert.ok(result.diagnostics.some((entry) => entry.severity === 'warning' && entry.message.includes('check') && entry.line === 4))
   assert.ok(result.diagnostics.some((entry) => entry.severity === 'error' && entry.message.includes('ValueError: broken') && entry.line === 6), JSON.stringify(result))
@@ -72,6 +71,34 @@ test('SQL runs actual SQLite statements and reports errors', () => withPage(asyn
 
   const error = await run(page, { language: 'sql', code: 'SELECT * FROM unknown_table;' })
   assert.ok(error.diagnostics.some((entry) => entry.severity === 'error' && entry.message.includes('no such table: unknown_table')))
+}))
+
+test('runner validates result shapes and applies language and preview limits', () => withPage(async (page) => {
+  const result = await page.evaluate(async () => {
+    const { parseRunnerMessage, parseNativeResult } = await import('/src/code/runnerProtocol.ts')
+    const { runCode } = await import('/src/code/runner.ts')
+    const valid = { severity: 'warning', message: '检查输入', line: 2 }
+    const image = '<img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAACklEQVR4nGNgAAAAAgABSK+kcQAAAABJRU5ErkJggg==">'
+    const preview = await runCode({ language: 'html', code: image.repeat(20) + '<p>保留正文</p>' })
+    const tooManyLines = await runCode({ language: 'html', code: '\n'.repeat(12_001) })
+    return {
+      valid: parseRunnerMessage({ kind: 'diagnostic', diagnostic: valid }),
+      badOutput: parseRunnerMessage({ kind: 'output', text: 12 }) === undefined,
+      badLine: parseRunnerMessage({ kind: 'diagnostic', diagnostic: { ...valid, line: 0 } }) === undefined,
+      badNative: parseNativeResult({ output: 'ok', diagnostics: 'warning' }) === undefined,
+      goodNative: parseNativeResult({ output: 'ok', diagnostics: [valid] }),
+      previewImageCount: preview.preview.match(/src="data:image/g)?.length,
+      previewText: preview.preview.includes('保留正文'),
+      previewNotice: preview.diagnostics.some(({ severity }) => severity === 'warning'),
+      oversized: tooManyLines.diagnostics.some(({ severity }) => severity === 'error'),
+    }
+  })
+  assert.deepEqual(result, {
+    valid: { kind: 'diagnostic', diagnostic: { severity: 'warning', message: '检查输入', line: 2 } },
+    badOutput: true, badLine: true, badNative: true,
+    goodNative: { output: 'ok', diagnostics: [{ severity: 'warning', message: '检查输入', line: 2 }] },
+    previewImageCount: 8, previewText: true, previewNotice: true, oversized: true,
+  })
 }))
 
 test('the runner denies network and origin storage access and stops infinite loops', () => withPage(async (page) => {
@@ -124,11 +151,66 @@ test('HTML preview remains static and removes embedded scripts and network sourc
   await frame.getByRole('heading', { name: 'Station log' }).waitFor()
   assert.equal(await frame.getByText('Notes', { exact: true }).evaluate((element) => getComputedStyle(element).color), 'rgb(255, 0, 0)')
   assert.equal(await frame.getByText('Next', { exact: true }).getAttribute('href'), null)
-  await frame.getByRole('link', { name: 'Jump to notes' }).click()
-  assert.equal(await frame.locator('body').evaluate(() => location.href), 'about:srcdoc#notes')
+  const previewFrame = await (await page.locator('#test-preview').elementHandle()).contentFrame()
+  assert.ok(previewFrame)
+  await Promise.all([
+    previewFrame.waitForURL('about:srcdoc#notes'),
+    frame.getByRole('link', { name: 'Jump to notes' }).click(),
+  ])
   assert.equal(await frame.locator('script,iframe,[onerror]').count(), 0)
   assert.equal(await frame.locator('form').getAttribute('action', { timeout: 3_000 }), null)
   await frame.getByRole('textbox', { name: 'Topic' }).fill('HTML')
   await frame.getByRole('button', { name: 'Submit' }).click()
+  assert.deepEqual(requests, [])
+}))
+
+test('controlled interactive HTML preview runs same-page DOM scripts while blocking network, inline handlers and parent access', () => withPage(async (page) => {
+  const canaryURL = `${origin}/interactive-preview-canary`
+  const requests = []
+  page.on('request', (request) => { if (request.url() === canaryURL) requests.push(request.url()) })
+  const code = `
+    <main>
+      <button id="btn" type="button" data-task="A">完成</button>
+      <form id="f"><input name="title" value="复习"><button type="submit">新增</button></form>
+      <p id="out">待点击</p>
+      <p id="sec">检查中</p>
+      <img src="${canaryURL}" onerror="document.querySelector('#out').textContent='xss'">
+      <iframe src="${canaryURL}"></iframe>
+      <script src="${canaryURL}"></script>
+      <script>
+        const out = document.querySelector("#out");
+        const sec = document.querySelector("#sec");
+        document.querySelector("#btn").addEventListener("click", (e) => {
+          out.textContent = "已点击：" + e.currentTarget.dataset.task;
+        });
+        document.querySelector("#f").addEventListener("submit", (e) => {
+          e.preventDefault();
+          out.textContent = "表单提交：" + new FormData(e.currentTarget).get("title");
+        });
+        let blockedFetch = false;
+        let blockedParent = false;
+        try { fetch(${JSON.stringify(canaryURL)}); } catch { blockedFetch = true; }
+        try { void window.parent.document.title; } catch { blockedParent = true; }
+        sec.textContent = "fetch:" + blockedFetch + ",parent:" + blockedParent;
+      </script>
+    </main>
+  `
+  const result = await run(page, { language: 'html', code, interactivePreview: true, previewToken: 'test-token' })
+  assert.equal(result.previewInteractive, true)
+  assert.ok(result.preview)
+  await page.evaluate((preview) => {
+    const frame = document.createElement('iframe')
+    frame.setAttribute('sandbox', 'allow-scripts allow-forms')
+    frame.id = 'interactive-test-preview'
+    frame.srcdoc = preview
+    document.body.append(frame)
+  }, result.preview)
+  const frame = page.frameLocator('#interactive-test-preview')
+  await frame.locator('#sec').filter({ hasText: 'fetch:true,parent:true' }).waitFor()
+  assert.equal(await frame.locator('iframe,[onerror],script[src]').count(), 0)
+  await frame.locator('#btn').click()
+  await frame.locator('#out').filter({ hasText: '已点击：A' }).waitFor()
+  await frame.getByRole('button', { name: '新增' }).click()
+  await frame.locator('#out').filter({ hasText: '表单提交：复习' }).waitFor()
   assert.deepEqual(requests, [])
 }))

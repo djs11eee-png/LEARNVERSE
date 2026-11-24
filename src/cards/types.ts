@@ -1,4 +1,4 @@
-export type Galaxy = 'python' | 'c' | 'algorithms'
+export type Galaxy = 'python' | 'c' | 'algorithms' | 'web' | 'backend' | 'systems' | 'robotics'
 export type Finish = 'standard' | 'reverse' | 'cosmos' | 'crosshatch' | 'rainbow' | 'gold'
 export interface HoloCard {
   id: string
@@ -16,7 +16,15 @@ export interface HoloCard {
   number: string
 }
 
-export const galaxyNames: Record<Galaxy, string> = { python: 'Python', c: 'C 语言', algorithms: '算法与 AI' }
+export const galaxyNames: Record<Galaxy, string> = {
+  python: 'Python',
+  c: 'C 语言',
+  algorithms: '算法与 AI',
+  web: 'JS 与 Web',
+  backend: 'Java 与后端',
+  systems: 'CS 与系统',
+  robotics: '物联网与 ROS 2',
+}
 export const finishNames: Record<Finish, string> = {
   standard: '哑光星尘', reverse: '逆向拉丝', cosmos: '宇宙星云',
   crosshatch: '十字激光', rainbow: '彩虹棱镜', gold: '黑金浮雕',

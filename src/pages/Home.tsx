@@ -1,7 +1,10 @@
-import { ArrowDown, ArrowRight, ArrowUpRight, Atom, Binary, BookOpen, Braces, Code2, Compass, Cpu, FlaskConical, GitBranch, Globe2, MoveHorizontal, Orbit, Play, Satellite } from 'lucide-react'
+import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, ChartNoAxesCombined, Compass, Cpu, FlaskConical, Layers3, MoveHorizontal, Orbit, Play, Satellite, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { useRef } from 'react'
-import { domains, routes } from '../data/learning'
+import { SeoulGuardianBanner } from '../components/guardian/SeoulGuardianBanner'
+import { useStation } from '../components/observatory/StationProvider'
+import { getLearningRoute, routeMapPath, routes } from '../data/learning'
+import { majorRoutes } from '../data/majorRoutes'
 import { difficultyLabels, languageLabels, resources } from '../data/resources'
 import { courseSummaries as courses } from '../data/courseCatalog'
 import { useProgress } from '../state/progress'
@@ -9,7 +12,10 @@ import { HomeGlobe } from '../components/HomeGlobe'
 import { Constellation, useHeroMotion, useMissionMotion } from '../components/HomeMotion'
 import './home.css'
 
-const domainIcons = [Braces, Cpu, Binary, Atom, Satellite, Globe2, GitBranch, Code2]
+const featuredMajors = [
+  { route: 'major-080902', icon: Layers3 }, { route: 'major-080910', icon: ChartNoAxesCombined },
+  { route: 'major-080911', icon: Shield }, { route: 'major-080907', icon: Cpu },
+]
 const starterRouteId = 'programming-foundations'
 const selectedSources = ['python-tutorial-cn', 'mdn-javascript-cn', 'cs50']
 
@@ -18,18 +24,19 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
   const missions = useRef<HTMLDivElement>(null)
   useHeroMotion(hero, introActive)
   useMissionMotion(missions)
+  const station = useStation()
   const { activeCourse, activeRoute, completed } = useProgress()
-  const route = routes.find(({ id }) => id === (activeRoute ?? starterRouteId)) ?? routes[0]
-  const routeDomain = domains.find(({ routeId }) => routeId === route.id)
-  const routePath = routeDomain ? `/explore/${routeDomain.id}` : '/explore'
+  const route = getLearningRoute(activeRoute ?? starterRouteId) ?? routes[0]
+  const routePath = routeMapPath(route)
   const routeCourses = route.courseIds.flatMap((id) => courses.filter((course) => course.id === id))
   const firstIncomplete = routeCourses.find((course) => !completed.includes(course.id))
+  const timelineStart = firstIncomplete ? Math.max(0, routeCourses.indexOf(firstIncomplete) - 1) : Math.max(0, routeCourses.length - 3)
   const currentCourse = courses.find(({ id }) => id === activeCourse && !completed.includes(id))
-  const nextCourse = currentCourse ?? firstIncomplete
+  const nextCourse = currentCourse && (!activeRoute || route.courseIds.includes(currentCourse.id)) ? currentCourse : firstIncomplete
   const startPath = nextCourse ? `/academy/${nextCourse.id}/learn` : '/academy'
   const completedCount = courses.filter(({ id }) => completed.includes(id)).length
   const stats = [
-    { count: domains.length, label: '知识领域', path: '/explore' },
+    { count: majorRoutes.length, label: '专业路线', path: '/explore' },
     { count: courses.length, label: '站内课程', path: '/academy' },
     { count: resources.length, label: '学习资源', path: '/library' },
   ]
@@ -46,11 +53,11 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
           </div>
         </div>
         <div className="hero-content">
-          <p className="hero-kicker" lang="en">Learn. Explore. Evolve.</p>
+          <p className="hero-kicker">{activeRoute ? route.title : '大学生计算机学习站'}</p>
           <h1><span><span>编程与 AI</span></span><span><span>学习观测站</span></span></h1>
-          <p className="hero-intro">从第一行代码到人工智能，沿着学习路线读课、写程序，在实验室里检验自己的想法。</p>
+          <p className="hero-intro">{activeRoute ? route.description : '从你的专业或兴趣出发，写下第一行代码。每完成一门课，就在知识星图上点亮一颗星。'}</p>
           <div className="hero-actions">
-            <span className="magnet-zone"><Link className="button button-light" to={startPath}>{currentCourse ? '继续学习' : nextCourse ? '开始学习' : '浏览课程'} <ArrowRight size={17} /></Link></span>
+            <span className="magnet-zone"><Link className="button button-light" to={startPath}>{nextCourse && nextCourse === currentCourse ? '继续学习' : nextCourse ? '开始学习' : '浏览课程'} <ArrowRight size={17} /></Link></span>
             <span className="magnet-zone"><Link className="button hero-secondary" to="/explore">探索知识星图 <ArrowUpRight size={16} /></Link></span>
           </div>
         </div>
@@ -66,6 +73,7 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
         <a className="home-scroll" href="#study-route">查看学习路线 <ArrowDown size={15} /></a>
       </div>
       <div className="home-more">
+        <SeoulGuardianBanner onStarSuccess={station.celebrateStar} />
         <section className="home-section" id="study-route">
           <div className="section-head">
             <h2>学习路线</h2>
@@ -86,14 +94,15 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
             <div className="timeline-card">
               <div className="timeline-head"><h3>下一步学什么</h3><BookOpen size={18} /></div>
               <ol className="home-timeline">
-                {routeCourses.map((course, index) => <li key={course.id}>
+                {routeCourses.slice(timelineStart, timelineStart + 3).map((course, index) => <li key={course.id}>
                   <Link className={course.id === firstIncomplete?.id ? 'next-step' : ''} to={`/academy/${course.id}`}>
-                    <span className="step-index">{String(index + 1).padStart(2, '0')}</span>
+                    <span className="step-index">{String(timelineStart + index + 1).padStart(2, '0')}</span>
                     <span className="step-content"><strong>{course.title}</strong><small>{completed.includes(course.id) ? '已完成' : course.id === firstIncomplete?.id ? '从这里开始' : difficultyLabels[course.difficulty]}</small></span>
                     <ArrowUpRight size={15} />
                   </Link>
                 </li>)}
               </ol>
+              {routeCourses.length > 3 && <Link className="home-text-link" to={routePath}>查看完整路线 <ArrowRight size={15} /></Link>}
             </div>
             <Link className="mission-card progress-card" to="/my-universe#study">
               <span className="mission-spot" aria-hidden="true" />
@@ -103,22 +112,22 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
             </Link>
             <Link className="mission-card map-card" to="/explore">
               <span className="mission-spot" aria-hidden="true" />
-              <div className="map-rings" aria-hidden="true"><i /><i /><i /><Constellation /></div>
+              <img className="map-preview-planet" src="/art/atlas/worlds/pelagic-rings.webp" width="768" height="768" loading="lazy" alt="" />
               <span className="mission-top"><Orbit size={17} /> 知识星图</span>
-              <strong>探索 {domains.length} 个知识领域</strong><ArrowUpRight className="map-jump" size={18} />
+              <strong>探索 {majorRoutes.length} 条专业路线</strong><ArrowUpRight className="map-jump" size={18} />
             </Link>
           </div>
         </section>
 
         <section className="home-section" id="featured-domains">
-          <div className="section-head"><h2>选择学习方向</h2><Link className="home-text-link" to="/explore">查看全部领域 <ArrowUpRight size={16} /></Link></div>
+          <div className="section-head"><h2>从专业出发</h2><Link className="home-text-link" to="/explore">查看全部路线 <ArrowUpRight size={16} /></Link></div>
           <div className="featured-domains">
-            {domains.slice(0, 4).map((domain, index) => {
-              const Icon = domainIcons[index] ?? Orbit
+            {featuredMajors.map(({ route: id, icon: Icon }) => {
+              const major = majorRoutes.find(item => item.id === id)!
               return (
-                <Link key={domain.id} to={`/explore/${domain.id}`}>
-                  <span className="domain-icon"><Icon size={25} strokeWidth={1.4} /></span>
-                  <h3>{domain.title}</h3><p>{domain.description}</p>
+                <Link key={id} to={`/explore/${id}`}>
+                  <span className="domain-icon" style={{ color: major.color }}><Icon size={25} strokeWidth={1.4} /></span>
+                  <h3>{major.title}</h3><p>{major.description}</p>
                   <ArrowUpRight className="domain-arrow" size={17} />
                 </Link>
               )

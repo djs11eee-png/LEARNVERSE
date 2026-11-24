@@ -51,7 +51,6 @@
 .holo-dock { align-self: end; display: grid; justify-items:center; gap:11px; padding:10px 12px max(26px,env(safe-area-inset-bottom)); }
 .holo-instruction { font-size:13px; letter-spacing:.06em; color:#bfcbc8; }
 .holo-count { padding: 0 7px; font: 13px var(--mono); }
-.holo-count b { font-weight:normal; color:#a1aea9; }
 .holo-empty { margin:auto; }
 
 /* The two crimped ends have different teeth, as they would after cutting the foil roll. */
@@ -119,15 +118,7 @@
 }
 .holo-tear-strip::before { content:""; position:absolute; inset:0 0 36%; background:repeating-linear-gradient(90deg,#dcecf14f 0 1px,#050b127a 2px 3px,transparent 4px 6px); border-bottom:1px solid #edf7ff36; }
 .holo-tear-strip span { font: bold 7px var(--mono); letter-spacing:.19em; text-shadow:0 1px 3px #000; }
-.holo-tear-gap { position:absolute; left:0; bottom:2%; height:20px; width:100%; transform-origin:left bottom; transform:scale(var(--rip),calc(.15 + var(--rip) * .85)); background:linear-gradient(170deg,#10181f,#03070c 75%,#c0c9c9 87%,#283a42);
-  clip-path:polygon(0 0,100% 86%,99% 95%,94% 82%,87% 96%,81% 80%,77% 95%,73% 85%,66% 98%,60% 85%,54% 96%,48% 80%,42% 95%,36% 86%,28% 98%,20% 86%,13% 92%,6% 80%,0 98%);
-  transition: transform .38s cubic-bezier(.24,1.18,.38,1);
-}
 .holo-tear-edge { position:absolute; left:0; right:0; bottom:0; border-bottom:1px dashed #d0ddbd94; }
-.is-tearing .holo-tear-strip, .is-tearing .holo-tear-gap { transition:none; }
-.holo-sparks { position:absolute; inset:90% 0 auto; transform:translateX(var(--rip-left)); pointer-events:none; opacity:min(1,calc(var(--rip) * 18)); }
-.holo-sparks i { position:absolute; width:2px; height:7px; background:#edffca; border-radius:50%; box-shadow:0 0 5px #ccff91; animation:holo-spark .22s linear infinite; animation-delay:calc(var(--n) * -.034s); }
-@keyframes holo-spark { from { transform:rotate(calc(var(--n) * 48deg)) translateY(-1px) scaleY(.25); opacity:.8; } to { transform:rotate(calc(var(--n) * 48deg)) translateY(-23px) scaleY(.7); opacity:0; } }
 .holo-sequence.is-opening .holo-packet { pointer-events:none; }
 .is-opening .holo-tear { animation:holo-fly .53s cubic-bezier(.24,.68,.3,1) both; }
 .is-opening .holo-bag-body { animation:holo-drop .76s .62s cubic-bezier(.49,.05,.8,.57) both; }
@@ -152,6 +143,10 @@
 }
 .holo-card[data-galaxy="c"] { --galaxy:#b8ddf6; --galaxy-dark:#233b50; --surface:#15222c; }
 .holo-card[data-galaxy="algorithms"] { --galaxy:#edd3a5; --galaxy-dark:#483a31; --surface:#29221f; }
+.holo-card[data-galaxy="web"] { --galaxy:#99e4ef; --galaxy-dark:#1b3847; --surface:#0f1f29; }
+.holo-card[data-galaxy="backend"] { --galaxy:#b4c3fb; --galaxy-dark:#242e52; --surface:#13182b; }
+.holo-card[data-galaxy="systems"] { --galaxy:#b8ebb2; --galaxy-dark:#213d2e; --surface:#112119; }
+.holo-card[data-galaxy="robotics"] { --galaxy:#f0cf88; --galaxy-dark:#44351c; --surface:#241c11; }
 .holo-finish-standard { --etch:radial-gradient(circle at 20% 31%,#f0eac68d 0 .55px,transparent .95px),radial-gradient(circle at 63% 74%,#e1f4fb99 0 .45px,transparent .8px); --ink-pattern:.29; --gloss:.15; }
 .holo-finish-standard .holo-texture { background-size:7px 9px,11px 13px; }
 .holo-finish-reverse { --foil:linear-gradient(118deg,#7acdcb,#d1cea7,#b4a6ce,#91c2be,#ded7ba); --etch:repeating-linear-gradient(105deg,transparent 0 1px,#e9fff4aa 1.5px,transparent 2.2px 4px); --ink-pattern:.24; }

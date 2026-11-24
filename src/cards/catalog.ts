@@ -1,20 +1,14 @@
 import type { HoloCard } from './types'
 import { importCardSources } from './importCards'
-
-type CardText = Pick<HoloCard, 'title' | 'subtitle' | 'body' | 'back' | 'code' | 'quiz' | 'slot'>
-type Chapter = [lessonId: string, cards: CardText[]]
-
-function card(slot: HoloCard['slot'], title: string, subtitle: string, body: string, back: string, code?: string): CardText {
-  return { slot, title, subtitle, body, back, ...(code === undefined ? {} : { code }) }
-}
-
-function quiz(title: string, subtitle: string, question: string, options: string[], answer: number, explanation: string, code?: string): CardText {
-  return { ...card(3, title, subtitle, question, explanation, code), quiz: { question, options, answer, explanation } }
-}
-
-function bug(title: string, subtitle: string, question: string, options: string[], answer: number, explanation: string, code: string): CardText {
-  return { ...quiz(title, subtitle, question, options, answer, explanation, code), slot: 4 }
-}
+import { bug, card, quiz } from './cardBuilders'
+import type { Chapter } from './cardBuilders'
+import { pythonPipeline } from './data/pythonPipelineCards'
+import { cMemory, cRecords } from './data/cExtendedCards'
+import { aiGroundedQa, aiRetrievalEvaluation, algorithmsEfficiency, algorithmsGraph } from './data/algorithmsAiExtendedCards'
+import { jsAsyncState, jsData, jsFoundations, webAccessibleState, webFoundations, webInteraction } from './data/webCards'
+import { backendConsistency, backendFoundations, backendReliability, javaCollections, javaFoundations, javaTestedDesign } from './data/backendJavaCards'
+import { computerArchitecture, csCache, csCost, csFoundations, operatingSystems } from './data/systemsCards'
+import { iotProtocols, ros2Foundations, ros2Integration, ros2Reliability } from './data/roboticsIotCards'
 
 const pythonBasics: Chapter[] = [
   ['values', [
@@ -173,7 +167,7 @@ function series(galaxy: HoloCard['galaxy'], prefix: string, courses: [string, Ch
     for (const [lessonId, cards] of chapters) {
       for (const content of cards) {
         const number = (result.length + 1).toString().padStart(3, '0')
-        const finish = content.slot === 3 && result.length % 2 === 1 ? 'rainbow' : slotFinishes[content.slot - 1]
+        const finish = content.finish ?? (content.slot === 3 && result.length % 2 === 1 ? 'rainbow' : slotFinishes[content.slot - 1])
         result.push({ ...content, galaxy, courseId, lessonId, id: `${galaxy}-${number}`, number: `${prefix}-${number}`, finish })
       }
     }
@@ -182,7 +176,51 @@ function series(galaxy: HoloCard['galaxy'], prefix: string, courses: [string, Ch
 }
 
 export const cardCatalog = importCardSources([
-  ...series('python', 'PY', [['lv-python-foundations', pythonBasics], ['lv-python-practice', pythonPractice]]),
-  ...series('c', 'C', [['lv-c-foundations', cBasics]]),
-  ...series('algorithms', 'AL', [['lv-algorithms-foundations', algorithms], ['lv-ai-foundations', ai]]),
+  ...series('python', 'PY', [
+    ['lv-python-foundations', pythonBasics],
+    ['lv-python-practice', pythonPractice],
+    ['lv-python-pipeline', pythonPipeline],
+  ]),
+  ...series('c', 'C', [
+    ['lv-c-foundations', cBasics],
+    ['lv-c-records', cRecords],
+    ['lv-c-memory', cMemory],
+  ]),
+  ...series('algorithms', 'AL', [
+    ['lv-algorithms-foundations', algorithms],
+    ['lv-ai-foundations', ai],
+    ['lv-algorithms-efficiency', algorithmsEfficiency],
+    ['lv-algorithms-graph', algorithmsGraph],
+    ['lv-ai-grounded-qa', aiGroundedQa],
+    ['lv-ai-retrieval-evaluation', aiRetrievalEvaluation],
+  ]),
+  ...series('web', 'WB', [
+    ['lv-javascript-foundations', jsFoundations],
+    ['lv-javascript-data', jsData],
+    ['lv-javascript-async-state', jsAsyncState],
+    ['lv-web-foundations', webFoundations],
+    ['lv-web-interaction', webInteraction],
+    ['lv-web-accessible-state', webAccessibleState],
+  ]),
+  ...series('backend', 'SV', [
+    ['lv-java-foundations', javaFoundations],
+    ['lv-java-collections', javaCollections],
+    ['lv-java-tested-design', javaTestedDesign],
+    ['lv-backend-foundations', backendFoundations],
+    ['lv-backend-consistency', backendConsistency],
+    ['lv-backend-reliability', backendReliability],
+  ]),
+  ...series('systems', 'CS', [
+    ['lv-computer-science', csFoundations],
+    ['lv-computer-science-cost', csCost],
+    ['lv-computer-science-cache', csCache],
+    ['lv-computer-architecture', computerArchitecture],
+    ['lv-operating-systems', operatingSystems],
+  ]),
+  ...series('robotics', 'IO', [
+    ['lv-iot-protocols', iotProtocols],
+    ['lv-ros2-foundations', ros2Foundations],
+    ['lv-ros2-integration', ros2Integration],
+    ['lv-ros2-reliability', ros2Reliability],
+  ]),
 ], import.meta.glob('./sources/*.json', { eager: true, import: 'default' }))

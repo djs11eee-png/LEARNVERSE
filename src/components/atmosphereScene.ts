@@ -62,6 +62,17 @@ export function mountAtmosphere(field: HTMLElement, sky: SkyName) {
   const reduced = matchMedia('(prefers-reduced-motion: reduce)')
   const compact = matchMedia('(max-width: 680px), (pointer: coarse)')
   const palette = scenePalettes[sky]
+  const haloCanvas = document.createElement('canvas')
+  haloCanvas.width = haloCanvas.height = 20
+  const haloCtx = haloCanvas.getContext('2d')
+  if (haloCtx) {
+    const halo = haloCtx.createRadialGradient(10, 10, 0, 10, 10, 10)
+    halo.addColorStop(0, '#f0ffff')
+    halo.addColorStop(.28, palette.ice + 'ae')
+    halo.addColorStop(1, palette.ice + '00')
+    haloCtx.fillStyle = halo
+    haloCtx.fillRect(0, 0, 20, 20)
+  }
   const stars = Array.from({ length: 120 }, (_, i) => ({
     x: sample(i + palette.phase), y: sample(120 + i), depth: .2 + .8 * sample(240 + i),
   }))
@@ -119,12 +130,7 @@ export function mountAtmosphere(field: HTMLElement, sky: SkyName) {
     const x = rx * Math.cos(t), y = ry * Math.sin(t)
     const px = cx + x * Math.cos(angle) - y * Math.sin(angle)
     const py = cy + x * Math.sin(angle) + y * Math.cos(angle)
-    const halo = ctx.createRadialGradient(px, py, 0, px, py, 5)
-    halo.addColorStop(0, '#f0ffff')
-    halo.addColorStop(.28, palette.ice + 'ae')
-    halo.addColorStop(1, palette.ice + '00')
-    ctx.fillStyle = halo
-    ctx.fillRect(px - 5, py - 5, 10, 10)
+    ctx.drawImage(haloCanvas, px - 5, py - 5, 10, 10)
   }
 
   function draw() {

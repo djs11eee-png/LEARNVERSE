@@ -1,6 +1,7 @@
 import type { CourseExpansions } from '../lessonExpansion'
+import { foundationWebWorkshops } from '../curriculum/webWorkshops'
 
-export const webExpansions: CourseExpansions = {
+const authoredWebExpansions: CourseExpansions = {
   'lv-javascript-foundations': {
     variables: {
       objectives: ['跟踪赋值前后的变量值', '把数字文本转换并验证为可计算的整数', '判断一个绑定在哪些代码块中可见'],
@@ -9,7 +10,7 @@ export const webExpansions: CourseExpansions = {
           heading: '赋值时先算右边',
           paragraphs: [
             '把变量名想成查找当前值的入口。执行 minutes = minutes + 5 时，右边先读取原来的 15，算出 20，再把 20 保存回 minutes。saved 在前一行已经取得数字 15，它不会因为另一个变量重新赋值而改变。这个结论适用于此处复制的数字这样的原始值。',
-            '把下方独立示例粘贴到浏览器控制台或保存为 .js 文件运行。两行输出依次为 15 和 20。调试较长的程序时，可以像这样在赋值前后设置可观察的检查点，找出值第一次偏离预期的位置。',
+            '在站内运行下方独立示例。两行输出依次为 15 和 20。调试较长的程序时，可以像这样在赋值前后设置可观察的检查点，找出值第一次偏离预期的位置。',
           ],
           codeLanguage: 'JavaScript',
           code: `let minutes = 15;
@@ -673,12 +674,29 @@ Content-Type: application/json
 {"items":[]}`,
         },
         {
+          heading: '先看一次等待 JSON 正文的最小程序',
+          paragraphs: [
+            'Response 把响应的状态、头部、正文收在同一个对象里。直接读取 response.status 可以得到数字。response.json() 则会先读取正文，再将 JSON 文本转换成对象，因此先交回一个 Promise。它代表将来会拿到值，也可能因为正文格式错误而失败。',
+            '在函数前写 async，函数里就可以用 await 等待 Promise 完成后继续使用结果。等待期间，浏览器仍能处理其他事情。下面在内存中构造一条 200 响应，无需访问网络。第一行打印状态，第二行打印已经转换好的课程标题。把 JSON 里的标题换成别的词，观察第二行如何变化。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '200\n网页基础' },
+          code: `async function showResponse() {
+  const response = new Response('{"title":"网页基础"}', { status: 200 });
+  console.log(response.status);
+  const course = await response.json();
+  console.log(course.title);
+}
+showResponse();`,
+        },
+        {
           heading: '读状态再决定如何消费正文',
           paragraphs: [
             '客户端需要处理三类情况。HTTP 成功响应可以按接口约定解析内容。404 等 HTTP 错误说明已经收到服务器响应，可以依据故障类型给出反馈。连接断开等网络问题则可能根本没有响应可读。读取一个 JSON 接口时，可先检查状态，再解析成功或错误正文。',
             '下方使用浏览器内置的 Response 在内存模拟 404，不发送网络请求。response.ok 只在状态码为 200 到 299 时为真。这里会输出「课程不存在」。把模拟响应替换成 200 并提供含 title 的 JSON，即可进入正文解析分支。',
           ],
           codeLanguage: 'JavaScript · 浏览器或 Node.js',
+          run: { language: 'javascript', expectedOutput: '课程不存在' },
           code: `async function displayCourse(response) {
   if (response.status === 404) return "课程不存在";
   if (!response.ok) return "暂时无法读取课程";
@@ -733,6 +751,19 @@ console.log(readCourses("/api/courses/unknown"));`,
     validation: {
       objectives: ['逐层校验 JSON 语法、数据形状与业务规则', '把清理后的数据交给写入逻辑', '为调用者返回可以精准定位的错误'],
       sections: [
+        {
+          heading: '对照原始文字和解析出来的值',
+          paragraphs: [
+            '收到的 JSON 正文是文本。JSON.parse 把文本转换成可读取的值。解析结果是对象时，可以用 data.minutes 取得 minutes 字段，再问它是数字、字符串还是缺少。JSON 中 25 无引号表示数字，"25" 有引号表示字符串。两者都能成功解析，但接口可以约定只接受数字。',
+            '先运行两条示例，观察 typeof 的不同。再试加一条 {"minutes":null} 体会缺值与数字的区别。检查 null 时直接比较 data.minutes === null。下一节会示范如何用 try 和 catch，把连 JSON 格式都不合法的正文变成调用者能理解的错误码。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '25 number\n25 string' },
+          code: `for (const raw of ['{"minutes":25}', '{"minutes":"25"}']) {
+  const data = JSON.parse(raw);
+  console.log(data.minutes, typeof data.minutes);
+}`,
+        },
         {
           heading: '解析完成后还要检查形状',
           paragraphs: [
@@ -847,6 +878,33 @@ console.log(sessions);`,
       objectives: ['用主键和外键表示课程与学习记录的关系', '在查询中绑定参数并检查排序', '按课程统计总时长并保留没有记录的课程'],
       sections: [
         {
+          heading: '先对一张小表写查询',
+          paragraphs: [
+            '这张学习记录表有三行，每行一条记录。SELECT 写要看的列，FROM 选用哪一张表，WHERE 只让满足条件的行留下。ORDER BY 指定最后怎么排列。此处希望保留至少 20 分钟的记录，按分钟数从大到小列出，时长相同时按编号排列。',
+            '先跑一次得到 s2 和 s3，再把 20 改为 30，观察 s3 被排除而恰好 30 的 s2 留下。把 DESC 改为 ASC 可以调换不同分钟数的显示顺序。建表和准备数据也放在代码里，工作台每次运行会开启一份新的 SQLite 数据库。',
+          ],
+          codeLanguage: 'SQLite · 独立运行',
+          run: { language: 'sql', expectedOutput: 'id\tminutes\ns2\t30\ns3\t25' },
+          code: `CREATE TABLE study(id TEXT PRIMARY KEY, minutes INTEGER NOT NULL);
+INSERT INTO study VALUES ('s1', 12), ('s2', 30), ('s3', 25);
+SELECT id, minutes FROM study
+WHERE minutes >= 20
+ORDER BY minutes DESC, id;`,
+        },
+        {
+          heading: '新增一行后再查它的编号',
+          paragraphs: [
+            'INSERT INTO 指定要写入的表及列，VALUES 提供对应的值。下面在旧表中新增一条 s2，再按精确的编号读取来确认。SQL 文本用单引号包住，整数直接写。id 是主键，同一个编号只应属于一行。换一个新编号尝试新增后，还要修改查询的编号才能看到刚加的记录。',
+            '试着添加一条记录 s3，再修改 SELECT 只读 s3。先写下预期输出，再运行观察。后面把课程名称放在另一张表时，记录表只保存关联编号，查询会使用刚学过的查询语句与连接规则取出更完整的信息。',
+          ],
+          codeLanguage: 'SQLite · 独立运行',
+          run: { language: 'sql', expectedOutput: 'id\tminutes\ns2\t25' },
+          code: `CREATE TABLE study(id TEXT PRIMARY KEY, minutes INTEGER NOT NULL);
+INSERT INTO study(id, minutes) VALUES ('s1', 12);
+INSERT INTO study(id, minutes) VALUES ('s2', 25);
+SELECT id, minutes FROM study WHERE id = 's2';`,
+        },
+        {
           heading: '把课程资料和学习事实分到两张表',
           paragraphs: [
             '一门课程可以对应多条学习记录。课程表保存每门课的唯一 ID 和标题，记录表保存每次学习的 ID、所属课程 ID 和分钟数。这样每门课的标题只保存在一个地方。若「网页设计」改名，修改课程表的一行就能让新查询读到新的标题。',
@@ -945,8 +1003,10 @@ console.log("三个用例通过");`,
           paragraphs: [
             '建立测试数据时，显式准备这次场景需要的记录。若用同一个数组跑很多个用例，某次创建留下的行会影响后续断言，交换顺序可能得到不同结果。这里让 makeRepository 在每次调用时返回一个新的存储实例。',
             '下面独立示例先创建两个存储，再只给其中一个新增记录，输出 1 和 0。真实数据库的测试也需要相同的独立性，例如为每个用例重新准备数据。验证不应依赖其他用例已成功执行了一次写入。',
+            'add 和 count 都访问 makeRepository 内的 rows。外层函数结束后，返回的两个方法仍记得自己那次调用里创建的数组。这种让函数保留外部变量作用域的写法叫闭包。再调用一次 makeRepository，会新建另一个数组。试试再为 first 添加一行，first 的数量会变为 2，second 仍是 0。',
           ],
           codeLanguage: 'JavaScript',
+          run: { language: 'javascript', expectedOutput: '1\n0' },
           code: `function makeRepository() {
   const rows = [];
   return {
@@ -1018,3 +1078,21 @@ console.log("五个用例通过");`,
     },
   },
 }
+
+export const webExpansions: CourseExpansions = Object.fromEntries(
+  Object.entries(authoredWebExpansions).map(([courseId, course]) => {
+    const workshops = foundationWebWorkshops[courseId]
+    if (!workshops) return [courseId, course]
+
+    const lessons = Object.entries(course).map(([lessonId, lesson]) => {
+      const sections = lesson.sections.map((section) => {
+        if (courseId === 'lv-javascript-foundations' && section.codeLanguage === 'JavaScript' && section.code) {
+          return { ...section, run: { language: 'javascript' as const } }
+        }
+        return section
+      })
+      return [lessonId, { ...lesson, sections: [...sections, ...(workshops[lessonId] ?? [])] }]
+    })
+    return [courseId, Object.fromEntries(lessons)]
+  }),
+)

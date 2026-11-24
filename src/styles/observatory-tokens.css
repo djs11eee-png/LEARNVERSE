@@ -1,0 +1,27 @@
+.lv-observatory {
+  --lvo-ink: var(--ink, #f2f4f3);
+  --lvo-muted: #b7c4c5;
+  --lvo-accent: var(--accent, #d5edb9);
+  --lvo-accent-ink: #17221a;
+  --lvo-field: #0d151c;
+  --lvo-surface: #141e25;
+  --lvo-raised: #1b282e;
+  --lvo-glass: #101a22f2;
+  --lvo-line: #a4c0c43c;
+  --lvo-control-line: #6d827e;
+  --lvo-error: #ffbcb2;
+  --lvo-alert: #f5d4a1;
+  --lvo-thinking: #98e5ff;
+  --lvo-success: #bff5c6;
+  --lvo-focus: #ddf3bd;
+  --lvo-radius: 12px;
+  --lvo-radius-panel: 24px;
+  --lvo-touch: 44px;
+  --lvo-dock-z: 30;
+  --lvo-dock-left: max(20px, env(safe-area-inset-left));
+  --lvo-dock-bottom: max(16px, env(safe-area-inset-bottom));
+  --lvo-panel-shadow: 0 26px 90px #000a, inset 0 1px #e3f1de13;
+  --lvo-mono: 'Geist Mono', Consolas, monospace;
+  --lvo-visible-height: 100dvh;
+  --lvo-visible-bottom: 0px;
+}

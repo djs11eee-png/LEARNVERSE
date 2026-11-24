@@ -3,6 +3,7 @@
   const maxOutput = 24_000
   const maxMessages = 300
   const maxDiagnostics = 30
+  const maxDisplay = 4_000
   const jsFilename = 'learnverse.js'
   const pythonFilename = 'learnverse.py'
 
@@ -22,18 +23,49 @@
     }
   }
 
-  function display(value, depth = 0) {
-    if (typeof value === 'string') return value.slice(0, 4_000)
-    if (value === null || typeof value !== 'object') return String(value)
-    if (value instanceof Error) return `${value.name}: ${value.message}`
-    if (depth > 2) return Array.isArray(value) ? '[…]' : '{…}'
-    if (Array.isArray(value)) {
-      const values = value.slice(0, 30).map((item) => display(item, depth + 1))
-      return `[${values.join(', ')}${value.length > 30 ? ', …' : ''}]`
+  function displayValues(values) {
+    let text = ''
+    const append = (part) => { text += part.slice(0, maxDisplay - text.length) }
+    const full = () => text.length >= maxDisplay
+
+    function show(value, depth) {
+      if (full()) return
+      if (value === null || typeof value !== 'object') {
+        append(typeof value === 'string' ? value : String(value))
+      } else if (value instanceof Error) {
+        append(String(value.name))
+        append(': ')
+        append(String(value.message))
+      } else if (depth > 2) {
+        append(Array.isArray(value) ? '[…]' : '{…}')
+      } else if (Array.isArray(value)) {
+        append('[')
+        for (let index = 0; index < Math.min(value.length, 30) && !full(); index++) {
+          if (index > 0) append(', ')
+          if (index in value) show(value[index], depth + 1)
+        }
+        append(value.length > 30 ? ', …]' : ']')
+      } else {
+        append('{')
+        let count = 0
+        for (const key in value) {
+          if (full()) break
+          if (!Object.hasOwn(value, key)) continue
+          if (count++) append(', ')
+          if (count > 12) { append('…'); break }
+          append(key)
+          append(': ')
+          show(value[key], depth + 1)
+        }
+        append('}')
+      }
     }
-    const keys = Object.keys(value)
-    const fields = keys.slice(0, 12).map((key) => `${key}: ${display(value[key], depth + 1)}`)
-    return `{${fields.join(', ')}${keys.length > 12 ? ', …' : ''}}`
+
+    for (let index = 0; index < values.length && !full(); index++) {
+      if (index > 0) append(' ')
+      show(values[index], 0)
+    }
+    return text
   }
 
   function jsLocation(error) {
@@ -59,12 +91,12 @@
     for (const method of ['log', 'info', 'debug', 'dir', 'table']) {
       console[method] = (...values) => {
         if (reporter.full()) return
-        reporter.append(`${values.map((value) => display(value)).join(' ')}\n`)
+        reporter.append(`${displayValues(values)}\n`)
       }
     }
     for (const [method, severity] of [['warn', 'warning'], ['error', 'error']]) {
       console[method] = (...values) => {
-        reporter.diagnostic(severity, values.map((value) => display(value)).join(' '), jsLocation(new Error()))
+        reporter.diagnostic(severity, displayValues(values), jsLocation(new Error()))
       }
     }
 
@@ -72,7 +104,7 @@
       const evaluated = (0, eval)(`${input.code}\n//# sourceURL=${jsFilename}`)
       if (evaluated instanceof Promise) await evaluated
     } catch (error) {
-      reporter.diagnostic('error', display(error), jsLocation(error))
+      reporter.diagnostic('error', displayValues([error]), jsLocation(error))
     }
   }
 
@@ -111,12 +143,17 @@
 
   async function python(input, assets, reporter) {
     const interpreter = await loadPython(assets)
-    const lines = input.stdin ? input.stdin.replace(/\r\n?/g, '\n').split('\n') : []
-    if (input.stdin?.endsWith('\n') || input.stdin?.endsWith('\r')) lines.pop()
-
-    let nextLine = 0
+    const text = input.stdin ?? ''
+    const lineBreak = /\r\n?|\n/g
+    let offset = 0
     const decoder = new TextDecoder()
-    interpreter.setStdin({ stdin: () => lines[nextLine++] ?? null, isatty: false })
+    interpreter.setStdin({ stdin: () => {
+      if (offset >= text.length) return null
+      const delimiter = lineBreak.exec(text)
+      const line = text.slice(offset, delimiter?.index ?? text.length)
+      offset = delimiter ? lineBreak.lastIndex : text.length
+      return line
+    }, isatty: false })
     interpreter.setStdout({ write: (bytes) => {
       if (!reporter.full()) reporter.append(decoder.decode(bytes, { stream: true }))
       return bytes.length
@@ -228,7 +265,7 @@
       await run(input, assets, reporter)
       post({ kind: 'done' })
     } catch (error) {
-      post({ kind: 'failure', message: display(error).slice(0, 4_000) })
+      post({ kind: 'failure', message: displayValues([error]) })
     }
   }, { once: true })
 })()

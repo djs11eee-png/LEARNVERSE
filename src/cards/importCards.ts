@@ -25,7 +25,8 @@ export function importCardSources(builtIn: HoloCard[], files: Record<string, unk
     if (!Array.isArray(content)) throw new Error(file + ' 应包含知识卡片数组')
     for (const [index, card] of content.entries()) {
       if (!record(card) || !['title', 'subtitle', 'body', 'back', 'id', 'number', 'lessonId', 'courseId'].every(field => nonempty(card[field]))
-        || !Object.hasOwn(galaxyNames, String(card.galaxy)) || !Object.hasOwn(finishNames, String(card.finish))
+        || typeof card.galaxy !== 'string' || !Object.hasOwn(galaxyNames, card.galaxy)
+        || typeof card.finish !== 'string' || !Object.hasOwn(finishNames, card.finish)
         || !lessons.has(card.courseId + '/' + card.lessonId)
         || ![1, 2, 3, 4, 5].includes(Number(card.slot)) || typeof card.slot !== 'number'
         || (card.slot === 5) !== (card.finish === 'gold')

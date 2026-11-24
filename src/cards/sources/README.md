@@ -6,7 +6,7 @@
 [
   {
     "id": "python-values-notebooks",
-    "number": "PY-031",
+    "number": "PY-099",
     "galaxy": "python",
     "courseId": "lv-python-foundations",
     "lessonId": "values",

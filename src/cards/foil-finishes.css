@@ -1,0 +1,126 @@
+.holo-card .holo-face { border-color: var(--finish-ink, var(--edge)); }
+.holo-card .holo-art::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: var(--print-light);
+  background-size: 135% 135%;
+  background-position: calc(50% + var(--h-shift-x)) calc(50% + var(--h-shift-y));
+  mix-blend-mode: screen;
+  opacity: .8;
+  transition: background-position .32s ease;
+}
+.holo-finish-standard {
+  --finish-ink: #99efd0;
+  --print-light: linear-gradient(145deg, #1df29277, transparent 42% 65%, #33bba852);
+}
+.holo-finish-reverse {
+  --finish-ink: #ffb7a2;
+  --print-light: repeating-linear-gradient(114deg, transparent 0 6px, #ffb5ab28 7px, transparent 8px),
+    linear-gradient(122deg, #ff806e80, transparent 52%, #ec89794d);
+}
+.holo-finish-gold {
+  --finish-ink: #f7cd71;
+  --print-light: repeating-conic-gradient(from 15deg at 50% 48%, #fdbe4d3d 0deg, transparent 5deg 16deg),
+    radial-gradient(ellipse at 46% 24%, #ffc83e66, transparent 74%);
+}
+.holo-finish-cosmos {
+  --finish-ink: #83bbff;
+  --print-light: radial-gradient(circle at 12% 28%, #efffff 0 .9px, transparent 1.7px),
+    radial-gradient(circle at 85% 72%, #d4edff 0 1.5px, transparent 2.5px),
+    linear-gradient(147deg, #454fc09c, #643da663 42%, transparent 58%, #257edb88);
+}
+.holo-card.holo-finish-cosmos .holo-art::after { background-size: 41px 57px, 69px 83px, 135% 135%; }
+
+.holo-finish-crosshatch {
+  --finish-ink: #8fe5ed;
+  --print-light: repeating-linear-gradient(48deg, transparent 0 5px, #a8eff42e 6px, transparent 7px),
+    repeating-linear-gradient(-48deg, transparent 0 5px, #a8c4fd30 6px, transparent 7px),
+    linear-gradient(125deg, #43bcde72, transparent 58%, #758de663);
+}
+
+/* The prism's saturated ink lives in the facets and metal rim. Keep the
+   reading area dark when the card opens to its full size. */
+.holo-card.holo-finish-rainbow {
+  --spectrum-rim: conic-gradient(from 26deg, #f5fcff, #6ee4ff 8%, #455ad4 17%, #ea8dff 29%, #fff1bb 39%, #e78168 44%, #a16af3 57%, #aaffdb 72%, #5f9be9 84%, #e998ff 93%, #f5fcff);
+  --finish-ink: #c6aaff;
+  --galaxy: #d9dcff;
+  --prism-frame: radial-gradient(ellipse at 95% 12%, #392755, transparent 47%),
+    linear-gradient(154deg, #142438, #171329 55%, #0d171f);
+}
+.holo-card.holo-finish-rainbow .holo-face {
+  border-color: #d6cbff;
+  background: var(--spectrum-rim);
+  box-shadow: 0 0 0 1px #090818, 0 0 11px #bf76fa6e, 0 0 29px #4ed8ff2b, 0 14px 24px #050820a6;
+}
+.holo-card.holo-finish-rainbow .holo-frame {
+  background: var(--prism-frame);
+  box-shadow: inset 0 0 0 1px #c6e9ff54;
+}
+.holo-card.holo-finish-rainbow .holo-frame::before {
+  content: '';
+  position: absolute;
+  width: 61%;
+  height: 28%;
+  top: -12%;
+  right: -14%;
+  pointer-events: none;
+  opacity: .46;
+  transform: rotate(-16deg);
+  background: repeating-radial-gradient(ellipse at 72% 25%, transparent 0 3px, #bedfff96 3.5px, transparent 4px);
+  mask-image: linear-gradient(140deg, transparent, black 60%, transparent);
+}
+.holo-card.holo-finish-rainbow .lv-plate-paper {
+  --plate-dark: #0b0b23; --plate-shade: #2a2855; --plate-mid: #907aca;
+  --plate-light: #bedaff; --plate-pearl: #fffff2;
+}
+.holo-card.holo-finish-rainbow .holo-art { isolation: isolate; overflow: hidden; border-color: #a09dcf; }
+.holo-finish-rainbow .holo-front .holo-art { flex-basis: 39%; }
+.holo-card.holo-finish-rainbow .holo-art::before {
+  content: '';
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(ellipse 13px 1px at 65% 41%, #fff 18%, transparent),
+    radial-gradient(ellipse 1px 12px at 65% 41%, #fff 18%, transparent),
+    radial-gradient(ellipse 7px 1px at 32% 67%, #ddfaff, transparent),
+    radial-gradient(ellipse 1px 8px at 32% 67%, #ddfaff, transparent);
+  animation: prism-stars 2.7s ease-in-out infinite alternate;
+}
+.holo-card.holo-finish-rainbow .holo-art::after {
+  inset: -45%;
+  background:
+    linear-gradient(117deg, transparent 32%, #6a8bff28 39%, #baf9ff8a 42%, #fff8d56b 43%, #fb8bd659 45%, transparent 51%),
+    linear-gradient(63deg, transparent 36%, #876ffe44 47%, #41f9dc47 51%, transparent 59%);
+  transform: translate(var(--h-shift-x), var(--h-shift-y));
+  animation: prism-caustic 5.8s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+@keyframes prism-caustic {
+  from { translate: -16% -3%; }
+  to { translate: 18% 5%; }
+}
+.holo-card.holo-finish-rainbow .holo-prism {
+  opacity: .36;
+  background: linear-gradient(118deg, transparent 12%, #56bfff65 20%, transparent 32%, #d980ff66 42%, #fff5b988 45%, transparent 54%, #49dfcd65 72%, transparent 84%);
+}
+.holo-card.holo-finish-rainbow .holo-card-foot span:last-child {
+  padding: 3px 7px;
+  border: 1px solid #acb0e36e;
+  border-radius: 3px;
+  color: #f5edff;
+  background: linear-gradient(108deg, #253f5a, #49305b 63%, #51413c);
+}
+.holo-card.holo-finish-rainbow .lv-plate-stars {
+  transform-box: fill-box; transform-origin: center;
+  animation: prism-stars 3.8s ease-in-out infinite alternate;
+}
+@keyframes prism-stars { from { opacity: .35; } to { opacity: 1; } }
+
+@media (prefers-reduced-motion: reduce) {
+  .holo-finish-rainbow .holo-art::before,
+  .holo-finish-rainbow .holo-art::after,
+  .holo-finish-rainbow .lv-plate-stars { animation: none; }
+}

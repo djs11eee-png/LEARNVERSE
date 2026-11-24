@@ -175,6 +175,37 @@ export async function openPack(key: string, cards: HoloCard[]) {
 export function saveCardNote(id: string, value: string) {
   if (byId.has(id)) write('note/' + id, value.slice(0, 600))
 }
+
+export function applySyncedVault(vault: {
+  earned?: string[]
+  opened?: Record<string, string[]>
+  offers?: Record<string, string[]>
+  notes?: Record<string, string>
+}) {
+  load()
+  let changed = false
+  const put = (key: string, value: string) => {
+    if (memory.get(key) === value) return
+    try { localStorage.setItem(prefix + key, value) } catch { saved = false }
+    memory.set(key, value)
+    changed = true
+  }
+  for (const packKey of vault.earned ?? []) {
+    if (packKey && packKey !== welcome) put('earned/' + packKey, '1')
+  }
+  for (const [packKey, ids] of Object.entries(vault.opened ?? {})) {
+    const raw = JSON.stringify(ids)
+    if (readIds(raw).length) put('opened/' + packKey, raw)
+  }
+  for (const [packKey, ids] of Object.entries(vault.offers ?? {})) {
+    const raw = JSON.stringify(ids)
+    if (readIds(raw).length && !memory.has('opened/' + packKey)) put('offer/' + packKey, raw)
+  }
+  for (const [cardId, note] of Object.entries(vault.notes ?? {})) {
+    if (byId.has(cardId) && typeof note === 'string') put('note/' + cardId, note.slice(0, 600))
+  }
+  if (changed) refresh()
+}
 function subscribe(listener: () => void) {
   subscribers.add(listener)
   return () => { subscribers.delete(listener) }

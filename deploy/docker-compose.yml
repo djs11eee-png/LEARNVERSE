@@ -1,0 +1,66 @@
+# ==============================================================================
+# LEARNVERSE 2C2G Production Docker Compose (Ubuntu 22.04 · 2 vCPU / 2 GiB RAM)
+# Strict per-service memory caps guarantee the host never hits kernel OOM.
+# ==============================================================================
+services:
+  redis:
+    image: redis:7.4-alpine
+    container_name: learnverse-redis
+    restart: unless-stopped
+    command: >
+      redis-server
+      --bind 127.0.0.1
+      --port 6379
+      --maxmemory 96mb
+      --maxmemory-policy allkeys-lru
+      --save ""
+      --appendonly no
+    network_mode: host
+    mem_limit: 112m
+    memswap_limit: 112m
+    cpus: 0.25
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: learnverse-backend
+    restart: unless-stopped
+    depends_on:
+      - redis
+    env_file:
+      - ../.env
+    environment:
+      - LEARNVERSE_HOST=127.0.0.1
+      - LEARNVERSE_PORT=8000
+      - REDIS_URL=redis://127.0.0.1:6379/0
+      - LEARNVERSE_SQLITE_PATH=/var/lib/learnverse/learnverse.sqlite
+      - SANDBOX_TEMP_ROOT=/tmp/learnverse-sandbox
+    volumes:
+      - learnverse_data:/var/lib/learnverse
+      # Shared host path so sibling sandbox containers can mount /tmp/learnverse-sandbox/<job>:ro
+      - /tmp/learnverse-sandbox:/tmp/learnverse-sandbox
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+    mem_limit: 320m
+    memswap_limit: 320m
+    cpus: 1.0
+
+  # Helper build targets for the C and Java micro-sandbox images:
+  # Run `docker compose --profile sandbox-images build` once before starting backend.
+  sandbox-c-image:
+    image: learnverse-sandbox-c:latest
+    profiles: ["sandbox-images"]
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile.c
+
+  sandbox-java-image:
+    image: learnverse-sandbox-java:latest
+    profiles: ["sandbox-images"]
+    build:
+      context: ./sandbox
+      dockerfile: Dockerfile.java
+
+volumes:
+  learnverse_data:

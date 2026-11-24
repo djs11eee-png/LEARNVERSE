@@ -423,6 +423,34 @@ export const conceptExpansions: CourseExpansions = {
           ],
         },
         {
+          heading: '用循环从当前位置找词表项',
+          paragraphs: [
+            '先用两项词表练习。把长片段「雨伞」放在单字「雨」前，再按顺序查找。position 表示当前读到哪一格，从 0 开始。startsWith(piece, position) 检查从当前位置开始是否等于词表片段。找到第一个匹配就记下编号，把位置向前移动该片段的长度。',
+            '下面的 while 会一直处理到文本末尾。matched 在每次进入循环时设为 false。如果这一轮查完词表仍没有匹配，就提示词表不足并结束。先跑「雨伞雨」，然后交换两个词表项来观察短片段排在前面时的影响。结课题还可以用 sort 按片段长度排好词表，匹配规则与这段小例相同。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '7,2' },
+          code: `function encode(text) {
+  const vocabulary = [['雨伞', 7], ['雨', 2]];
+  const ids = [];
+  let position = 0;
+  while (position < text.length) {
+    let matched = false;
+    for (const entry of vocabulary) {
+      const piece = entry[0];
+      if (!text.startsWith(piece, position)) continue;
+      ids.push(entry[1]);
+      position += piece.length;
+      matched = true;
+      break;
+    }
+    if (!matched) return '词表不足';
+  }
+  return ids.join(',');
+}
+console.log(encode('雨伞雨'));`,
+        },
+        {
           heading: '编号只在配套词表内解释',
           paragraphs: [
             '换用一个教学分词器，它只有「星」→ 6 和「图」→ 19，没有「星图」。同样输入「星图」，第一个分词器得到 [6]，第二个得到 [6, 19]。编号 6 在两个表里对应不同片段。编号大小也不表示片段长短或意思相近，它只是该词表中的索引。',
@@ -524,6 +552,25 @@ export const conceptExpansions: CourseExpansions = {
           codeLanguage: 'json',
           code: '{"status":"ok","totalMinutes":95,"recordIds":["M1","M2"]}',
         },
+        {
+          heading: '把手算检查一步步写成循环',
+          paragraphs: [
+            '先从已确认属于本场次的分钟数开始，例如 [20, 25]。方括号列出多项数值，for…of 一次取一项。let 声明的 sum 会随每次相加更新，sum += minutes 就是把当前分钟数加进累计值。遇到 null 时可以立即 return「资料不足」，返回后就结束本次函数。',
+            '试运行下面的两组输入，第一组得到 45，第二组报告缺失。再把 [20, null] 改成 [20, 0]，预期可得到确定的 20。章节练习里的 some 和 reduce 是两个常用数组方法，可表达「有没有缺值」和「怎样相加」；用这个循环同样能完成相同的核对。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '45\n资料不足' },
+          code: `function checkMinutes(values) {
+  let sum = 0;
+  for (const minutes of values) {
+    if (minutes === null) return '资料不足';
+    sum += minutes;
+  }
+  return sum;
+}
+console.log(checkMinutes([20, 25]));
+console.log(checkMinutes([20, null]));`,
+        },
       ],
       pitfalls: [
         { mistake: '接受可解析但把分钟数写成字符串的 JSON。', why: '合法 JSON 支持字符串，接口约定的字段仍然需要整数。', fix: '解析后继续校验字段类型和字段组合。' },
@@ -614,6 +661,22 @@ export const conceptExpansions: CourseExpansions = {
             '如果平滑话题已有正确的 21，面板仍无更新，就缩小到面板订阅与显示。逐段保存输入、预期和实见读数，可验证每一个连接。本章图和序列属于纸面演算。实际 ROS 2 还会异步发现端点、传送消息和调度回调，运行时需观察通信图与应用日志确认。',
           ],
         },
+        {
+          heading: '用三次比较完成最高温分支',
+          paragraphs: [
+            '先在纸上圈出末三条 20、23、22。把第一项 20 放进最高值格，看到 23 时替换，看到 22 时保留 23。JavaScript 数组按收到的顺序保存这些值。slice(1) 从下标 1 截取到末尾，适合下面这个四条读数的短例。遇到任意数量的读数时，可从 readings.length - 3 的位置取末三条，或用 slice(-3)。',
+            '示例假设已经收到足够多的读数。for…of 逐项比较，最高值可以移动到面板要显示的位置。将最后一条改成 26，预期会显示 26。还没收满的场景由观测站策略决定，此处可以先保留等待数据的提示。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '23' },
+          code: `const readings = [25, 20, 23, 22];
+const recent = readings.slice(1);
+let highest = recent[0];
+for (const value of recent) {
+  if (value > highest) highest = value;
+}
+console.log(highest);`,
+        },
       ],
       pitfalls: [
         { mistake: '节点出现就认定其预期输出已经产生。', why: '节点在图中可见时，输入仍可能缺失，回调也可能尚未执行。', fix: '分别核对端点连接、实际收发及计算输出。' },
@@ -699,6 +762,21 @@ export const conceptExpansions: CourseExpansions = {
             '用户先选 room，随后选 roof。两次请求可能以不同顺序得到回复。若 roof 的响应先到并更新显示，之后 room 的响应就不应改写 roof 的界面。可以在面板为每次查询记录本地请求编号和当时选中的传感器，只有最新请求且对应当前选择时才应用其响应。',
             '本例是只读查询，超时后发起另一次查询不会重复修改配置，但两次回复可能反映不同时间点。对有副作用的服务，超时不能证明服务端没执行，盲目重发可能重复改变状态；接口若允许重试，就要说明重复请求如何处理。按 Jazzy 文档，同一服务名应由一个服务端提供，多个面板可作为客户端。',
           ],
+        },
+        {
+          heading: '让不同查询编号的两个回复走一次分支',
+          paragraphs: [
+            '把单次回复写成一个对象，编号放在 id，单位放在 unit。用点号读取字段。显示面板保存 currentId，只有 reply.id 与 currentId 相等时，才用 reply.unit 更新显示。=== 比较数字 12 和字符串 "12" 时结果为 false，因此本练习约定请求编号始终是数字。',
+            '先处理旧编号 11，再处理当前编号 12。你也可以调换顺序，比较在第二次输出时是否依然保留 celsius。只在匹配支路赋值是预防旧请求写入当前画面的直接做法。完整的查询代码还需要为超时与业务缺失留不同状态。',
+          ],
+          codeLanguage: 'JavaScript · 独立运行',
+          run: { language: 'javascript', expectedOutput: '等待当前回复\ncelsius' },
+          code: `const currentId = 12;
+let display = '等待当前回复';
+for (const reply of [{ id: 11, unit: 'fahrenheit' }, { id: 12, unit: 'celsius' }]) {
+  if (reply.id === currentId) display = reply.unit;
+  console.log(display);
+}`,
         },
       ],
       pitfalls: [

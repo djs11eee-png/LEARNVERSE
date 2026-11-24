@@ -1,4 +1,5 @@
 import type { LessonExpansion } from '../data/lessonExpansion'
+import { getCurriculumLesson } from '../data/curriculum'
 import type { RunLanguage } from './runner'
 
 export interface ChapterExercise {
@@ -6,6 +7,8 @@ export interface ChapterExercise {
   starter: string
   stdin?: string
   expectedOutput?: string
+  /** Labels for exercises that print one result per case, in fixture order. */
+  caseLabels?: string[]
   /** A separate runnable practice for chapters whose main exercise is a paper simulation. */
   prompt?: string
   checkpoints?: string[]
@@ -40,6 +43,147 @@ const js = (starter: string, output?: string) => coding('javascript', starter, o
 const html = (starter: string) => coding('html', starter)
 const fullHtml = (head: string, body: string) => `<!doctype html>\n<html lang="zh-CN">\n<head>\n  <meta charset="utf-8">\n  ${head}\n</head>\n<body>\n  ${body}\n</body>\n</html>\n`
 
+function checkedExercise(language: RunLanguage, template: string, solution: string, expectedOutput: string, caseLabels?: string[]): ChapterExercise {
+  return { language, starter: template, solution: template.replace(/\/\* 补全这一段 \*\/[^\n]*/, () => solution), expectedOutput, caseLabels }
+}
+
+const roomBooking = checkedExercise('java', `public class RoomBooking {
+    private final String room;
+    private final int people;
+
+    public RoomBooking(String name, int count) {
+        /* 补全这一段 */ room = name; people = count;
+    }
+
+    String summary() {
+        return room + " " + people;
+    }
+
+    // 下方是固定验收代码，不需要修改。
+    static void check(String room, int count) {
+        try {
+            System.out.println(new RoomBooking(room, count).summary());
+        } catch (IllegalArgumentException exception) {
+            System.out.println("拒绝");
+        }
+    }
+
+    public static void main(String[] args) {
+        RoomBooking first = new RoomBooking(" A2 ", 4);
+        RoomBooking second = new RoomBooking("B1", 7);
+        System.out.println(first.summary() + "；" + second.summary() + "；合计 " + (first.people + second.people));
+        check("A2", 1);
+        check("A2", 12);
+        check("", 4);
+        check(null, 4);
+        check("A2", 0);
+        check("A2", 13);
+    }
+}`, `if (name == null || name.strip().isEmpty() || count < 1 || count > 12) {
+            throw new IllegalArgumentException("检查房间名和人数");
+        }
+        room = name.strip();
+        people = count;`, 'A2 4；B1 7；合计 11\nA2 1\nA2 12\n拒绝\n拒绝\n拒绝\n拒绝',
+['两笔预约', '最少 1 人', '最多 12 人', '空房间名', '缺少房间名', '人数小于下限', '人数大于上限'])
+
+const readCourses = checkedExercise('javascript', `const courses = [
+  { id: "html", topic: "web", title: "HTML 结构" },
+  { id: "js", topic: "web", title: "JavaScript 起步" },
+];
+
+function readCourses(target) {
+  // 用 URL 拆出路径和查询条件，再构造响应对象。
+  /* 补全这一段 */ return { status: 0, body: {} };
+}
+
+// 固定验收代码。用 - 表示有效的空列表。
+for (const target of ["/api/courses?topic=web", "/api/courses?topic=other", "/api/courses/html", "/api/courses/unknown"]) {
+  const result = readCourses(target);
+  const body = result.body ?? {};
+  const value = body.items ? (body.items.map(course => course.id).join(",") || "-") : (body.id ?? body.message);
+  console.log(result.status, value);
+}`, `const url = new URL(target, "https://learnverse.example");
+  if (url.pathname === "/api/courses") {
+    const topic = url.searchParams.get("topic");
+    const items = topic === null ? courses : courses.filter(course => course.topic === topic);
+    return { status: 200, body: { items } };
+  }
+  const course = courses.find(item => "/api/courses/" + item.id === url.pathname);
+  if (course) return { status: 200, body: course };
+  return { status: 404, body: { message: "没有找到课程" } };`, '200 html,js\n200 -\n200 html\n404 没有找到课程', ['按主题匹配', '主题无匹配', '找到课程', '课程缺失'])
+
+const createSession = checkedExercise('javascript', `const sessions = [];
+const courses = new Set(["web", "python"]);
+
+function reject(field, code) {
+  return { status: 400, body: { field, code } };
+}
+
+function createSession(raw) {
+  // 依次解析、校验、保存。用 reject 返回字段和机器代码。
+  /* 补全这一段 */ return { status: 0 };
+}
+
+for (const raw of ["{", "null", '{"courseId":"web","minutes":"25"}', '{"courseId":"web","minutes":0}', '{"courseId":" web ","minutes":25}']) {
+  const result = createSession(raw);
+  console.log(result.status, result.body?.field ?? "-", result.body?.code ?? result.body?.id ?? "-", sessions.length);
+}
+const first = sessions[0];
+console.log(first?.id ?? "-", first?.courseId ?? "-", first?.minutes ?? "-");`, `let body;
+  try {
+    body = JSON.parse(raw);
+  } catch {
+    return reject(null, "invalid_json");
+  }
+  if (body === null || typeof body !== "object" || Array.isArray(body)) return reject(null, "expected_object");
+  if (typeof body.courseId !== "string") return reject("courseId", "invalid_type");
+  const courseId = body.courseId.trim();
+  if (!courses.has(courseId)) return reject("courseId", "unknown_course");
+  const minutes = body.minutes;
+  if (!Number.isInteger(minutes)) return reject("minutes", "invalid_type");
+  if (minutes < 1 || minutes > 1440) return reject("minutes", "out_of_range");
+  const id = "s" + (sessions.length + 1);
+  sessions.push({ id, courseId, minutes });
+  return { status: 201, body: { id } };`,
+'400 - invalid_json 0\n400 - expected_object 0\n400 minutes invalid_type 0\n400 minutes out_of_range 0\n201 - s1 1\ns1 web 25',
+['JSON 损坏', '需要对象', '错误类型', '分钟越界', '创建成功', '读回规范化记录'])
+
+const sessionTotals = checkedExercise('sql', `WITH
+  courses(id, title) AS (VALUES ('web', '网页设计'), ('js', 'JavaScript 起步')),
+  sessions(id, course_id, minutes) AS (VALUES ('s1', 'web', 12), ('s2', 'web', 25))
+/* 补全这一段 */ SELECT * FROM courses;`, `SELECT c.id, c.title,
+       COUNT(s.id) AS session_count,
+       COALESCE(SUM(s.minutes), 0) AS total_minutes
+FROM courses AS c
+LEFT JOIN sessions AS s ON s.course_id = c.id
+GROUP BY c.id, c.title
+ORDER BY total_minutes DESC, c.id;`, 'id\ttitle\tsession_count\ttotal_minutes\nweb\t网页设计\t2\t37\njs\tJavaScript 起步\t0\t0')
+
+const sessionTests = checkedExercise('javascript', `function createSession(minutes, rows) {
+  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {
+    return { status: 400, body: { field: "minutes" } };
+  }
+  rows.push({ id: "s" + (rows.length + 1), minutes });
+  return { status: 201, body: { id: rows[rows.length - 1].id } };
+}
+
+const cases = [[0, 400], [1, 201], [1440, 201], [1441, 400], ["25", 400]];
+for (const [input, expectedStatus] of cases) {
+  const rows = [{ id: "s1", minutes: 10 }];
+  const result = createSession(input, rows);
+  // 分别核对响应、旧记录、新纪录或错误字段。
+  /* 补全这一段 */ const ok = false;
+  console.log(JSON.stringify(input), ok ? "通过" : "未通过");
+}`, `const untouched = rows[0]?.id === "s1" && rows[0]?.minutes === 10;
+  let storageMatches;
+  if (expectedStatus === 201) {
+    storageMatches = rows.length === 2 && rows[1].minutes === input && result.body?.id === rows[1].id;
+  } else {
+    storageMatches = rows.length === 1 && result.body?.field === "minutes";
+  }
+  const ok = result.status === expectedStatus && untouched && storageMatches;`,
+'0 通过\n1 通过\n1440 通过\n1441 通过\n"25" 通过', ['下限外', '恰好下限', '恰好上限', '上限外', '字符串分钟'])
+
 const authored: Record<string, Record<string, ChapterExercise>> = {
   'lv-python-foundations': {
     values: python('item = "苹果"\nprice = 4\nquantity = 3\n\n# 先计算总价，再输出小票。\n', '苹果 12 元'),
@@ -53,12 +197,15 @@ const authored: Record<string, Record<string, ChapterExercise>> = {
     'mapping-and-sets': python('plan = {"列表", "字典", "模块"}\nrecords = [("字典", 15), ("字典", 10)]\nminutes = {}\n\n# 先累计，再找出未学主题。\n', "25\n['列表', '模块']"),
     'function-arguments': python('def weekly_plan(days, daily=25):\n    # 生成一个新的列表。\n    return [0, 0, 0]\n\nfirst = weekly_plan(3)\nprint(first)\nfirst[0] = 5\nprint(weekly_plan(3))\nprint(weekly_plan(2, 0))\n', '[25, 25, 25]\n[25, 25, 25]\n[0, 0]'),
     'modules-and-json': python(`import json\n\ndef display(text):\n    # 解析文本、验证字段，再给出显示结果。\n    return ""\n\nprint(display('{"course":"Python","minutes":25}'))\nprint(display('{"course":"Python","minutes":true}'))\n`, 'Python 25\n需要有效的整数分钟'),
-    exceptions: python('def add_minutes(records, raw):\n    # 先解析，再检查范围，通过后才写入。\n    return ""\n\nentries = [15]\nfor raw in ("25", "abc", "0"):\n    print(add_minutes(entries, raw))\nprint(entries)\n', '已记录\n需要整数\n时长超出范围\n[15, 25]'),
+    exceptions: {
+      ...python('def add_minutes(records, raw):\n    # 先解析，再检查范围，通过后才写入。\n    return ""\n\nentries = [15]\nfor raw in ("25", "abc", "0"):\n    print(add_minutes(entries, raw))\nprint(entries)\n', '已记录\n需要整数\n时长超出范围\n[15, 25]'),
+      caseLabels: ['有效输入', '转换失败', '范围无效', '最终列表'],
+    },
   },
   'lv-javascript-foundations': {
     variables: js('const baseCount = 8;\nconst raw = " 7 ";\n\n// 清理输入，检查是否为正整数，然后输出结果。\n', '总计 15 张'),
     conditions: js('const minutes = 60;\n\n// 先检查是否有效，再从最大的区间往下判断。\n', '安排休息'),
-    arrays: js('const minutes = [9, 24, 15, 6];\n\n// 选出达标记录，逐条编号，最后输出合计。\n'),
+    arrays: js('const minutes = [9, 24, 15, 6];\n\n// 选出达标记录，逐条编号，最后输出合计。\n', '1. 24 分钟\n2. 15 分钟\n达标时长 39 分钟'),
     functions: js('function roundsNeeded(questions, perRound) {\n  // 检查输入，把计算结果返回给调用者。\n}\n\nfunction roundLabel(result) {\n  // 返回提示文本。\n}\n\nconsole.log(roundLabel(roundsNeeded(13, 5)));\nconsole.log(roundLabel(roundsNeeded(0, 5)));\nconsole.log(roundLabel(roundsNeeded(13, 0)));\n', '需要 3 轮\n需要 0 轮\n检查题数和每轮安排'),
   },
   'lv-c-foundations': {
@@ -71,7 +218,7 @@ const authored: Record<string, Record<string, ChapterExercise>> = {
     'types-and-programs': javaMain('PosterBags', '        int posters = 17;\n        int capacity = 4;\n        // 输出满袋数、剩余张数和容量比值。', 'Full bags: 4\nLoose posters: 1\nRatio: 4.25'),
     'branches-and-loops': javaMain('ValidReadings', '        int[] readings = {-2, 4, 7, 0, 9};\n        int count = 0;\n        long total = 0L;\n        // 遍历读数，按题意跳过或结束。\n        System.out.println(count + " " + total);', '2 11'),
     methods: javaMain('Racks', '        System.out.println(rackSlots(0, 4));\n        System.out.println(rackSlots(8, 4));\n        System.out.println(rackSlots(9, 4));\n        System.out.println(rackSlots(Integer.MAX_VALUE, 4));', '0\n2\n3\n536870912', '    static int rackSlots(int items, int perRack) {\n        // 检查参数，再计算架子数。\n        return 0;\n    }\n\n'),
-    objects: javaMain('RoomBooking', '        // 创建两条预订，打印每条摘要并求总人数。', undefined, '    // 写出成员、构造方法和摘要方法。\n\n'),
+    objects: roomBooking,
   },
   'lv-web-foundations': {
     'html-structure': html(fullHtml('<title>活动中心</title>', '<main>\n    <!-- 补上主标题与两个内容区。 -->\n  </main>')),
@@ -80,10 +227,10 @@ const authored: Record<string, Record<string, ChapterExercise>> = {
     'browser-interaction': simulated('先把按钮背后的规则写成一个函数：点击完成时数字最多到 3，点击重置则回到 0。给定当前 2 题和“完成”，结果应为 3。再试 3 题和“完成”、3 题和“重置”。', 'completed, action', '2, "完成"', '3', '  if (action === "重置") return 0;\n  if (action === "完成" && completed < 3) return completed + 1;\n  return completed;'),
   },
   'lv-backend-foundations': {
-    http: js('const courses = [\n  { id: "html", topic: "web", title: "HTML 结构" },\n  { id: "js", topic: "web", title: "JavaScript 起步" },\n];\n\nfunction readCourses(target) {\n  // 用 URL 拆出路径和查询条件，再构造响应对象。\n}\n\nconsole.log(readCourses("/api/courses?topic=web"));\nconsole.log(readCourses("/api/courses?topic=other"));\nconsole.log(readCourses("/api/courses/html"));\nconsole.log(readCourses("/api/courses/unknown"));\n'),
-    validation: js('const sessions = [];\nconst courses = new Set(["web", "python"]);\n\nfunction createSession(raw) {\n  // 依次解析、校验、保存。错误时返回字段和原因。\n}\n\nconsole.log(createSession(\'{"courseId":" web ","minutes":20}\'));\nconsole.log(createSession(\'{"courseId":"web","minutes":0}\'));\nconsole.log(sessions);\n'),
-    data: coding('sql', `WITH\n  courses(id, title) AS (VALUES ('web', '网页设计'), ('js', 'JavaScript 起步')),\n  sessions(id, course_id, minutes) AS (VALUES ('s1', 'web', 12), ('s2', 'web', 25))\n-- 先保留所有课程，再用 COUNT 和 SUM 汇总。\nSELECT * FROM courses;\n`),
-    testing: js('function createSession(minutes, rows) {\n  if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) {\n    return { status: 400 };\n  }\n  rows.push({ id: "s" + (rows.length + 1), minutes });\n  return { status: 201 };\n}\n\nconst cases = [[0, 400], [1, 201], [1440, 201], [1441, 400], ["25", 400]];\nfor (const [input, expectedStatus] of cases) {\n  const rows = [{ id: "s1", minutes: 10 }];\n  const result = createSession(input, rows);\n  // 检查状态码、旧记录，以及是否恰好按预期写入。\n}\n'),
+    http: readCourses,
+    validation: createSession,
+    data: sessionTotals,
+    testing: sessionTests,
   },
   'lv-computer-science': {
     binary: simulated('输入分区号和座位号，将座位限制在 0 到 63 内。用 8 位文字输出编码，例如 2 号分区、37 号座位输出 10100101。超过范围就返回“超出范围”。', 'zone, seat', '2, 37', '10100101', '  if (zone < 0 || zone > 3 || seat < 0 || seat > 63) return "超出范围";\n  return (zone * 64 + seat).toString(2).padStart(8, "0");'),
@@ -107,11 +254,11 @@ const authored: Record<string, Record<string, ChapterExercise>> = {
     nodes: simulated('用普通 JavaScript 模拟观测面板处理数据这一步。只读取最后 windowSize 条温度记录，输出其中最大的读数。试试把最后一条改为 26。', 'readings, windowSize', '[25, 20, 23, 22], 3', '23', '  return Math.max(...readings.slice(-windowSize));'),
     topics: simulated('只模拟 QoS 的可靠性这一项：订阅者要求“可靠”时，尽力而为的发布者满足不了它；其余组合视为兼容。返回“兼容”或“不兼容”。', 'offers, requests', '"尽力而为", "可靠"', '不兼容', '  return requests === "可靠" && offers !== "可靠" ? "不兼容" : "兼容";'),
     services: simulated('模拟服务面板筛选回复：只有请求编号等于当前编号，才能更新显示。匹配的响应显示单位，否则显示“等待当前回复”。', 'activeId, replyId, unit', '12, 11, "celsius"', '等待当前回复', '  return replyId === activeId ? unit : "等待当前回复";'),
-    actions: simulated('模拟动作面板的取消进度。发取消请求时显示“正在取消”；收到任务已取消的最终事件才显示“已取消”。给定已运行任务和这两个连续事件，检查最终显示。', 'events', '["请求取消", "已取消事件"]', '已取消', '  let state = "运行中";\n  for (const event of events) {\n    if (event === "请求取消") state = "正在取消";\n    if (event === "已取消事件") state = "已取消";\n  }\n  return state;'),
+    actions: simulated('逐步模拟动作面板。发出请求后显示“已申请取消”，服务端接受后显示“正在取消”，最终状态到达后才显示“已取消”。按顺序输出每一步的显示。如果草稿只有两个事件，在请求与最终事件之间补上“接受取消”，再检查三步的输出。', 'events', '["请求取消", "接受取消", "已取消事件"]', '已申请取消 → 正在取消 → 已取消', '  let state = "运行中";\n  const trace = [];\n  for (const event of events) {\n    if (event === "请求取消") state = "已申请取消";\n    if (event === "接受取消") state = "正在取消";\n    if (event === "已取消事件") state = "已取消";\n    trace.push(state);\n  }\n  return trace.join(" → ");'),
   },
 }
 
 export function getChapterExercise(courseId: string, lessonId: string, practice?: LessonExpansion['practice']): ChapterExercise | undefined {
   if (!practice) return undefined
-  return authored[courseId]?.[lessonId]
+  return authored[courseId]?.[lessonId] ?? getCurriculumLesson(courseId, lessonId)?.exercise
 }

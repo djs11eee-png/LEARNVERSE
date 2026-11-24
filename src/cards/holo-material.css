@@ -29,6 +29,34 @@
   --plate-light: #dec2ac;
   --plate-pearl: #fff3d4;
 }
+.lv-plate-paper[data-series=web] {
+  --plate-dark: #09151e;
+  --plate-shade: #143243;
+  --plate-mid: #4e8099;
+  --plate-light: #a6e4f2;
+  --plate-pearl: #f0fdff;
+}
+.lv-plate-paper[data-series=backend] {
+  --plate-dark: #0b1020;
+  --plate-shade: #1b254a;
+  --plate-mid: #5d6fa8;
+  --plate-light: #b6c7fa;
+  --plate-pearl: #f2f5ff;
+}
+.lv-plate-paper[data-series=systems] {
+  --plate-dark: #0a1610;
+  --plate-shade: #193828;
+  --plate-mid: #55856c;
+  --plate-light: #b3e5c7;
+  --plate-pearl: #f2fff2;
+}
+.lv-plate-paper[data-series=robotics] {
+  --plate-dark: #171209;
+  --plate-shade: #382b15;
+  --plate-mid: #997c46;
+  --plate-light: #ebd096;
+  --plate-pearl: #fff8df;
+}
 .lv-plate-paper svg, .lv-plate-canvas { display: block; width: 100%; height: 100%; }
 .lv-plate-caption {
   position: absolute;

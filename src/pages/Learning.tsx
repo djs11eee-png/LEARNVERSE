@@ -1,39 +1,57 @@
 import {
-  ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, Binary, BookOpen, Bookmark,
-  Braces, Check, CircleDot, Clock3, Code2, Compass, Flame, GitBranch,
-  Layers3, Radio, Search, Sparkles, Target, Terminal, Trophy,
+  ArrowDownRight, ArrowLeft, ArrowRight, ArrowUpRight, BookOpen, Bookmark,
+  Check, CircleDot, Clock3, Cloud, Compass, Flame, GitBranch, Layers3, RefreshCw, Search, Target, Trophy,
 } from 'lucide-react';
-import type { CSSProperties, FormEvent, ReactNode } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { lazy, Suspense, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { ThemeSelect } from '../components/ThemeSelect';
-import { domains, routes } from '../data/learning';
+import { useStation } from '../components/observatory/StationProvider';
+import { courseCatalog, getRelatedCourses } from '../data/courseCatalog';
+import { courseProjects } from '../data/curriculum';
+import { transferExercises } from '../data/curriculum/transfer';
+import { domains, getLearningRoute as findRoute, routeMapPath } from '../data/learning';
+import { majorRoutes } from '../data/majorRoutes';
 import type { KnowledgeDomain, LearningRoute } from '../data/learning';
 import { categoryLabels, courses as externalCourses, difficultyLabels, languageLabels, resources, resourceSearchText } from '../data/resources';
 import type { Resource } from '../data/resources';
 import { workspaceCourses } from '../data/workspaceCourses';
+import type { WorkspaceCourse } from '../data/workspaceCourses';
 import { useProgress } from '../state/progress';
 import type { Activity } from '../state/progress';
 import './learning.css';
 
 const CardVault = lazy(() => import('../cards/CardVault').then(module => ({ default: module.CardVault })));
 
-const domainVisuals = [
-  { icon: Braces, x: 20, y: 28 },
-  { icon: Sparkles, x: 53, y: 13 },
-  { icon: Binary, x: 79, y: 28 },
-  { icon: Layers3, x: 85, y: 51 },
-  { icon: Radio, x: 77, y: 75 },
-  { icon: Code2, x: 48, y: 87 },
-  { icon: GitBranch, x: 20, y: 74 },
-  { icon: Terminal, x: 16, y: 51 },
-];
 const difficulties = ['Beginner', 'Intermediate', 'Advanced'] as const;
 const courseSymbols: Record<string, string> = {
   Python: 'Py', JavaScript: 'JS', 'Computer Science': 'CS', 'C Language': 'C',
   Algorithms: 'O(n)', 'Frontend Development': '</>', Java: 'Java',
-  'Backend Development': 'HTTP', 'AI & LLM': 'LLM', 'ROS2 & Robotics': 'ROS 2',
+  'Backend Development': 'HTTP', 'AI & LLM': 'LLM', 'IoT & Embedded': 'IoT', 'ROS2 & Robotics': 'ROS 2',
 };
+
+function readWorkspaceMastery(course: WorkspaceCourse) {
+  try {
+    const raw = localStorage.getItem('learnverse.workspace.v1.' + course.id);
+    const parsed: unknown = JSON.parse(raw ?? 'null');
+    if (!parsed || typeof parsed !== 'object') {
+      return { completed: [] as string[], verified: [] as string[], projectCompleted: false, transferCompleted: false };
+    }
+    const record = parsed as Record<string, unknown>;
+    const valid = new Set(course.lessons.map((lesson) => lesson.id));
+    const pick = (value: unknown) => Array.isArray(value)
+      ? [...new Set(value.filter((item): item is string => typeof item === 'string' && valid.has(item)))]
+      : [];
+    return {
+      completed: pick(record.completed),
+      verified: pick(record.verified),
+      projectCompleted: record.projectCompleted === true,
+      transferCompleted: record.transferCompleted === true,
+    };
+  } catch {
+    return { completed: [] as string[], verified: [] as string[], projectCompleted: false, transferCompleted: false };
+  }
+}
 const sourceDateFormatter = new Intl.DateTimeFormat('zh-CN', {
   year: 'numeric', month: 'long', day: 'numeric', timeZone: 'UTC',
 });
@@ -47,7 +65,11 @@ const localCourses: Resource[] = workspaceCourses.map((course) => ({
   redistributionStatus: '站内学习内容',
   tags: course.lessons.flatMap((lesson) => [lesson.title, lesson.summary]),
   updatedAt: '2026-11-17',
-  audience: '从基础开始学习的学习者',
+  audience: {
+    Beginner: '从基础开始学习的学习者',
+    Intermediate: '已经完成同方向基础学习的学习者',
+    Advanced: '已经完成同方向进阶学习的学习者',
+  }[course.difficulty],
   author: course.attribution?.author ?? 'LEARNVERSE',
 }));
 
@@ -57,10 +79,6 @@ function findResource(id: string) {
 
 function findCourse(id: string) {
   return localCourses.find((course) => course.id === id) ?? externalCourses.find((course) => course.id === id);
-}
-
-function findRoute(id: string | null) {
-  return routes.find((route) => route.id === id);
 }
 
 function resolveResources(ids: string[], lookup: (id: string) => Resource | undefined) {
@@ -206,67 +224,11 @@ function DomainDetail({ domain }: { domain: KnowledgeDomain }) {
   );
 }
 
-export function Explore() {
-  const { domainId } = useParams();
-  if (domainId) {
-    const domain = domains.find((item) => item.id === domainId);
-    return domain
-      ? <DomainDetail domain={domain} />
-      : <Screen><BackLink to="/explore">返回知识星图</BackLink><EmptyState title="未找到这个领域"><p>请从知识星图选择其他主题。</p></EmptyState></Screen>;
-  }
-
-  return (
-    <Screen view="map">
-      <div className="explore-observatory">
-      <PageHeader title="知识星图" copy="选择星图上的领域，查看学习路线、入门要求和推荐资源。" count={domains.length} unit="个知识领域" />
-      <section aria-label="知识领域" className="learn-map">
-        <div className="learn-map-art" aria-hidden="true">
-          <div className="learn-map-ring" />
-          <div className="learn-map-ring" />
-          <div className="learn-map-ring" />
-          <svg className="learn-map-spokes" viewBox="0 0 100 100" preserveAspectRatio="none" focusable="false">
-            {domainVisuals.map(({ x, y }, index) => {
-              const path = `M 50 50 L ${x} ${y}`;
-              return (
-                <g key={domains[index].id}>
-                  <path d={path} vectorEffect="non-scaling-stroke" />
-                  <path
-                    className="learn-map-signal"
-                    d={path}
-                    pathLength="1"
-                    vectorEffect="non-scaling-stroke"
-                    style={{ '--signal-delay': `${index * 37}ms` } as CSSProperties}
-                  />
-                </g>
-              );
-            })}
-          </svg>
-          <div className="learn-map-core" />
-        </div>
-        <ul className="learn-map-nodes">
-          {domains.map((domain, index) => {
-            const { icon: Icon, x, y } = domainVisuals[index];
-            return (
-              <li key={domain.id} style={{ '--node-x': `${x}%`, '--node-y': `${y}%` } as CSSProperties}>
-                <Link to={`/explore/${domain.id}`}><Icon size={17} aria-hidden="true" /><span>{domain.title}</span><ArrowUpRight size={13} aria-hidden="true" /></Link>
-              </li>
-            );
-          })}
-        </ul>
-      </section>
-      </div>
-      <section className="learn-section">
-        <SectionHeading title="精选路线" />
-        <div className="learn-grid">
-          {domains.filter((domain) => ['programming', 'ai', 'web-development'].includes(domain.id)).map((domain) => {
-            const route = findRoute(domain.routeId);
-            if (!route) return null;
-            return <article className="learn-card learn-featured-route" key={route.id}><h3>{route.title}</h3><p>{route.description}</p><Link className="learn-card-action" to={`/explore/${domain.id}`}>查看学习路线 <ArrowUpRight size={15} aria-hidden="true" /></Link></article>;
-          })}
-        </div>
-      </section>
-    </Screen>
-  );
+export function InterestRoute({ domainId }: { domainId: string }) {
+  const domain = domains.find(item => item.id === domainId);
+  return domain
+    ? <DomainDetail domain={domain} />
+    : <Screen><BackLink to="/explore">返回知识星图</BackLink><EmptyState title="未找到这条路线"><p>请从知识星图选择其他路线。</p></EmptyState></Screen>;
 }
 
 function Catalog({ mode }: { mode: 'course' | 'resource' }) {
@@ -315,7 +277,7 @@ function Catalog({ mode }: { mode: 'course' | 'resource' }) {
     <Screen view={mode}>
       <PageHeader title={isLibrary ? '资源库' : '学习学院'} copy={isLibrary
         ? '查找公开课程、练习和技术指南。每项资源都链接到原始发布方。'
-        : '选择课程，在站内阅读章节、完成练习并记录进度。'} count={catalog.length} unit={isLibrary ? '项外部资源' : '门站内课程'} />
+        : '选择课程，在站内学习章节、练习并完成结课项目。'} count={catalog.length} unit={isLibrary ? '项外部资源' : '门站内课程'} />
       <section aria-label={isLibrary ? '资源目录' : '课程目录'}>
         <div className="learn-filters">
           <label className="learn-search">
@@ -358,13 +320,33 @@ function Catalog({ mode }: { mode: 'course' | 'resource' }) {
 }
 
 function CourseDetail({ course }: { course: Resource }) {
-  const { started, completed, favorites, uncompleteCourse, toggleFavorite } = useProgress();
+  const { started, completed, activeRoute, favorites, uncompleteCourse, toggleFavorite } = useProgress();
   const isComplete = completed.includes(course.id);
   const isActive = started.includes(course.id);
   const saved = favorites.includes(course.id);
   const local = workspaceCourses.find((item) => item.id === course.id);
   const firstLesson = local?.lessons[0];
   const attribution = local?.attribution;
+  const project = local && courseProjects[local.id];
+  const transfer = local && transferExercises[local.id];
+  const mastery = local ? readWorkspaceMastery(local) : undefined;
+  const allQuizzesDone = Boolean(local && mastery && mastery.completed.length === local.lessons.length);
+  const allCodeVerified = Boolean(local && mastery && mastery.verified.length === local.lessons.length);
+  const related = local ? getRelatedCourses(local.id) : [];
+  const needsNativeRunner = local && ['C Language', 'Java'].includes(course.category);
+  const matchingMajors = majorRoutes.filter(route => route.courseIds.includes(course.id));
+  const courseMap = matchingMajors.find(route => route.id === activeRoute) ?? matchingMajors[0];
+  const isSqlCourse = course.id === 'lv-backend-consistency';
+  const isAiCourse = course.category === 'AI & LLM';
+  const isIotCourse = course.category === 'IoT & Embedded';
+  const usesJavaScript = local && !isSqlCourse && !isAiCourse && !isIotCourse && ['Computer Science', 'Algorithms', 'Frontend Development', 'Backend Development', 'ROS2 & Robotics'].includes(course.category);
+  const statusLabel = isComplete
+    ? '已完成'
+    : allQuizzesDone && !allCodeVerified
+      ? '测验已全通 · 编程待验收'
+      : isActive || (mastery && (mastery.completed.length > 0 || mastery.verified.length > 0))
+        ? '学习中'
+        : '尚未开始';
   return (
     <Screen>
       <PageHeader title={course.title} copy={course.description}><BackLink to="/academy">返回学习学院</BackLink></PageHeader>
@@ -386,6 +368,12 @@ function CourseDetail({ course }: { course: Resource }) {
               : <Link className="learn-button" to="/academy">浏览站内课程 <ArrowRight size={15} aria-hidden="true" /></Link>}
             <button className="learn-button learn-button--secondary" type="button" aria-pressed={saved} onClick={() => toggleFavorite(course.id)}><Bookmark size={16} aria-hidden="true" /> {saved ? '已收藏' : '收藏课程'}</button>
           </div>
+          {related.map(({ label, course }) => <p className="learn-course-related" key={course.id}>{label} <Link className="learn-inline-link" to={`/academy/${course.id}`}>{course.title}</Link></p>)}
+          {isSqlCourse && <p className="learn-course-related">动手练习直接在浏览器内置 SQLite 中运行多表查询与事务，无需先学 JavaScript，适合搭配 Python 主轴学习。</p>}
+          {isAiCourse && <p className="learn-course-related">站内评测与检索微实验采用零环境轻量 JavaScript 脚本执行，工程思路与 Python 主轴课程完全通用。</p>}
+          {isIotCourse && <p className="learn-course-related">站内边缘网关与协议回放沙箱使用轻量 JavaScript 脚本执行，16 位传感帧位掩码与 C 语言实操完全一致。</p>}
+          {usesJavaScript && <p className="learn-course-related">动手练习用到 JavaScript 的数组、循环和函数。<Link className="learn-inline-link" to={`/academy/${courseCatalog.javascript.id}`}>查看 JavaScript 起步</Link></p>}
+          {needsNativeRunner && <p className="learn-course-related">运行代码需要本机编译服务。Windows 用户可从项目目录打开「安装并启动实验室.cmd」。</p>}
           {attribution && <details className="learn-source-details">
             <summary>课程来源与许可</summary>
             <dl>
@@ -402,13 +390,33 @@ function CourseDetail({ course }: { course: Resource }) {
         <aside className="learn-card learn-course-progress">
           <div className="learn-icon"><Target size={20} aria-hidden="true" /></div>
           <h2>{local ? '课程章节' : '历史学习记录'}</h2>
-          <p role="status">{isComplete ? '已完成' : isActive ? '学习中' : '尚未开始'}</p>
+          <p role="status">{statusLabel}</p>
+          {local && mastery && (
+            <div className="learn-mastery-grid" aria-label="课程分层达成情况">
+              <span>测验 {mastery.completed.length}/{local.lessons.length}</span>
+              <span>编程 {mastery.verified.length}/{local.lessons.length}</span>
+              {project && <span>结课项目 {mastery.projectCompleted ? '已完成' : '待验收'}</span>}
+              {transfer && <span>迁移练习 {mastery.transferCompleted ? '已完成' : '待完成'}</span>}
+            </div>
+          )}
+          {isComplete && courseMap && <Link className="learn-card-action" to={routeMapPath(courseMap)}>
+            查看点亮的星星 <ArrowUpRight size={15} aria-hidden="true" />
+          </Link>}
           {local
             ? <ol className="learn-route-steps">
-                {local.lessons.map((lesson, index) => <li key={lesson.id}>
-                  <span className="learn-route-index">{index + 1}</span>
-                  <Link to={`/academy/${local.id}/lesson/${lesson.id}`}><span>{lesson.title}<small>{lesson.summary}</small></span><ArrowRight size={16} aria-hidden="true" /></Link>
-                </li>)}
+                {local.lessons.map((lesson, index) => {
+                  const lessonDualDone = mastery?.completed.includes(lesson.id) && mastery?.verified.includes(lesson.id);
+                  return (
+                    <li key={lesson.id}>
+                      <span className="learn-route-index">{lessonDualDone ? <Check size={15} aria-label="本章双达标" /> : index + 1}</span>
+                      <Link to={`/academy/${local.id}/lesson/${lesson.id}`}><span>{lesson.title}<small>{lesson.summary}</small></span><ArrowRight size={16} aria-hidden="true" /></Link>
+                    </li>
+                  );
+                })}
+                {project && <li key="project">
+                  <span className="learn-route-index"><Target size={16} aria-hidden="true" /></span>
+                  <Link to={`/academy/${local.id}/project`}><span>结课项目<small>{project.title}</small></span><ArrowRight size={16} aria-hidden="true" /></Link>
+                </li>}
               </ol>
             : <><p>这项外部课程的站内版本正在建设中。你的历史记录仍可查看。</p>
                 {isComplete && <button type="button" className="learn-button learn-button--secondary" onClick={() => uncompleteCourse(course.id)}>撤销历史完成标记 <ArrowLeft size={15} aria-hidden="true" /></button>}
@@ -465,22 +473,43 @@ function formatActivityDate(timestamp: string): string {
 }
 
 function TimeForm() {
-  const { logMinutes } = useProgress();
-  const [values, setValues] = useState({ minutes: '', lastLogged: 0 });
+  const { logMinutes, hasUnsavedProgress, retryProgress } = useProgress();
+  const [entry, setEntry] = useState('');
+  const [notice, setNotice] = useState('');
+  const [saving, setSaving] = useState(false);
 
-  function submit(event: FormEvent<HTMLFormElement>) {
+  async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const minutes = Number(values.minutes);
-    if (!Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return;
-    logMinutes(minutes);
-    setValues({ minutes: '', lastLogged: minutes });
+    const minutes = Number(entry);
+    if (saving || !Number.isInteger(minutes) || minutes < 1 || minutes > 1440) return;
+    setSaving(true);
+    const saved = await logMinutes(minutes);
+    setEntry('');
+    setNotice(saved ? `已记录 ${formatDuration(minutes)}。` : '');
+    setSaving(false);
+  }
+
+  async function retry() {
+    setSaving(true);
+    const saved = await retryProgress();
+    setNotice(saved ? '暂存的学习记录已保存。' : '');
+    setSaving(false);
   }
 
   return (
-    <form className="learn-time-form" onSubmit={submit}>
+    <form className="learn-time-form" onSubmit={(event) => void submit(event)}>
       <label htmlFor="study-minutes">记录学习时长</label>
-      <div><input id="study-minutes" type="number" min="1" max="1440" placeholder="分钟" value={values.minutes} required onChange={(event) => setValues({ minutes: event.target.value, lastLogged: 0 })} /><button type="submit" className="learn-button learn-button--secondary">记录</button></div>
-      {values.lastLogged > 0 && <p role="status">已记录 {formatDuration(values.lastLogged)}。</p>}
+      <div>
+        <input id="study-minutes" type="number" min="1" max="1440" placeholder="分钟" value={entry} required disabled={saving}
+          onChange={(event) => { setEntry(event.target.value); setNotice(''); }} />
+        <button type="submit" className="learn-button learn-button--secondary" disabled={saving}>记录</button>
+      </div>
+      {hasUnsavedProgress
+        ? <div className="learn-time-save">
+          <p role="status">学习进度未保存，暂存在此标签页。</p>
+          <button type="button" className="learn-button learn-button--secondary" disabled={saving} onClick={() => void retry()}>重试保存</button>
+        </div>
+        : notice && <p role="status">{notice}</p>}
     </form>
   );
 }
@@ -488,12 +517,16 @@ function TimeForm() {
 export function Dashboard() {
   const { hash } = useLocation();
   const section = hash === '#study' ? 'study' : 'vault';
+  const observatory = useStation();
   const { completed, favorites, minutes, streak, activity, activeCourse, activeRoute } = useProgress();
   const currentCourse = activeCourse ? findCourse(activeCourse) : undefined;
   const currentRoute = findRoute(activeRoute);
   const completedCourses = resolveResources(completed, findCourse);
   const savedCount = favorites.filter((id) => findResource(id) || findCourse(id)).length;
-  const routeComplete = currentRoute?.courseIds.every((id) => completed.includes(id)) ?? false;
+  const milestoneCourses = currentRoute?.milestoneCourseIds
+    ?? currentRoute?.courseIds.filter((id) => findCourse(id)?.difficulty !== 'Advanced')
+    ?? [];
+  const routeMilestone = milestoneCourses.length > 0 && milestoneCourses.every((id) => completed.includes(id));
   const metrics = [
     { icon: BookOpen, value: `${completedCourses.length} 门`, label: '已完成课程' },
     { icon: Clock3, value: formatDuration(minutes), label: '累计学习时长' },
@@ -504,16 +537,39 @@ export function Dashboard() {
     { title: '完成第一门课程', earned: completedCourses.length > 0 },
     { title: '累计学习一小时', earned: minutes >= 60 },
     { title: '连续学习三天', earned: streak >= 3 },
-    { title: '走完一条学习路线', earned: routeComplete },
+    { title: '完成路线的基础与进阶', earned: routeMilestone },
   ];
 
   return (
     <Screen view="universe">
-      <PageHeader title="我的宇宙" copy="在这台设备上收藏知识卡片，回顾自己的学习记录。" />
-      <nav className="universe-switch" aria-label="我的宇宙视图">
-        <Link to="/my-universe" aria-current={section === 'vault' ? 'page' : undefined}><Layers3 size={16} /> 知识图鉴</Link>
-        <Link to="/my-universe#study" aria-current={section === 'study' ? 'page' : undefined}><BookOpen size={16} /> 学习记录</Link>
-      </nav>
+      <PageHeader title="我的宇宙" copy="在这台设备上收藏知识卡片，回顾自己的学习记录，也可登录观测站跨设备云端同步。" />
+      <div className="universe-toolbar">
+        <nav className="universe-switch" aria-label="我的宇宙视图">
+          <Link to="/my-universe" aria-current={section === 'vault' ? 'page' : undefined}><Layers3 size={16} /> 知识图鉴</Link>
+          <Link to="/my-universe#study" aria-current={section === 'study' ? 'page' : undefined}><BookOpen size={16} /> 学习记录</Link>
+        </nav>
+        <div className="universe-cloud-actions">
+          <button
+            type="button"
+            className="universe-sync-btn"
+            disabled={observatory.syncing}
+            onClick={(event) => void observatory.triggerCloudSync(section === 'vault' ? 'sync_cards' : 'sync_progress', event.currentTarget)}
+          >
+            {observatory.syncing ? <RefreshCw size={15} className="universe-sync-spin" aria-hidden="true" /> : <Cloud size={15} aria-hidden="true" />}
+            <span>
+              {observatory.syncing
+                ? '正在云端同步…'
+                : observatory.user
+                  ? (section === 'vault' ? '云端同步卡册' : '云端同步进度')
+                  : (section === 'vault' ? '登录并同步卡册' : '登录并同步进度')}
+            </span>
+          </button>
+          {observatory.user && (
+            <span className="universe-sync-badge">@{observatory.user.username}</span>
+          )}
+        </div>
+      </div>
+      {observatory.syncNote && <p className="universe-sync-note" role="status">{observatory.syncNote}</p>}
       {section === 'vault' ? <Suspense fallback={<p role="status">正在加载图鉴…</p>}><CardVault /></Suspense> : <>
       <dl className="learn-metrics">
         {metrics.map(({ icon: Icon, label, value }) => <div className="learn-card" key={label}><Icon size={20} aria-hidden="true" /><dt>{label}</dt><dd>{value}</dd></div>)}
@@ -522,7 +578,7 @@ export function Dashboard() {
         <section className="learn-card learn-dashboard-card">
           <h2>当前学习路线</h2>
           {currentRoute
-            ? <><p>{currentRoute.title}</p><RouteCourses route={currentRoute} /></>
+            ? <><p>{currentRoute.title}</p><Link className="learn-card-action" to={routeMapPath(currentRoute)}>在星图中查看 <ArrowUpRight size={15} /></Link><RouteCourses route={currentRoute} /></>
             : <><p>还没有选择学习路线。</p><Link className="learn-card-action" to="/explore">探索学习路线 <ArrowUpRight size={16} aria-hidden="true" /></Link></>}
           {currentCourse && <Link className="learn-button" to={workspaceCourses.some((course) => course.id === currentCourse.id) ? `/academy/${currentCourse.id}/learn` : `/academy/${currentCourse.id}`}>继续学习「{currentCourse.title}」 <ArrowRight size={17} aria-hidden="true" /></Link>}
         </section>

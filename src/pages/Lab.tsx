@@ -6,6 +6,7 @@ import {
 import { algorithms, projects, questions, traceBinarySearch, traceBubbleSort } from '../data/lab';
 import { ThemeSelect } from '../components/ThemeSelect';
 import { CodeWorkbench } from '../components/CodeWorkbench';
+import { useStation } from '../components/observatory/StationProvider';
 import type { RunLanguage } from '../code/runner';
 import { Link } from 'react-router-dom';
 import { earnDaily, dailyKey } from '../cards/rewards';
@@ -25,6 +26,7 @@ const labSamples = {
 } satisfies Partial<Record<RunLanguage, { label: string; code: string }>>;
 
 function FreePractice() {
+  const observatory = useStation();
   const [language, setLanguage] = useState<keyof typeof labSamples>('python');
   const sample = labSamples[language];
   return (
@@ -43,7 +45,14 @@ function FreePractice() {
           </ul>
         </details>
       </div>
-      <CodeWorkbench title="代码编辑器" draftKey="lab/free" language={language} starter={sample.code} stdin={language === 'python' ? '' : undefined} />
+      <CodeWorkbench
+        title="代码编辑器"
+        draftKey="lab/free"
+        language={language}
+        starter={sample.code}
+        stdin={language === 'python' ? '' : undefined}
+        onAskAboutError={(issue, opener) => observatory.askAboutError(issue, opener, { courseId: 'lab', lessonId: `free-${language}` })}
+      />
     </section>
   );
 }
@@ -56,6 +65,7 @@ function generateInput(algorithm: Algorithm) {
 }
 
 function AlgorithmBench() {
+  const observatory = useStation();
   const [algorithm, setAlgorithm] = useState<Algorithm>('bubble');
   const [input, setInput] = useState(algorithms.bubble.sample);
   const [target, setTarget] = useState(79);
@@ -161,8 +171,13 @@ function AlgorithmBench() {
         </div>
       </article>
       <article className="lab-panel lab-editor">
-        <CodeWorkbench title={`${config.title}示例`} draftKey={`lab/${algorithm}`} language="javascript"
-          starter={`${config.code}\n\nconsole.log(${algorithm === 'bubble' ? 'bubbleSort([6, 2, 8, 1])' : 'binarySearch([12, 35, 64, 79], 79)'});\n`} />
+        <CodeWorkbench
+          title={`${config.title}示例`}
+          draftKey={`lab/${algorithm}`}
+          language="javascript"
+          starter={`${config.code}\n\nconsole.log(${algorithm === 'bubble' ? 'bubbleSort([6, 2, 8, 1])' : 'binarySearch([12, 35, 64, 79], 79)'});\n`}
+          onAskAboutError={(issue, opener) => observatory.askAboutError(issue, opener, { courseId: 'lab', lessonId: `algorithm-${algorithm}` })}
+        />
       </article>
     </section>
   );

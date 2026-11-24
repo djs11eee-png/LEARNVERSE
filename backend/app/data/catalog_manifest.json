@@ -1,0 +1,1772 @@
+{
+  "courses": [
+    {
+      "id": "lv-python-foundations",
+      "title": "Python 编程起步",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "values",
+          "title": "变量与数据"
+        },
+        {
+          "id": "decisions",
+          "title": "条件与选择"
+        },
+        {
+          "id": "collections",
+          "title": "列表与循环"
+        },
+        {
+          "id": "functions",
+          "title": "函数与返回值"
+        }
+      ]
+    },
+    {
+      "id": "lv-javascript-foundations",
+      "title": "JavaScript 编程起步",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "variables",
+          "title": "变量与值"
+        },
+        {
+          "id": "conditions",
+          "title": "条件判断"
+        },
+        {
+          "id": "arrays",
+          "title": "数组与遍历"
+        },
+        {
+          "id": "functions",
+          "title": "函数与交互思维"
+        }
+      ]
+    },
+    {
+      "id": "lv-computer-science",
+      "title": "计算机科学基础",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "binary",
+          "title": "信息与二进制"
+        },
+        {
+          "id": "algorithms",
+          "title": "算法与查找"
+        },
+        {
+          "id": "structures",
+          "title": "数据结构"
+        },
+        {
+          "id": "testing",
+          "title": "程序与测试"
+        }
+      ]
+    },
+    {
+      "id": "lv-c-foundations",
+      "title": "C 语言编程起步",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "first-program",
+          "title": "认识 C 程序"
+        },
+        {
+          "id": "values-and-operators",
+          "title": "变量与整数运算"
+        },
+        {
+          "id": "control-flow",
+          "title": "条件与循环"
+        },
+        {
+          "id": "functions-and-arrays",
+          "title": "函数与数组"
+        }
+      ]
+    },
+    {
+      "id": "lv-algorithms-foundations",
+      "title": "算法与数据结构入门",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "arrays",
+          "title": "数组与索引"
+        },
+        {
+          "id": "search",
+          "title": "线性查找与二分查找"
+        },
+        {
+          "id": "sorting",
+          "title": "冒泡排序"
+        },
+        {
+          "id": "stacks-and-queues",
+          "title": "栈与队列"
+        }
+      ]
+    },
+    {
+      "id": "lv-web-foundations",
+      "title": "Web 前端基础",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "html-structure",
+          "title": "用 HTML 组织内容"
+        },
+        {
+          "id": "css-style",
+          "title": "用 CSS 设置样式"
+        },
+        {
+          "id": "links-and-forms",
+          "title": "链接、按钮与表单"
+        },
+        {
+          "id": "browser-interaction",
+          "title": "用 JavaScript 响应操作"
+        }
+      ]
+    },
+    {
+      "id": "lv-python-practice",
+      "title": "Python 官方教程 · 进阶练习",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "iteration",
+          "title": "遍历：次数、位置与元素"
+        },
+        {
+          "id": "list-transformations",
+          "title": "列表：修改与生成新结果"
+        },
+        {
+          "id": "mapping-and-sets",
+          "title": "字典与集合：记录和去重"
+        },
+        {
+          "id": "function-arguments",
+          "title": "函数参数与默认值"
+        },
+        {
+          "id": "modules-and-json",
+          "title": "模块与 JSON 学习记录"
+        },
+        {
+          "id": "exceptions",
+          "title": "处理可预期的输入错误"
+        }
+      ]
+    },
+    {
+      "id": "lv-java-foundations",
+      "title": "Java 编程起步",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "types-and-programs",
+          "title": "从 main 方法开始"
+        },
+        {
+          "id": "branches-and-loops",
+          "title": "判断与循环"
+        },
+        {
+          "id": "methods",
+          "title": "方法与返回值"
+        },
+        {
+          "id": "objects",
+          "title": "用对象表示一条学习记录"
+        }
+      ]
+    },
+    {
+      "id": "lv-backend-foundations",
+      "title": "后端开发基础",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "http",
+          "title": "读懂 HTTP 请求和响应"
+        },
+        {
+          "id": "validation",
+          "title": "接收数据与校验"
+        },
+        {
+          "id": "data",
+          "title": "从对象到数据记录"
+        },
+        {
+          "id": "testing",
+          "title": "用测试锁定接口行为"
+        }
+      ]
+    },
+    {
+      "id": "lv-ai-foundations",
+      "title": "大语言模型入门",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "tokens",
+          "title": "模型怎样读到文字"
+        },
+        {
+          "id": "generation",
+          "title": "下一步预测怎样形成整段文字"
+        },
+        {
+          "id": "instructions",
+          "title": "给出资料和清楚的任务"
+        },
+        {
+          "id": "evaluation",
+          "title": "设计可以复查的评估"
+        }
+      ]
+    },
+    {
+      "id": "lv-ros2-foundations",
+      "title": "ROS 2 通信基础",
+      "difficulty": "Beginner",
+      "lessons": [
+        {
+          "id": "nodes",
+          "title": "把系统拆成节点"
+        },
+        {
+          "id": "topics",
+          "title": "通过话题传递连续消息"
+        },
+        {
+          "id": "services",
+          "title": "通过服务发起一次查询"
+        },
+        {
+          "id": "actions",
+          "title": "用动作跟踪一个长任务"
+        }
+      ]
+    },
+    {
+      "id": "lv-javascript-data",
+      "title": "JavaScript 数据处理实战",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "signup-objects",
+          "title": "用对象整理报名记录"
+        },
+        {
+          "id": "signup-map-filter",
+          "title": "用 map 和 filter 处理数组"
+        },
+        {
+          "id": "signup-group-sort",
+          "title": "分组汇总并处理并列"
+        },
+        {
+          "id": "signup-functions-testing",
+          "title": "拆分函数并测试输入边界"
+        }
+      ]
+    },
+    {
+      "id": "lv-computer-science-cost",
+      "title": "计算机科学进阶：数据与查找成本",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "record-representation",
+          "title": "选择记录、标识与单位"
+        },
+        {
+          "id": "ordered-catalog-index",
+          "title": "建立有序索引并找区间"
+        },
+        {
+          "id": "search-work-count",
+          "title": "分别统计建表与查询成本"
+        },
+        {
+          "id": "lookup-edge-model",
+          "title": "用边界模型区分查询结果"
+        }
+      ]
+    },
+    {
+      "id": "lv-c-records",
+      "title": "C 语言进阶：结构体与文件",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "structures",
+          "title": "用结构体表示一条样本"
+        },
+        {
+          "id": "capacity",
+          "title": "区分有效长度和数组容量"
+        },
+        {
+          "id": "text-files",
+          "title": "从文本文件读取有效记录"
+        },
+        {
+          "id": "decomposition",
+          "title": "拆分验证、写入与统计并用断言检查"
+        }
+      ]
+    },
+    {
+      "id": "lv-algorithms-efficiency",
+      "title": "算法进阶：把重复工作变少",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "recursion",
+          "title": "给递归设计终止条件和更小问题"
+        },
+        {
+          "id": "merge-sort",
+          "title": "递归排序并稳定地合并"
+        },
+        {
+          "id": "prefix-sums",
+          "title": "用前缀和回答区间总量"
+        },
+        {
+          "id": "operation-counts",
+          "title": "数清预处理和查询的操作次数"
+        }
+      ]
+    },
+    {
+      "id": "lv-web-interaction",
+      "title": "原生 Web 交互进阶",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "task-form-validation",
+          "title": "处理表单提交与输入校验"
+        },
+        {
+          "id": "data-driven-task-list",
+          "title": "从任务数据渲染列表"
+        },
+        {
+          "id": "task-filter-edit",
+          "title": "保持筛选与编辑同步"
+        },
+        {
+          "id": "task-keyboard-feedback",
+          "title": "支持键盘操作和状态反馈"
+        }
+      ]
+    },
+    {
+      "id": "lv-java-collections",
+      "title": "Java 进阶：集合与程序分工",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "array-list",
+          "title": "用 ArrayList 保存可增长清单"
+        },
+        {
+          "id": "map",
+          "title": "用 Map 按设备编号查找与计数"
+        },
+        {
+          "id": "exceptions",
+          "title": "用异常报告无效请求"
+        },
+        {
+          "id": "model-service",
+          "title": "划分设备记录与借用服务的职责"
+        }
+      ]
+    },
+    {
+      "id": "lv-backend-consistency",
+      "title": "后端进阶：数据一致性与接口测试",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "backend-routing-contracts",
+          "title": "让方法、路径和状态码对上"
+        },
+        {
+          "id": "backend-joins-reporting",
+          "title": "用连接和汇总检查每门课程"
+        },
+        {
+          "id": "backend-transaction-safety",
+          "title": "让相关写入一起提交或撤回"
+        },
+        {
+          "id": "backend-request-storage",
+          "title": "按请求、响应和存储决定测试顺序"
+        }
+      ]
+    },
+    {
+      "id": "lv-ai-grounded-qa",
+      "title": "大模型进阶：带资料的问答与评估",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "ai-chunk-records",
+          "title": "按记录切分并保留来源"
+        },
+        {
+          "id": "ai-keyword-retrieval",
+          "title": "按关键词从资料库检索候选"
+        },
+        {
+          "id": "ai-check-evidence",
+          "title": "核对证据引用与可重算结果"
+        },
+        {
+          "id": "ai-batch-error-types",
+          "title": "用一批给定样本定位首个错误"
+        }
+      ]
+    },
+    {
+      "id": "lv-ros2-integration",
+      "title": "ROS 2 进阶：通信联调与故障排查",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "ros-message-contracts",
+          "title": "检查话题上的消息契约"
+        },
+        {
+          "id": "ros-connection-qos",
+          "title": "逐段检查连接与 QoS 兼容性"
+        },
+        {
+          "id": "ros-timeout-state",
+          "title": "用请求编号和截止时间更新面板"
+        },
+        {
+          "id": "ros-log-replay",
+          "title": "重放日志，定位不同状态之间的断点"
+        }
+      ]
+    },
+    {
+      "id": "lv-python-pipeline",
+      "title": "Python 高级：可维护的数据处理流水线",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "lazy-iteration",
+          "title": "按需读取，少走多余的路"
+        },
+        {
+          "id": "typed-records",
+          "title": "把外部输入转换成稳定的记录"
+        },
+        {
+          "id": "jsonl-input",
+          "title": "逐行解析，把坏行留在错误清单"
+        },
+        {
+          "id": "pipeline-regression",
+          "title": "把解析、校验和统计串起来，再用小样本回归"
+        }
+      ]
+    },
+    {
+      "id": "lv-javascript-async-state",
+      "title": "JavaScript 高级：异步任务与可预测状态",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "promise-await",
+          "title": "用 Promise 和 await 读异步结果"
+        },
+        {
+          "id": "bounded-async-work",
+          "title": "处理异步失败并限制并行数量"
+        },
+        {
+          "id": "request-tickets",
+          "title": "用请求编号保护当前状态"
+        },
+        {
+          "id": "deterministic-async-tests",
+          "title": "用手动兑现的 Promise 测试异步代码"
+        }
+      ]
+    },
+    {
+      "id": "lv-computer-science-cache",
+      "title": "计算机科学高级：缓存局部性与成本模型",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "locality-working-set",
+          "title": "从访问序列识别局部性与工作集"
+        },
+        {
+          "id": "cache-fifo-lru",
+          "title": "逐步模拟 FIFO 与 LRU"
+        },
+        {
+          "id": "cache-weighted-cost",
+          "title": "把命中率和维护开销放进同一成本表"
+        },
+        {
+          "id": "reproducible-cache-comparison",
+          "title": "让缓存策略对照可以重跑"
+        }
+      ]
+    },
+    {
+      "id": "lv-c-memory",
+      "title": "C 语言高级：动态内存与资源管理",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "memory-ownership",
+          "title": "为样本缓冲区定义所有权和容量上限"
+        },
+        {
+          "id": "safe-allocation",
+          "title": "安全地申请、扩容与释放"
+        },
+        {
+          "id": "resource-invariants",
+          "title": "维护资源不变量与失败后的原状态"
+        },
+        {
+          "id": "allocation-tests",
+          "title": "用受控失败注入复现实务故障"
+        }
+      ]
+    },
+    {
+      "id": "lv-algorithms-graph",
+      "title": "算法高级：图搜索与最短路径",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "graph-adjacency",
+          "title": "用邻接表表达地点和连接"
+        },
+        {
+          "id": "bfs-path",
+          "title": "用广度优先搜索找到最少边数的路径"
+        },
+        {
+          "id": "dijkstra-queue",
+          "title": "用最小优先队列写 Dijkstra 搜索"
+        },
+        {
+          "id": "graph-validation",
+          "title": "校验图输入并用独立方法交叉核对"
+        }
+      ]
+    },
+    {
+      "id": "lv-web-accessible-state",
+      "title": "Web 前端高级：状态管理与可访问交互",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "state-action-render",
+          "title": "从状态和动作得到可预测界面"
+        },
+        {
+          "id": "modal-dialog-focus",
+          "title": "建立可访问的确认框和焦点回路"
+        },
+        {
+          "id": "web-async-stale-state",
+          "title": "让异步回复属于正确的课程"
+        },
+        {
+          "id": "keyboard-workflow-testing",
+          "title": "验证完整键盘路径与结果回放"
+        }
+      ]
+    },
+    {
+      "id": "lv-java-tested-design",
+      "title": "Java 高级：泛型、接口与可测试设计",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "generic-types",
+          "title": "用泛型写可复用的类型安全容器"
+        },
+        {
+          "id": "interface-substitution",
+          "title": "按接口调用，并在测试中替换实现"
+        },
+        {
+          "id": "ordering-and-clock",
+          "title": "定义稳定顺序并注入可控时钟"
+        },
+        {
+          "id": "service-tests",
+          "title": "为预约服务测试时间、顺序与拒绝路径"
+        }
+      ]
+    },
+    {
+      "id": "lv-backend-reliability",
+      "title": "后端高级：幂等、并发与故障恢复",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "backend-idempotency-keys",
+          "title": "让同一报名请求可以安全重试"
+        },
+        {
+          "id": "backend-concurrent-enrollment",
+          "title": "重放最后一个名额的并发竞争"
+        },
+        {
+          "id": "backend-outbox-replay",
+          "title": "让报名与待派发事件随同一事务提交"
+        },
+        {
+          "id": "backend-recovery-scenarios",
+          "title": "用确定故障点检验服务能否恢复"
+        }
+      ]
+    },
+    {
+      "id": "lv-ai-retrieval-evaluation",
+      "title": "大模型高级：检索质量与可靠性评测",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "ai-retrieval-quality",
+          "title": "用 Top-K 指标读懂候选排序"
+        },
+        {
+          "id": "ai-evidence-support-matching",
+          "title": "让引用真正支撑回答里的结论"
+        },
+        {
+          "id": "ai-abstention-thresholds",
+          "title": "在证据薄弱或候选歧义时拒答"
+        },
+        {
+          "id": "ai-offline-regression-groups",
+          "title": "用固定样本分组报告问答回归"
+        }
+      ]
+    },
+    {
+      "id": "lv-ros2-reliability",
+      "title": "ROS 2 高级：观测、恢复与可靠性验证",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "ros-heartbeat-and-reorder",
+          "title": "用心跳和序号判断虚拟节点状态"
+        },
+        {
+          "id": "ros-retry-and-deduplicate",
+          "title": "给虚拟请求设计重试上限和去重"
+        },
+        {
+          "id": "ros-bounded-backpressure",
+          "title": "在有限缓冲区里处理积压"
+        },
+        {
+          "id": "ros-fault-trace-regression",
+          "title": "用可重放的故障轨迹做回归确认"
+        }
+      ]
+    },
+    {
+      "id": "lv-computer-architecture",
+      "title": "计算机组成原理",
+      "difficulty": "Intermediate",
+      "lessons": [
+        {
+          "id": "fixed-width",
+          "title": "寄存器、加法与进位"
+        },
+        {
+          "id": "instruction-cycle",
+          "title": "取指、译码与执行"
+        },
+        {
+          "id": "memory-and-io",
+          "title": "内存地址与输入输出"
+        }
+      ]
+    },
+    {
+      "id": "lv-operating-systems",
+      "title": "操作系统：调度、内存与恢复",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "round-robin",
+          "title": "从就绪队列到时间片"
+        },
+        {
+          "id": "virtual-memory",
+          "title": "虚拟页、物理页框与隔离"
+        },
+        {
+          "id": "journal-replay",
+          "title": "中断之后怎样恢复数据"
+        }
+      ]
+    }
+  ],
+  "rooms": [
+    "lv-python-foundations/values",
+    "lv-python-foundations/decisions",
+    "lv-python-foundations/collections",
+    "lv-python-foundations/functions",
+    "lv-javascript-foundations/variables",
+    "lv-javascript-foundations/conditions",
+    "lv-javascript-foundations/arrays",
+    "lv-javascript-foundations/functions",
+    "lv-computer-science/binary",
+    "lv-computer-science/algorithms",
+    "lv-computer-science/structures",
+    "lv-computer-science/testing",
+    "lv-c-foundations/first-program",
+    "lv-c-foundations/values-and-operators",
+    "lv-c-foundations/control-flow",
+    "lv-c-foundations/functions-and-arrays",
+    "lv-algorithms-foundations/arrays",
+    "lv-algorithms-foundations/search",
+    "lv-algorithms-foundations/sorting",
+    "lv-algorithms-foundations/stacks-and-queues",
+    "lv-web-foundations/html-structure",
+    "lv-web-foundations/css-style",
+    "lv-web-foundations/links-and-forms",
+    "lv-web-foundations/browser-interaction",
+    "lv-python-practice/iteration",
+    "lv-python-practice/list-transformations",
+    "lv-python-practice/mapping-and-sets",
+    "lv-python-practice/function-arguments",
+    "lv-python-practice/modules-and-json",
+    "lv-python-practice/exceptions",
+    "lv-java-foundations/types-and-programs",
+    "lv-java-foundations/branches-and-loops",
+    "lv-java-foundations/methods",
+    "lv-java-foundations/objects",
+    "lv-backend-foundations/http",
+    "lv-backend-foundations/validation",
+    "lv-backend-foundations/data",
+    "lv-backend-foundations/testing",
+    "lv-ai-foundations/tokens",
+    "lv-ai-foundations/generation",
+    "lv-ai-foundations/instructions",
+    "lv-ai-foundations/evaluation",
+    "lv-ros2-foundations/nodes",
+    "lv-ros2-foundations/topics",
+    "lv-ros2-foundations/services",
+    "lv-ros2-foundations/actions",
+    "lv-javascript-data/signup-objects",
+    "lv-javascript-data/signup-map-filter",
+    "lv-javascript-data/signup-group-sort",
+    "lv-javascript-data/signup-functions-testing",
+    "lv-computer-science-cost/record-representation",
+    "lv-computer-science-cost/ordered-catalog-index",
+    "lv-computer-science-cost/search-work-count",
+    "lv-computer-science-cost/lookup-edge-model",
+    "lv-c-records/structures",
+    "lv-c-records/capacity",
+    "lv-c-records/text-files",
+    "lv-c-records/decomposition",
+    "lv-algorithms-efficiency/recursion",
+    "lv-algorithms-efficiency/merge-sort",
+    "lv-algorithms-efficiency/prefix-sums",
+    "lv-algorithms-efficiency/operation-counts",
+    "lv-web-interaction/task-form-validation",
+    "lv-web-interaction/data-driven-task-list",
+    "lv-web-interaction/task-filter-edit",
+    "lv-web-interaction/task-keyboard-feedback",
+    "lv-java-collections/array-list",
+    "lv-java-collections/map",
+    "lv-java-collections/exceptions",
+    "lv-java-collections/model-service",
+    "lv-backend-consistency/backend-routing-contracts",
+    "lv-backend-consistency/backend-joins-reporting",
+    "lv-backend-consistency/backend-transaction-safety",
+    "lv-backend-consistency/backend-request-storage",
+    "lv-ai-grounded-qa/ai-chunk-records",
+    "lv-ai-grounded-qa/ai-keyword-retrieval",
+    "lv-ai-grounded-qa/ai-check-evidence",
+    "lv-ai-grounded-qa/ai-batch-error-types",
+    "lv-ros2-integration/ros-message-contracts",
+    "lv-ros2-integration/ros-connection-qos",
+    "lv-ros2-integration/ros-timeout-state",
+    "lv-ros2-integration/ros-log-replay",
+    "lv-python-pipeline/lazy-iteration",
+    "lv-python-pipeline/typed-records",
+    "lv-python-pipeline/jsonl-input",
+    "lv-python-pipeline/pipeline-regression",
+    "lv-javascript-async-state/promise-await",
+    "lv-javascript-async-state/bounded-async-work",
+    "lv-javascript-async-state/request-tickets",
+    "lv-javascript-async-state/deterministic-async-tests",
+    "lv-computer-science-cache/locality-working-set",
+    "lv-computer-science-cache/cache-fifo-lru",
+    "lv-computer-science-cache/cache-weighted-cost",
+    "lv-computer-science-cache/reproducible-cache-comparison",
+    "lv-c-memory/memory-ownership",
+    "lv-c-memory/safe-allocation",
+    "lv-c-memory/resource-invariants",
+    "lv-c-memory/allocation-tests",
+    "lv-algorithms-graph/graph-adjacency",
+    "lv-algorithms-graph/bfs-path",
+    "lv-algorithms-graph/dijkstra-queue",
+    "lv-algorithms-graph/graph-validation",
+    "lv-web-accessible-state/state-action-render",
+    "lv-web-accessible-state/modal-dialog-focus",
+    "lv-web-accessible-state/web-async-stale-state",
+    "lv-web-accessible-state/keyboard-workflow-testing",
+    "lv-java-tested-design/generic-types",
+    "lv-java-tested-design/interface-substitution",
+    "lv-java-tested-design/ordering-and-clock",
+    "lv-java-tested-design/service-tests",
+    "lv-backend-reliability/backend-idempotency-keys",
+    "lv-backend-reliability/backend-concurrent-enrollment",
+    "lv-backend-reliability/backend-outbox-replay",
+    "lv-backend-reliability/backend-recovery-scenarios",
+    "lv-ai-retrieval-evaluation/ai-retrieval-quality",
+    "lv-ai-retrieval-evaluation/ai-evidence-support-matching",
+    "lv-ai-retrieval-evaluation/ai-abstention-thresholds",
+    "lv-ai-retrieval-evaluation/ai-offline-regression-groups",
+    "lv-ros2-reliability/ros-heartbeat-and-reorder",
+    "lv-ros2-reliability/ros-retry-and-deduplicate",
+    "lv-ros2-reliability/ros-bounded-backpressure",
+    "lv-ros2-reliability/ros-fault-trace-regression",
+    "lv-computer-architecture/fixed-width",
+    "lv-computer-architecture/instruction-cycle",
+    "lv-computer-architecture/memory-and-io",
+    "lv-operating-systems/round-robin",
+    "lv-operating-systems/virtual-memory",
+    "lv-operating-systems/journal-replay"
+  ],
+  "cards": [
+    {
+      "id": "python-001",
+      "number": "PY-001",
+      "slot": 1,
+      "courseId": "lv-python-foundations",
+      "lessonId": "values",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "名字里的数"
+    },
+    {
+      "id": "python-002",
+      "number": "PY-002",
+      "slot": 2,
+      "courseId": "lv-python-foundations",
+      "lessonId": "values",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "三本笔记"
+    },
+    {
+      "id": "python-003",
+      "number": "PY-003",
+      "slot": 3,
+      "courseId": "lv-python-foundations",
+      "lessonId": "values",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "换价之后"
+    },
+    {
+      "id": "python-004",
+      "number": "PY-004",
+      "slot": 4,
+      "courseId": "lv-python-foundations",
+      "lessonId": "values",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "多出一个七"
+    },
+    {
+      "id": "python-005",
+      "number": "PY-005",
+      "slot": 5,
+      "courseId": "lv-python-foundations",
+      "lessonId": "values",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "看见引号"
+    },
+    {
+      "id": "python-006",
+      "number": "PY-006",
+      "slot": 1,
+      "courseId": "lv-python-foundations",
+      "lessonId": "decisions",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "轮到哪一档"
+    },
+    {
+      "id": "python-007",
+      "number": "PY-007",
+      "slot": 3,
+      "courseId": "lv-python-foundations",
+      "lessonId": "decisions",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "刚好满座"
+    },
+    {
+      "id": "python-008",
+      "number": "PY-008",
+      "slot": 4,
+      "courseId": "lv-python-foundations",
+      "lessonId": "decisions",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "门槛前的文字"
+    },
+    {
+      "id": "python-009",
+      "number": "PY-009",
+      "slot": 2,
+      "courseId": "lv-python-foundations",
+      "lessonId": "collections",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "称重记录"
+    },
+    {
+      "id": "python-010",
+      "number": "PY-010",
+      "slot": 3,
+      "courseId": "lv-python-foundations",
+      "lessonId": "collections",
+      "galaxy": "python",
+      "finish": "rainbow",
+      "title": "空清单添一项"
+    },
+    {
+      "id": "python-011",
+      "number": "PY-011",
+      "slot": 5,
+      "courseId": "lv-python-foundations",
+      "lessonId": "collections",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "找第几件"
+    },
+    {
+      "id": "python-012",
+      "number": "PY-012",
+      "slot": 1,
+      "courseId": "lv-python-foundations",
+      "lessonId": "functions",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "把结果交回去"
+    },
+    {
+      "id": "python-013",
+      "number": "PY-013",
+      "slot": 2,
+      "courseId": "lv-python-foundations",
+      "lessonId": "functions",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "最后一个袋子"
+    },
+    {
+      "id": "python-014",
+      "number": "PY-014",
+      "slot": 4,
+      "courseId": "lv-python-foundations",
+      "lessonId": "functions",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "只写了函数名"
+    },
+    {
+      "id": "python-015",
+      "number": "PY-015",
+      "slot": 1,
+      "courseId": "lv-python-practice",
+      "lessonId": "iteration",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "终点前停步"
+    },
+    {
+      "id": "python-016",
+      "number": "PY-016",
+      "slot": 2,
+      "courseId": "lv-python-practice",
+      "lessonId": "iteration",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "给书名编号"
+    },
+    {
+      "id": "python-017",
+      "number": "PY-017",
+      "slot": 3,
+      "courseId": "lv-python-practice",
+      "lessonId": "iteration",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "跳过一站"
+    },
+    {
+      "id": "python-018",
+      "number": "PY-018",
+      "slot": 4,
+      "courseId": "lv-python-practice",
+      "lessonId": "iteration",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "倒数没有启动"
+    },
+    {
+      "id": "python-019",
+      "number": "PY-019",
+      "slot": 5,
+      "courseId": "lv-python-practice",
+      "lessonId": "iteration",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "找到就收工"
+    },
+    {
+      "id": "python-020",
+      "number": "PY-020",
+      "slot": 2,
+      "courseId": "lv-python-practice",
+      "lessonId": "list-transformations",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "挑出待复习页"
+    },
+    {
+      "id": "python-021",
+      "number": "PY-021",
+      "slot": 4,
+      "courseId": "lv-python-practice",
+      "lessonId": "list-transformations",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "排序后的空结果"
+    },
+    {
+      "id": "python-022",
+      "number": "PY-022",
+      "slot": 2,
+      "courseId": "lv-python-practice",
+      "lessonId": "mapping-and-sets",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "第一次也能记账"
+    },
+    {
+      "id": "python-023",
+      "number": "PY-023",
+      "slot": 3,
+      "courseId": "lv-python-practice",
+      "lessonId": "mapping-and-sets",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "还缺哪门课"
+    },
+    {
+      "id": "python-024",
+      "number": "PY-024",
+      "slot": 1,
+      "courseId": "lv-python-practice",
+      "lessonId": "function-arguments",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "叫出参数名字"
+    },
+    {
+      "id": "python-025",
+      "number": "PY-025",
+      "slot": 4,
+      "courseId": "lv-python-practice",
+      "lessonId": "function-arguments",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "上次留下的脚印"
+    },
+    {
+      "id": "python-026",
+      "number": "PY-026",
+      "slot": 2,
+      "courseId": "lv-python-practice",
+      "lessonId": "modules-and-json",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "从文本里取分数"
+    },
+    {
+      "id": "python-027",
+      "number": "PY-027",
+      "slot": 5,
+      "courseId": "lv-python-practice",
+      "lessonId": "modules-and-json",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "来回转换"
+    },
+    {
+      "id": "python-028",
+      "number": "PY-028",
+      "slot": 1,
+      "courseId": "lv-python-practice",
+      "lessonId": "exceptions",
+      "galaxy": "python",
+      "finish": "standard",
+      "title": "给错误取对名字"
+    },
+    {
+      "id": "python-029",
+      "number": "PY-029",
+      "slot": 3,
+      "courseId": "lv-python-practice",
+      "lessonId": "exceptions",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "收尾顺序"
+    },
+    {
+      "id": "python-030",
+      "number": "PY-030",
+      "slot": 5,
+      "courseId": "lv-python-practice",
+      "lessonId": "exceptions",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "两道检查"
+    },
+    {
+      "id": "c-001",
+      "number": "C-001",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "开场第一行"
+    },
+    {
+      "id": "c-002",
+      "number": "C-002",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "小票的空格"
+    },
+    {
+      "id": "c-003",
+      "number": "C-003",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "两次发声"
+    },
+    {
+      "id": "c-004",
+      "number": "C-004",
+      "slot": 4,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "消失的分号"
+    },
+    {
+      "id": "c-005",
+      "number": "C-005",
+      "slot": 5,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "终端小抄"
+    },
+    {
+      "id": "c-006",
+      "number": "C-006",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "先构建，再运行"
+    },
+    {
+      "id": "c-007",
+      "number": "C-007",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "被略过的问候"
+    },
+    {
+      "id": "c-008",
+      "number": "C-008",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "first-program",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "把声明带进来"
+    },
+    {
+      "id": "c-009",
+      "number": "C-009",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "满箱与散瓶"
+    },
+    {
+      "id": "c-010",
+      "number": "C-010",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "先换一种数"
+    },
+    {
+      "id": "c-011",
+      "number": "C-011",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "括号的次序"
+    },
+    {
+      "id": "c-012",
+      "number": "C-012",
+      "slot": 4,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "迟到的小数"
+    },
+    {
+      "id": "c-013",
+      "number": "C-013",
+      "slot": 5,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "打印数值"
+    },
+    {
+      "id": "c-014",
+      "number": "C-014",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "让乘法用宽整数"
+    },
+    {
+      "id": "c-015",
+      "number": "C-015",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "差一瓶满箱"
+    },
+    {
+      "id": "c-016",
+      "number": "C-016",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "values-and-operators",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "让机器回答上限"
+    },
+    {
+      "id": "c-017",
+      "number": "C-017",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "恰在分界线上"
+    },
+    {
+      "id": "c-018",
+      "number": "C-018",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "每轮前问一次"
+    },
+    {
+      "id": "c-019",
+      "number": "C-019",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "跨过偶数"
+    },
+    {
+      "id": "c-020",
+      "number": "C-020",
+      "slot": 4,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "条件被改写"
+    },
+    {
+      "id": "c-021",
+      "number": "C-021",
+      "slot": 5,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "退出到哪里"
+    },
+    {
+      "id": "c-022",
+      "number": "C-022",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "先检查分母"
+    },
+    {
+      "id": "c-023",
+      "number": "C-023",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "control-flow",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "停在第五格"
+    },
+    {
+      "id": "c-024",
+      "number": "C-024",
+      "slot": 1,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "带着副本出门"
+    },
+    {
+      "id": "c-025",
+      "number": "C-025",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "把长度一起带上"
+    },
+    {
+      "id": "c-026",
+      "number": "C-026",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "读取表格"
+    },
+    {
+      "id": "c-027",
+      "number": "C-027",
+      "slot": 4,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "最后一格之外"
+    },
+    {
+      "id": "c-028",
+      "number": "C-028",
+      "slot": 5,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "地址与所指的值"
+    },
+    {
+      "id": "c-029",
+      "number": "C-029",
+      "slot": 2,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "字符串的末格"
+    },
+    {
+      "id": "c-030",
+      "number": "C-030",
+      "slot": 3,
+      "courseId": "lv-c-foundations",
+      "lessonId": "functions-and-arrays",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "谁真的变了"
+    },
+    {
+      "id": "algorithms-001",
+      "number": "AL-001",
+      "slot": 1,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "arrays",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "第零个格子"
+    },
+    {
+      "id": "algorithms-002",
+      "number": "AL-002",
+      "slot": 2,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "arrays",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "中间加一位"
+    },
+    {
+      "id": "algorithms-003",
+      "number": "AL-003",
+      "slot": 3,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "arrays",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "移走一个座位"
+    },
+    {
+      "id": "algorithms-004",
+      "number": "AL-004",
+      "slot": 4,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "arrays",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "最后一本书"
+    },
+    {
+      "id": "algorithms-005",
+      "number": "AL-005",
+      "slot": 5,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "arrays",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "挪动几格"
+    },
+    {
+      "id": "algorithms-006",
+      "number": "AL-006",
+      "slot": 1,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "search",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "从头比起"
+    },
+    {
+      "id": "algorithms-007",
+      "number": "AL-007",
+      "slot": 2,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "search",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "缩小一半"
+    },
+    {
+      "id": "algorithms-008",
+      "number": "AL-008",
+      "slot": 3,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "search",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "新左端在哪里"
+    },
+    {
+      "id": "algorithms-009",
+      "number": "AL-009",
+      "slot": 4,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "search",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "停住的中点"
+    },
+    {
+      "id": "algorithms-010",
+      "number": "AL-010",
+      "slot": 1,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "sorting",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "较大者向右"
+    },
+    {
+      "id": "algorithms-011",
+      "number": "AL-011",
+      "slot": 3,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "sorting",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "只走一趟"
+    },
+    {
+      "id": "algorithms-012",
+      "number": "AL-012",
+      "slot": 5,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "sorting",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "平手时留队形"
+    },
+    {
+      "id": "algorithms-013",
+      "number": "AL-013",
+      "slot": 2,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "stacks-and-queues",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "盘子和取餐号"
+    },
+    {
+      "id": "algorithms-014",
+      "number": "AL-014",
+      "slot": 3,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "stacks-and-queues",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "叫到谁的号"
+    },
+    {
+      "id": "algorithms-015",
+      "number": "AL-015",
+      "slot": 4,
+      "courseId": "lv-algorithms-foundations",
+      "lessonId": "stacks-and-queues",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "队尾要绕回来"
+    },
+    {
+      "id": "algorithms-016",
+      "number": "AL-016",
+      "slot": 1,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "tokens",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "词表里的小块"
+    },
+    {
+      "id": "algorithms-017",
+      "number": "AL-017",
+      "slot": 2,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "tokens",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "编号也有顺序"
+    },
+    {
+      "id": "algorithms-018",
+      "number": "AL-018",
+      "slot": 3,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "tokens",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "读回短句"
+    },
+    {
+      "id": "algorithms-019",
+      "number": "AL-019",
+      "slot": 4,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "tokens",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "少算了一截"
+    },
+    {
+      "id": "algorithms-020",
+      "number": "AL-020",
+      "slot": 5,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "tokens",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "先分词再计数"
+    },
+    {
+      "id": "algorithms-021",
+      "number": "AL-021",
+      "slot": 1,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "generation",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "把刚选的接回去"
+    },
+    {
+      "id": "algorithms-022",
+      "number": "AL-022",
+      "slot": 3,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "generation",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "落在哪一格"
+    },
+    {
+      "id": "algorithms-023",
+      "number": "AL-023",
+      "slot": 4,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "generation",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "把概率当成绩"
+    },
+    {
+      "id": "algorithms-024",
+      "number": "AL-024",
+      "slot": 1,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "instructions",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "留白也有含义"
+    },
+    {
+      "id": "algorithms-025",
+      "number": "AL-025",
+      "slot": 2,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "instructions",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "把依据摆在旁边"
+    },
+    {
+      "id": "algorithms-026",
+      "number": "AL-026",
+      "slot": 3,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "instructions",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "读懂有效记录"
+    },
+    {
+      "id": "algorithms-027",
+      "number": "AL-027",
+      "slot": 4,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "instructions",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "引号藏起的数字"
+    },
+    {
+      "id": "algorithms-028",
+      "number": "AL-028",
+      "slot": 2,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "evaluation",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "先把判分写下来"
+    },
+    {
+      "id": "algorithms-029",
+      "number": "AL-029",
+      "slot": 3,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "evaluation",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "合起来过了几题"
+    },
+    {
+      "id": "algorithms-030",
+      "number": "AL-030",
+      "slot": 5,
+      "courseId": "lv-ai-foundations",
+      "lessonId": "evaluation",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "留一组新题"
+    }
+  ]
+}

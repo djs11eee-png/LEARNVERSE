@@ -39,6 +39,10 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '为记录 [12, 5, 28, 30] 找出第一条达到 25 分钟的学习任务。按从 1 开始编号。再测试没有命中的列表 [5, 12]。',
+        hints: [
+          '先用 enumerate(values, start=1) 同时拿到从 1 开始的序号与对应分钟数，无需自己维护计数器。',
+          '遇到第一个 minutes >= minimum 时直接 return (number, minutes)（或 break 退出循环）；若整轮遍历结束仍未命中，最后返回 None。',
+        ],
         checkpoints: ['必须先检查每条记录的分钟数再决定是否停止。', '第一组应得到第 3 项、28 分钟。第二组应得到“未找到”。'],
         solution: '用 enumerate(..., start=1) 产生展示序号。找到后把序号和分钟数成对保存并退出。第二组循环执行完毕时，结果仍为 None。',
         codeLanguage: 'Python',
@@ -71,6 +75,23 @@ export const pythonPracticeExpansions: CourseExpansions = {
           code: 'logs = [("阅读", 20), ("复盘", 20), ("实验", 10)]\nby_duration = sorted(logs, key=lambda item: item[1])\nprint(by_duration)  # [(\'实验\', 10), (\'阅读\', 20), (\'复盘\', 20)]',
         },
         {
+          heading: '时长降序，名字升序',
+          paragraphs: [
+            '元组按位置从左向右比较。只在第一项相等时才看第二项。时长按大到小排，可以让时长大的记录获得更小的排序键：35 变成 -35，20 变成 -20。这里变的是比较用的值，记录本身仍保存正数。',
+            '先用具名函数写出来，确认每一步能解释。把输入中两条 35 分钟的记录交换位置再运行，预期仍是 C 在 Python 之前。若对整个排序使用 reverse=True，名字也会倒过来。',
+          ],
+          codeLanguage: 'Python',
+          code: `rows = [("Python", 35), ("Web", 20), ("C", 35)]
+
+def order_by(row):
+    name, minutes = row
+    return (-minutes, name)
+
+for name, minutes in sorted(rows, key=order_by):
+    print(name, minutes)`,
+          run: { language: 'python', expectedOutput: 'C 35\nPython 35\nWeb 20' },
+        },
+        {
           heading: '把推导式拆成可以追踪的循环',
           paragraphs: [
             '把 [n * 60 for n in durations if n > 0] 展开时，先创建空结果，再遍历每个 n。只在 n > 0 时执行 append(n * 60)。输入 [0, 2, 5] 的第一项被过滤，后两项依次变成 120 和 300。空输入返回空列表。',
@@ -84,6 +105,10 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '从 [("读", 5), ("练", 25), ("记", 15), ("看", 25)] 中保留至少 15 分钟的记录，再按分钟从大到小排序。原列表要保持原样。',
+        hints: [
+          '先用列表推导式生成只包含 row[1] >= 15 的新列表，这样不会改动原列表 logs。',
+          '再用 sorted(..., key=lambda row: row[1], reverse=True) 降序排列。Python 的稳定排序会自动保留两条 25 分钟记录的原有先后。',
+        ],
         checkpoints: ['并列的“练”和“看”按原顺序出现。', '5 分钟的记录被筛掉，原数组仍有四项。'],
         solution: '先用推导式按分钟过滤，再对过滤结果用 key 和 reverse=True。稳定性意味着两个 25 分钟的项目会继续按照输入顺序相邻。',
         codeLanguage: 'Python',
@@ -129,6 +154,10 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '计划为 {"列表", "字典", "模块"}，两条已学记录是 [("字典", 15), ("字典", 10)]。算出字典总时长，再列出未学的计划主题。',
+        hints: [
+          '遍历 records 时用 minutes[lesson] = minutes.get(lesson, 0) + duration 累加，避免首次写入触发 KeyError。',
+          '已学主题集合就是 set(minutes)，用差集 plan - set(minutes) 得到未学主题，再包一层 sorted(...) 输出稳定顺序的列表。',
+        ],
         checkpoints: ['字典的累计值为 25。', '未学主题包含列表和模块，不重复出现。'],
         solution: '先建立时长映射。映射的键就能生成已记录的主题集合。用计划减去该集合，再按需要排序。',
         codeLanguage: 'Python',
@@ -174,6 +203,10 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '写 weekly_plan(days, daily=25)，返回每天分钟数的列表。测试默认 3 天，以及显式 daily=0 的 2 天。再改动第一次返回的列表，检查第二次调用是否独立。',
+        hints: [
+          '在函数体内部每次调用时新建列表（例如 [daily] * days 或列表推导式），绝不要在函数参数里把可变列表写为默认值。',
+          '注意显式传入 daily=0 属于合法值，不要用 daily or 25 之类会把 0 误当假值的写法。',
+        ],
         checkpoints: ['默认 3 天返回 [25, 25, 25]，两天、每天零分钟返回 [0, 0]。', '修改某次返回的结果不会污染下一次。'],
         solution: '在函数体内按天数创建新列表即可。这里重复的是整数，整数不可变，因此不需要为每项另建可变容器。',
         codeLanguage: 'Python',
@@ -221,6 +254,10 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '读取 {"course":"Python","minutes":25}，只有 course 是非空字符串、minutes 是 1 到 1440 的整数时才打印课程和分钟数。试试把 minutes 改成 true 或 "25"。',
+        hints: [
+          '先调用 json.loads(text) 并检查 isinstance(data, dict)，再分别用 data.get 读取 course 和 minutes。',
+          'Python 里 True 是 int 的子类，检验 minutes 必须写 type(minutes) is int 再判断 1 <= minutes <= 1440，才能同时拦住 true 和 "25"。',
+        ],
         checkpoints: ['有效输入得到 Python 25。', '布尔值和字符串分钟数返回相同的清楚提示。'],
         solution: 'JSON 解码后先判断 data 是字典。再分别取两个字段，按类型和规则判断后返回。这里假设传入的是合法 JSON，下一章会处理非法文本。',
         codeLanguage: 'Python',
@@ -259,6 +296,44 @@ export const pythonPracticeExpansions: CourseExpansions = {
             '错误的输入和失败后的状态都要检查。例如一次记录失败之后，列表的长度应保持原样。先验证再追加数据，就能使失败的操作停在写入之前。异常信息适合给调用者定位错误，界面提示可以用更明确的中文说明下一步该填什么。',
           ],
         },
+        {
+          heading: '区分 JSON 损坏和记录列表不合规',
+          paragraphs: [
+            '先把 JSON 当成一段文本。json.loads 负责读懂这段文本。缺少右方括号时，它抛出 JSONDecodeError，程序没有拿到列表。输入 {} 则是合法文本，解析得到字典，再由业务规则指出需要列表。',
+            '逐条校验发生在拿到列表以后。有一条 minutes 不合规时，可以记下它的序号再继续遍历。先把这三种结果分开，周报项目就能保留仍然有效的记录。',
+            '运行下面的三组输入，再给测试元组添加字符串 "null"。它也能成功解析，因此应和 {} 走同一条分支。',
+          ],
+          codeLanguage: 'Python',
+          code: `import json
+
+def load_rows(text):
+    try:
+        rows = json.loads(text)
+    except json.JSONDecodeError:
+        return "JSON 无法解析"
+    if not isinstance(rows, list):
+        return "需要记录列表"
+    return f"读取 {len(rows)} 条"
+
+for text in ("[", "{}", "[1, 2]"):
+    print(load_rows(text))`,
+          run: { language: 'python', expectedOutput: 'JSON 无法解析\n需要记录列表\n读取 2 条' },
+        },
+        {
+          heading: '小练习：收集坏记录的序号',
+          paragraphs: [
+            'enumerate(rows, start=1) 每次交回一个从 1 开始的序号和对应的值。把各组输出核对清楚再写周报。判断严格整数可用 type(minutes) is int，因此布尔值和字符串都会被识别为坏记录。',
+            '只补循环。把每条坏记录的序号 append 到 bad，合法时长不改动 bad。最终三个输入应显示 [2, 3]、[]、[1]。',
+          ],
+          run: { language: 'python', expectedOutput: '[2, 3]\n[]\n[1]', starter: `def bad_rows(rows):
+    bad = []
+    # 遍历并检查严格整数和 1 到 1440 的范围。
+    return bad
+
+print(bad_rows([25, True, 0]))
+print(bad_rows([]))
+print(bad_rows(["25", 1440]))` },
+        },
       ],
       pitfalls: [
         { mistake: '用 except: pass 让程序看起来没有报错', why: '预期外的程序错误也会被吞掉，用户可能以为记录已保存。', fix: '捕获明确的异常类型，写明结果和可采取的改正方式。' },
@@ -266,6 +341,7 @@ export const pythonPracticeExpansions: CourseExpansions = {
       ],
       practice: {
         prompt: '尝试向记录 [15] 添加 "25"、"abc"、"0"。对有效输入增加一项，对无效输入给提示，并保持已有记录。',
+        hints: ['先让 int(raw) 单独待在 try 块内，只抓 ValueError。', '有了整数再检查 1 到 1440 的范围。把 append 放到两个失败分支之后。'],
         checkpoints: ['"25" 成功后为 [15, 25]。', '两条无效输入各有提示，最终长度仍为 2。'],
         solution: '把转换和范围检查都放在 append 前。输入 abc 走异常分支，0 走范围校验分支，两个分支都在修改数据之前返回。',
         codeLanguage: 'Python',

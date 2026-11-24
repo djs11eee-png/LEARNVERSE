@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
+import { withStorageLock } from './storageLock';
 
 const storageKey = 'learnverse.learning-progress.v1';
 const maxRecentActivity = 30;
@@ -26,8 +27,12 @@ interface ProgressContextValue extends Progress {
   uncompleteCourse: (id: string) => void;
   toggleFavorite: (id: string) => void;
   chooseRoute: (id: string) => void;
-  logMinutes: (minutes: number) => void;
+  logMinutes: (minutes: number) => Promise<boolean>;
+  hasUnsavedProgress: boolean;
+  retryProgress: () => Promise<boolean>;
 }
+
+type ProgressChange = (previous: Progress) => Progress;
 
 const emptyProgress: Progress = {
   completed: [],
@@ -134,7 +139,9 @@ function addActivity(progress: Progress, activity: Activity, studyDate?: Date): 
   const today = studyDate ? dayKey(studyDate) : undefined;
   return {
     ...progress,
-    activity: [activity, ...progress.activity].slice(0, maxRecentActivity),
+    activity: [activity, ...progress.activity]
+      .sort((left, right) => Date.parse(right.timestamp) - Date.parse(left.timestamp))
+      .slice(0, maxRecentActivity),
     studyDays: today && !progress.studyDays.includes(today)
       ? [today, ...progress.studyDays]
       : progress.studyDays,
@@ -143,48 +150,63 @@ function addActivity(progress: Progress, activity: Activity, studyDate?: Date): 
 
 export function ProgressProvider({ children }: { children: ReactNode }) {
   const [progress, setProgress] = useState(() => readProgress() ?? emptyProgress);
-  const memory = useRef(progress);
-  const storageAvailable = useRef(true);
+  const [hasUnsavedProgress, setHasUnsavedProgress] = useState(false);
+  const durable = useRef(progress);
+  const pending = useRef<ProgressChange[]>([]);
+
+  function applyPending(base: Progress) {
+    return pending.current.reduce((current, change) => change(current), base);
+  }
 
   useEffect(() => {
+    function reloadStored() {
+      const next = readProgress();
+      if (!next) return;
+      durable.current = next;
+      setProgress(applyPending(next));
+    }
     function syncProgress(event: StorageEvent) {
-      if (!storageAvailable.current || (event.key !== storageKey && event.key !== null)) return;
-      const next = readProgress() ?? emptyProgress;
-      memory.current = next;
-      setProgress(next);
+      if (event.key !== storageKey && event.key !== null) return;
+      reloadStored();
     }
 
     window.addEventListener('storage', syncProgress);
-    return () => window.removeEventListener('storage', syncProgress);
+    window.addEventListener('learnverse:progress-synced', reloadStored);
+    return () => {
+      window.removeEventListener('storage', syncProgress);
+      window.removeEventListener('learnverse:progress-synced', reloadStored);
+    };
   }, []);
 
-  function commit(change: (previous: Progress) => Progress) {
-    const previous = (storageAvailable.current ? readProgress() : undefined) ?? memory.current;
-    const next = change(previous);
-    memory.current = next;
-    setProgress(next);
+  function update(change?: ProgressChange) {
+    if (change) pending.current.push(change);
+    return withStorageLock(storageKey, () => {
+      if (!pending.current.length) return true;
 
-    if (next === previous) return;
-    try {
-      window.localStorage.setItem(storageKey, JSON.stringify(next));
-      storageAvailable.current = true;
-    } catch {
-      storageAvailable.current = false;
-    }
-  }
-
-  function update(change: (previous: Progress) => Progress) {
-    // Storage operations are atomic individually. The lock covers the full update across tabs.
-    if (navigator.locks) {
-      void navigator.locks.request(storageKey, () => commit(change)).catch(() => commit(change));
-    } else {
-      commit(change);
-    }
+      // Replay only local changes against the latest durable value under the lock.
+      const stored = readProgress();
+      if (stored) durable.current = stored;
+      const next = applyPending(durable.current);
+      setProgress(next);
+      if (stored) {
+        try {
+          if (next !== stored) window.localStorage.setItem(storageKey, JSON.stringify(next));
+          durable.current = next;
+          pending.current = [];
+          setHasUnsavedProgress(false);
+          return true;
+        } catch {
+          // Keep the operations for a subsequent retry or update.
+        }
+      }
+      setHasUnsavedProgress(true);
+      return false;
+    });
   }
 
   function startCourse(id: string) {
-    update((previous) => {
-      const now = new Date();
+    const now = new Date();
+    void update((previous) => {
       const timestamp = now.toISOString();
       const last = previous.activity[0];
       if (last?.type === 'course-started' && last.id === id && dayKey(new Date(last.timestamp)) === dayKey(now) &&
@@ -199,9 +221,9 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   }
 
   function completeCourse(id: string) {
-    update((previous) => {
+    const now = new Date();
+    void update((previous) => {
       if (previous.completed.includes(id)) return previous;
-      const now = new Date();
       const completed = [...previous.completed, id];
       const activeCourse = previous.activeCourse === id
         ? previous.started.find((course) => !completed.includes(course)) ?? null
@@ -215,37 +237,43 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
   }
 
   function uncompleteCourse(id: string) {
-    update((previous) => {
+    const timestamp = new Date().toISOString();
+    void update((previous) => {
       if (!previous.completed.includes(id)) return previous;
       return addActivity({
         ...previous,
         completed: previous.completed.filter((course) => course !== id),
         activeCourse: previous.activeCourse ?? (previous.started.includes(id) ? id : null),
-      }, { type: 'course-reopened', id, timestamp: new Date().toISOString() });
+      }, { type: 'course-reopened', id, timestamp });
     });
   }
 
   function toggleFavorite(id: string) {
-    update((previous) => ({
-      ...previous,
-      favorites: previous.favorites.includes(id)
-        ? previous.favorites.filter((resource) => resource !== id)
-        : [...previous.favorites, id],
-    }));
-  }
-
-  function chooseRoute(id: string) {
-    update((previous) => {
-      if (previous.activeRoute === id) return previous;
-      return addActivity({ ...previous, activeRoute: id }, { type: 'route-selected', id, timestamp: new Date().toISOString() });
+    const favorite = !applyPending(durable.current).favorites.includes(id);
+    void update((previous) => {
+      if (previous.favorites.includes(id) === favorite) return previous;
+      return {
+        ...previous,
+        favorites: favorite
+          ? [...previous.favorites, id]
+          : previous.favorites.filter((resource) => resource !== id),
+      };
     });
   }
 
-  function logMinutes(minutes: number) {
-    if (!wholeMinutes(minutes) || minutes > 1440) return;
-    update((previous) => {
-      const now = new Date();
-      return addActivity({ ...previous, minutes: previous.minutes + minutes }, {
+  function chooseRoute(id: string) {
+    const timestamp = new Date().toISOString();
+    void update((previous) => {
+      if (previous.activeRoute === id) return previous;
+      return addActivity({ ...previous, activeRoute: id }, { type: 'route-selected', id, timestamp });
+    });
+  }
+
+  async function logMinutes(minutes: number) {
+    if (!wholeMinutes(minutes) || minutes > 1440) return false;
+    const now = new Date();
+    return update((previous) => {
+      return addActivity({ ...previous, minutes: Math.min(Number.MAX_SAFE_INTEGER, previous.minutes + minutes) }, {
         type: 'time-logged', minutes, timestamp: now.toISOString(),
       }, now);
     });
@@ -261,6 +289,8 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       toggleFavorite,
       chooseRoute,
       logMinutes,
+      hasUnsavedProgress,
+      retryProgress: () => update(),
     }}>
       {children}
     </ProgressContext.Provider>

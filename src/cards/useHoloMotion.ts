@@ -1,13 +1,29 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 
 type Light = { x: number; y: number; gain: number; turn: number }
+type Key = keyof Light
 const restingLight: Light = { x: .46, y: .36, gain: 0, turn: 0 }
 export const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value))
+
+/**
+ * Spring constants per channel. The light follows the pointer tightly, the
+ * flip is slightly under-damped so a turned card settles with one soft bounce
+ * the way a stiff piece of card stock does.
+ */
+const springs: Record<Key, { k: number; zeta: number; rest: number }> = {
+  x: { k: 210, zeta: .86, rest: .0006 },
+  y: { k: 210, zeta: .86, rest: .0006 },
+  gain: { k: 120, zeta: 1, rest: .002 },
+  turn: { k: 118, zeta: .6, rest: .05 },
+}
+const dragSpring = { k: 900, zeta: 1 }
 
 export function useHoloMotion() {
   const stage = useRef<HTMLDivElement>(null)
   const aim = useRef({ ...restingLight })
   const live = useRef({ ...restingLight })
+  const speed = useRef<Light>({ x: 0, y: 0, gain: 0, turn: 0 })
+  const dragging = useRef(false)
   const raf = useRef(0)
   const lastTime = useRef(0)
   const facingBack = useRef(false)
@@ -15,47 +31,87 @@ export function useHoloMotion() {
   const [back, setBack] = useState(false)
   const [sensor, setSensor] = useState(false)
   const [sensorMessage, setSensorMessage] = useState('')
+
+  const paint = useCallback((frame: Light) => {
+    const element = stage.current
+    if (!element) return
+    const css = element.style
+    const still = reduced.current
+    const dx = frame.x - .5
+    const dy = frame.y - .5
+    const gain = frame.gain
+    const radians = frame.turn * Math.PI / 180
+    // Lift peaks when the card is edge-on so a flip arcs towards the viewer.
+    const lift = still ? 0 : Math.abs(Math.sin(radians))
+    css.setProperty('--h-shift-x', `${dx * 32}%`)
+    css.setProperty('--h-shift-y', `${dy * 32}%`)
+    css.setProperty('--h-px', `${frame.x * 100}%`)
+    css.setProperty('--h-py', `${frame.y * 100}%`)
+    css.setProperty('--h-bg-x', `${50 + dx * 52}%`)
+    css.setProperty('--h-bg-y', `${50 + dy * 64}%`)
+    css.setProperty('--h-dist', String(Math.min(1, Math.hypot(dx, dy) * 2)))
+    css.setProperty('--h-gain', String(gain))
+    css.setProperty('--h-lift', String(lift))
+    css.setProperty('--h-rx', `${still ? 0 : -dy * 22 * gain}deg`)
+    css.setProperty('--h-ry', `${still ? 0 : dx * 26 * gain}deg`)
+    css.setProperty('--h-sx', `${still ? 0 : -dx * 26 * gain}px`)
+    css.setProperty('--h-sy', `${still ? 0 : 10 - dy * 18 * gain}px`)
+    css.setProperty('--h-turn', `${frame.turn}deg`)
+    element.dispatchEvent(new CustomEvent('plate-light', { detail: frame }))
+    const nextBack = Math.cos(radians) < 0
+    if (nextBack !== facingBack.current) { facingBack.current = nextBack; setBack(nextBack) }
+  }, [])
+
   const wake = useCallback(function animate() {
     if (raf.current || !stage.current) return
-    raf.current = requestAnimationFrame(now => {
+    lastTime.current = performance.now()
+    const step = (now: number) => {
       raf.current = 0
       if (!stage.current) return
       const frame = live.current
       const target = aim.current
-      const seconds = Math.min(.04, (now - lastTime.current) / 1000)
+      const velocity = speed.current
+      const seconds = Math.min(1 / 30, Math.max(0, (now - lastTime.current) / 1000))
       lastTime.current = now
       let pending = false
-      for (const key of Object.keys(target) as (keyof Light)[]) {
-        const diff = target[key] - frame[key]
-        if (Math.abs(diff) > (key === 'turn' ? .09 : .001)) {
-          frame[key] += diff * (reduced.current ? 1 : 1 - Math.exp(-seconds * (key === 'turn' ? 16 : 10)))
-          pending = true
-        } else frame[key] = target[key]
+      for (const key of Object.keys(target) as Key[]) {
+        if (reduced.current) { frame[key] = target[key]; velocity[key] = 0; continue }
+        const spring = key === 'turn' && dragging.current ? { ...springs.turn, ...dragSpring } : springs[key]
+        // Semi-implicit Euler in fixed sub-steps stays stable on 30 Hz and 144 Hz screens alike.
+        const steps = Math.max(1, Math.ceil(seconds / (1 / 240)))
+        const h = seconds / steps
+        const damping = 2 * spring.zeta * Math.sqrt(spring.k)
+        for (let i = 0; i < steps; i++) {
+          velocity[key] += (spring.k * (target[key] - frame[key]) - damping * velocity[key]) * h
+          frame[key] += velocity[key] * h
+        }
+        if (Math.abs(target[key] - frame[key]) < spring.rest && Math.abs(velocity[key]) < spring.rest * 8) {
+          frame[key] = target[key]
+          velocity[key] = 0
+        } else pending = true
       }
-      const css = stage.current.style
-      css.setProperty('--h-shift-x', `${(frame.x - .5) * 32}%`)
-      css.setProperty('--h-shift-y', `${(frame.y - .5) * 32}%`)
-      css.setProperty('--h-gain', String(frame.gain))
-      css.setProperty('--h-rx', `${reduced.current ? 0 : (.5 - frame.y) * 19 * frame.gain}deg`)
-      css.setProperty('--h-ry', `${reduced.current ? 0 : (frame.x - .5) * 24 * frame.gain}deg`)
-      css.setProperty('--h-turn', `${frame.turn}deg`)
-      stage.current.dispatchEvent(new CustomEvent('plate-light', { detail: frame }))
-      const nextBack = Math.cos(frame.turn * Math.PI / 180) < 0
-      if (nextBack !== facingBack.current) { facingBack.current = nextBack; setBack(nextBack) }
-      if (pending) animate()
-    })
-  }, [])
+      paint(frame)
+      if (pending) raf.current = requestAnimationFrame(step)
+    }
+    raf.current = requestAnimationFrame(step)
+  }, [paint])
 
   const light = useCallback((x: number, y: number, gain = 1) => {
     Object.assign(aim.current, { x: clamp(x, 0, 1), y: clamp(y, 0, 1), gain })
     wake()
   }, [wake])
 
-  const turn = (degrees: number, immediate = false) => {
+  const turn = useCallback((degrees: number, immediate = false) => {
     aim.current.turn = degrees
-    if (immediate) live.current.turn = degrees
+    if (immediate) { live.current.turn = degrees; speed.current.turn = 0 }
     wake()
-  }
+  }, [wake])
+
+  /** Follow the finger tightly while held; on release the flip spring takes over again. */
+  const grab = useCallback((held: boolean) => { dragging.current = held }, [])
+
+  /** Angular velocity in degrees per second, used to project a flick. */
+  const spin = () => speed.current.turn
 
   useEffect(() => {
     const media = window.matchMedia('(prefers-reduced-motion: reduce)')
@@ -75,7 +131,10 @@ export function useHoloMotion() {
     const orientation = (event: DeviceOrientationEvent) => {
       if (event.beta === null || event.gamma === null) return
       if (!baseline) baseline = { beta: event.beta, gamma: event.gamma }
-      light(.5 + (event.gamma - baseline.gamma) / 55, .5 + (event.beta - baseline.beta) / 60)
+      // Let the resting hand position drift slowly so a phone held at a new angle re-centres.
+      baseline.beta += (event.beta - baseline.beta) * .004
+      baseline.gamma += (event.gamma - baseline.gamma) * .004
+      light(.5 + (event.gamma - baseline.gamma) / 50, .5 + (event.beta - baseline.beta) / 56)
     }
     window.addEventListener('deviceorientation', orientation)
     return () => window.removeEventListener('deviceorientation', orientation)
@@ -94,15 +153,15 @@ export function useHoloMotion() {
     } catch { setSensorMessage('体感暂时不可用，可以拖动卡片。') }
   }
 
-  return { stage, aim, light, turn, back, reduced, sensor, toggleSensor, sensorMessage }
+  return { stage, aim, light, turn, grab, spin, back, reduced, sensor, toggleSensor, sensorMessage }
 }
 
 /** Keep one noise source live during a gesture. New movement briefly opens its gain envelope. */
-export function createFoilSound() {
+export function createFoilSound(shared?: AudioContext) {
   try {
     const Audio = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext
     if (!Audio) return
-    const ctx = new Audio()
+    const ctx = shared ?? new Audio()
     const duration = .4
     const buffer = ctx.createBuffer(1, Math.ceil(ctx.sampleRate * duration), ctx.sampleRate)
     const data = buffer.getChannelData(0)
@@ -136,7 +195,12 @@ export function createFoilSound() {
       if (stopped) return
       if (finish) pulse(1, 1, true)
       stopped = true
-      const release = () => { if (ctx.state !== 'closed') void ctx.close().catch(() => {}) }
+      const release = () => {
+        source.disconnect()
+        high.disconnect()
+        gain.disconnect()
+        if (!shared && ctx.state !== 'closed') void ctx.close().catch(() => {})
+      }
       const watchdog = window.setTimeout(release, 950)
       source.onended = () => { window.clearTimeout(watchdog); release() }
       source.stop(ctx.currentTime + (finish ? .25 : .012))

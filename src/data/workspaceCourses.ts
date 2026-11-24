@@ -2,6 +2,8 @@ import { adaptedPython } from './adaptedPython'
 import { additionalCourses } from './additionalCourses'
 import { courseCatalog } from './courseCatalog'
 import type { CourseSummary } from './courseCatalog'
+import { curriculumCourses } from './curriculum'
+import type { RunLanguage } from '../code/runner'
 
 /**
  * Self-contained LEARNVERSE lessons, with attribution on adapted courses.
@@ -11,6 +13,7 @@ export interface LessonSection {
   paragraphs: string[]
   code?: string
   codeLanguage?: string
+  run?: { language: RunLanguage; starter?: string; expectedOutput?: string; stdin?: string; downloadName?: string }
 }
 
 export interface LessonQuestion {
@@ -21,13 +24,26 @@ export interface LessonQuestion {
   explanation: string
 }
 
+export type WorkspaceDemoKind =
+  | 'range'
+  | 'search'
+  | 'publish-subscribe'
+  | 'binary-carry'
+  | 'bitmask-frame'
+  | 'c-pointer'
+  | 'bubble-sort'
+  | 'stack-queue'
+  | 'lru-cache'
+  | 'iot-gateway'
+  | 'cpu-cycle'
+
 export interface WorkspaceLesson {
   id: string
   title: string
   summary: string
   sections: LessonSection[]
   questions: LessonQuestion[]
-  demo?: 'range' | 'search' | 'publish-subscribe'
+  demo?: WorkspaceDemoKind
 }
 
 export interface WorkspaceCourse extends CourseSummary {
@@ -304,6 +320,7 @@ export const workspaceCourses: WorkspaceCourse[] = [
       {
         id: 'binary',
         title: '信息与二进制',
+        demo: 'binary-carry',
         summary: '理解位、字节与二进制如何表示数字。',
         sections: [
           {
@@ -358,6 +375,7 @@ export const workspaceCourses: WorkspaceCourse[] = [
       {
         id: 'structures',
         title: '数据结构',
+        demo: 'stack-queue',
         summary: '根据需要选择保存与访问数据的方式。',
         sections: [
           {
@@ -502,6 +520,7 @@ export const workspaceCourses: WorkspaceCourse[] = [
       {
         id: 'functions-and-arrays',
         title: '函数与数组',
+        demo: 'c-pointer',
         summary: '用函数组织计算，并按索引读取数组。',
         sections: [
           {
@@ -595,6 +614,7 @@ export const workspaceCourses: WorkspaceCourse[] = [
       {
         id: 'sorting',
         title: '冒泡排序',
+        demo: 'bubble-sort',
         summary: '通过比较相邻元素，逐轮整理顺序。',
         sections: [
           {
@@ -622,6 +642,7 @@ export const workspaceCourses: WorkspaceCourse[] = [
       {
         id: 'stacks-and-queues',
         title: '栈与队列',
+        demo: 'stack-queue',
         summary: '用进入和取出的顺序理解两种常见结构。',
         sections: [
           {
@@ -771,4 +792,5 @@ export const workspaceCourses: WorkspaceCourse[] = [
   },
   adaptedPython,
   ...additionalCourses,
+  ...curriculumCourses,
 ]

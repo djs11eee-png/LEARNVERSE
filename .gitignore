@@ -1,6 +1,19 @@
 node_modules/
 dist/
 .vite/
+
+# Local configuration at any depth, including backend/.env.
+.env
+.env.*
+!.env.example
+
+# Local databases and their SQLite journal files.
+.learnverse/
+*.sqlite
+*.sqlite-*
+
+__pycache__/
+_trash_backup/
 *.local
 playwright-report/
 test-results/

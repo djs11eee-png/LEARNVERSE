@@ -8,6 +8,7 @@ export const categoryLabels: Record<string, string> = {
   'Computer Science': '计算机科学',
   'Data Structures': '数据结构',
   'Frontend Development': '前端开发',
+  'IoT & Embedded': '物联网与嵌入式',
   Java: 'Java',
   JavaScript: 'JavaScript',
   Programming: '编程',

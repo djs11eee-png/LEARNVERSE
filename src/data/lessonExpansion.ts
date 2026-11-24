@@ -7,11 +7,13 @@ export interface LessonExpansion {
   practice: {
     prompt: string
     checkpoints: string[]
+    hints?: string[]
     solution: string
     code?: string
     codeLanguage?: string
   }
   questions: LessonQuestion[]
+  wrapUp?: Pick<LessonSection, 'heading' | 'paragraphs'>
 }
 
 export type CourseExpansions = Record<string, Record<string, LessonExpansion>>

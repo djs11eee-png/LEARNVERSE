@@ -9,9 +9,10 @@ export const languageExpansions: CourseExpansions = {
           heading: '从源文件追踪到可执行文件',
           paragraphs: [
             '预处理器先处理 #include 等指令。编译与汇编阶段把处理后的 C 代码转换成目标文件。链接器再组合目标文件与所需库，生成操作系统可以启动的程序。头文件提供声明，例如 printf 接收什么参数，库提供声明所对应的实现。',
-            '把下面的程序保存成 receipt.c。在 GCC 环境中执行 gcc -std=c17 -Wall -Wextra -pedantic -c receipt.c -o receipt.o，得到目标文件。再执行 gcc receipt.o -o receipt.exe 完成链接。在 PowerShell 中用 .\\receipt.exe 启动，在类 Unix shell 中用 ./receipt.exe。单条命令 gcc -std=c17 -Wall -Wextra -pedantic receipt.c -o receipt.exe 也能完成这两个步骤。',
+            '先用本机实验室运行下方完整程序，核对输出两行。若想观察编译和链接分步产生的文件，可在有 GCC 的终端将它保存为 receipt.c，依次执行 gcc -std=c17 -Wall -Wextra -pedantic -c receipt.c -o receipt.o 与 gcc receipt.o -o receipt.exe，再在 PowerShell 用 .\\receipt.exe 运行。',
           ],
           codeLanguage: 'C · 完整程序 receipt.c',
+          run: { language: 'c', expectedOutput: 'Notebook\nCopies: 3', downloadName: 'receipt.c' },
           code: String.raw`#include <stdio.h>
 
 int main(void) {
@@ -222,6 +223,7 @@ int main(void) {
             '声明 int *value 表示 value 指向 int，表达式 *value 表示读取或写入它指向的对象。下面的完整程序先输出计算结果 8，再输出原值 4，最后输出指针写入后的值 9。reset 的参数约定是传入一个有效 int 对象的地址，函数调用期间该对象始终存在。',
           ],
           codeLanguage: 'C · 完整程序 update_value.c',
+          run: { language: 'c', expectedOutput: '8\n4\n9', downloadName: 'update_value.c' },
           code: String.raw`#include <stdio.h>
 
 static int doubled(int value) {
@@ -242,6 +244,29 @@ int main(void) {
 }`,
         },
         {
+          heading: '动手把更新后的值交回调用方',
+          paragraphs: [
+            '要修改调用方的值，先在 main 里取变量地址，再把地址传给带 * 的形参。函数内读取 *score 得到当前值，写入 *score 会更新同一变量。这个小程序把第一次读到的值打印在前，调用 add_point 后再打印一次。',
+            '先跑模板，输出两行 4 表示地址已经传入，但还没有通过地址写值。补上一条赋值，让输出变为 4 和 5。完成后把初始值换成 0，再手算第二行应为 1。进阶课会用相同方法更新数组的有效长度。',
+          ],
+          run: {
+            language: 'c',
+            expectedOutput: '4\n5',
+            starter: String.raw`#include <stdio.h>
+
+static void add_point(int *score) {
+    /* 把 *score 增加 1。 */
+}
+
+int main(void) {
+    int score = 4;
+    printf("%d\n", score);
+    add_point(&score);
+    printf("%d\n", score);
+}`,
+          },
+        },
+        {
           heading: '查清函数拿到的是数组还是指针',
           paragraphs: [
             '在定义数组 int readings[] = {18, 20, 23} 的作用域，sizeof readings 计算整个数组的字节数，sizeof readings[0] 计算一个元素的字节数，两者相除得 3。把 readings 作为实参传给函数时，表达式通常转换成指向首元素的指针。形参 const int readings[] 也按指针形参处理。',
@@ -254,6 +279,24 @@ int main(void) {
             '字符数组可以保存结尾带空字符的字符串。对于 char label[8] = "C17"，前三个字节是 C、1 和 7，紧接的是 \\0，剩余元素也被初始化为零。sizeof label 是 8，包含所有存储空间。包含 <string.h> 后使用 strlen(label) 得到 3，计算范围截至第一个空字符之前。',
             '预留容量时把终止字符计入预算。例如三个可见的 ASCII 字符至少需要四个 char。用 %s 输出前应保证在数组有效范围内存在终止字符。如果数组里存的是一般字节数据，应通过知道的长度逐字节处理。',
           ],
+        },
+        {
+          heading: '动手观察字符串的结束位置',
+          paragraphs: [
+            '运行下例，容量仍是 8。先显示完整的 C17，再将下标 1 的字符换成终止字符，显示时只剩 C。终止符之后的内容没有被用作字符串的一部分，strlen 从头数到终止符之前便停止。',
+            '把下标从 1 改为 2，手算第二行的字符串为 C1、长度为 2、容量仍为 8。再试将下标改为 0，字符串为空而缓冲区依旧存在。进阶课的 fgets 每次把读到的文本放进这种缓冲区。',
+          ],
+          codeLanguage: 'C',
+          code: String.raw`#include <stdio.h>
+#include <string.h>
+
+int main(void) {
+    char label[8] = "C17";
+    printf("%s %zu %zu\n", label, strlen(label), sizeof label);
+    label[1] = '\0';
+    printf("%s %zu %zu\n", label, strlen(label), sizeof label);
+}`,
+          run: { language: 'c', expectedOutput: 'C17 3 8\nC 1 8' },
         },
         {
           heading: '给二维数组选择正确的行宽',
@@ -466,6 +509,21 @@ for quantity in sales:
 print(total)`,
         },
         {
+          heading: '次数不固定时用 while',
+          paragraphs: [
+            'for 适合把一份清单逐项读完。while 先检查条件，只要条件成立就继续。例如每批发出 3 张卡片，能发几批要看还剩多少卡。每轮都减去 3，余量不足 3 时退出。如果漏写减法，成立的条件一直成立，循环就停不下来。',
+            '试跑 8 张再将剩余量改为 2。第一次应发 2 批，还剩 2 张。第二次条件一开始就不成立，批数应为 0。',
+          ],
+          codeLanguage: 'Python',
+          code: `remaining = 8
+batches = 0
+while remaining >= 3:
+    remaining = remaining - 3
+    batches = batches + 1
+print(batches, remaining)`,
+          run: { language: 'python', expectedOutput: '2 2' },
+        },
+        {
           heading: '用 append 把符合条件的一项记下来',
           paragraphs: [
             '记账表中有补录失败留下的 0 和负数。要保留大于 0 的记录，可以建一张空列表 valid，再在循环里逐条判断。',
@@ -533,6 +591,23 @@ print(total)`,
     functions: {
       objectives: ['用 def 定义函数，再用 return 把计算结果交给调用方。', '用整除和取余计算满袋数与剩余件数。', '用默认值简化常见调用，按参数名字指定特殊值。'],
       sections: [
+        {
+          heading: '清理短文本，再把值填入句子',
+          paragraphs: [
+            'strip() 返回去掉首尾空白的新字符串，原字符串保持原样。split() 按空白把一段文本拆成列表，连续空格算一个分隔位置。如果用户可能少填一项，要先检查列表长度，再读取下标。',
+            'f-string 是字符串前加 f 的写法。Python 会先求出花括号里的值，再把结果放进句子。跑一次正常输入后，把 raw 改成只有空白，看看分支如何避免读取不存在的第一项。',
+          ],
+          codeLanguage: 'Python',
+          code: `raw = "  苹果  3  "
+parts = raw.strip().split()
+if len(parts) == 2:
+    item = parts[0]
+    count = parts[1]
+    print(f"{item}有 {count} 个")
+else:
+    print("请填写商品和数量")`,
+          run: { language: 'python', expectedOutput: '苹果有 3 个' },
+        },
         {
           heading: '分装水果时分别求满袋数和余量',
           paragraphs: [
@@ -842,12 +917,43 @@ print(packages_needed(items=7, capacity=3))`,
       objectives: ['区分实例、引用和字段。', '在构造方法中建立并维持数据约束。', '通过公有方法读取对象数据而保持字段封装。'],
       sections: [
         {
+          heading: '先给一条记录加两个字段',
+          paragraphs: [
+            'new Reservation("A2", 4) 创建一条记录，并调用与类同名的构造方法。构造方法没有返回类型。传入同名参数时，用 this.room 指正在创建的对象的字段，用等号右边的 room 指参数。',
+            'private 限制外部直接读写字段，final 表示构造完成后字段不能重新赋值。people() 和 summary() 从对象内部读取字段，分别返回可累加的数字与可显示的描述。',
+            '下例先建立记录并读取两个结果。把 4 改成 7，第一行应为 A2 7，第二行应为 8。这里先只练保存和读取，下一段再给构造器加检查。',
+          ],
+          codeLanguage: 'Java',
+          code: `public class Main {
+    static class Reservation {
+        private final String room;
+        private final int people;
+
+        Reservation(String room, int people) {
+            this.room = room;
+            this.people = people;
+        }
+
+        String summary() { return room + " " + people; }
+        int people() { return people; }
+    }
+
+    public static void main(String[] args) {
+        Reservation entry = new Reservation("A2", 4);
+        System.out.println(entry.summary());
+        System.out.println(entry.people() + 1);
+    }
+}`,
+          run: { language: 'java', expectedOutput: 'A2 4\n5' },
+        },
+        {
           heading: '用构造方法保证记录有效',
           paragraphs: [
             '阅读场次只接受非空标题和非负时长。创建对象前检查这两个条件，可以让读取方法直接相信每条记录都满足约定。示例使用 String.strip 去掉两侧空白，需要 Java 11 或更高版本。先用 title == null 检查是否没有字符串，再执行 strip，避免对空引用调用方法。',
-            '保存示例到 ReadingEntry.java，运行 javac ReadingEntry.java，再运行 java -cp . ReadingEntry。输入标题 "  Atlas  " 会被保存为 Atlas，时长 20 保留。主方法先调用 summary() 输出 Atlas 20 min，再用 minutes() 得到可继续计算的整数，输出加 5 后的 25。',
+            '用本机实验室运行下方完整示例。输入标题 "  Atlas  " 会被保存为 Atlas，时长 20 保留。主方法先调用 summary() 输出 Atlas 20 min，再用 minutes() 得到可继续计算的整数，输出加 5 后的 25。',
           ],
           codeLanguage: 'Java · 完整程序 ReadingEntry.java',
+          run: { language: 'java', expectedOutput: 'Atlas 20 min\n25', downloadName: 'ReadingEntry.java' },
           code: `public class ReadingEntry {
     private final String title;
     private final int minutes;
@@ -898,6 +1004,38 @@ print(packages_needed(items=7, capacity=3))`,
           paragraphs: [
             '阅读时长属于某一次阅读，所以每个 ReadingEntry 实例保存自己的 minutes。预订上限是所有房间共同遵守的规则，可以在预订类中声明 private static final int MAX_PEOPLE = 12，让所有构造方法复用。若将 minutes 声明为可修改的 static 字段，新建第二条记录时会修改共有数据，第一条记录读到的时长也会跟着变。用两条时长不同的记录即可观察这类问题。',
           ],
+        },
+        {
+          heading: '动手加上构造器的第一条检查',
+          paragraphs: [
+            '当前类可以接收任意整数。运行后会输出 4 和 0，第二行表明不合法的记录也创建了。补上一条人数检查，发现小于 1 或大于 12 时，用 throw new IllegalArgumentException("invalid people") 结束构造。字段赋值只在通过检查后执行。',
+            '模板里的主函数已有 try/catch，它将失败时的消息打印出来并继续运行。修正后预期为 4、invalid people。把 0 改为 13，预期仍拒绝。把 0 改成 12，第二行应为 12。只改构造器，测试部分已经写好。',
+            '随后完成章末的 RoomBooking，按相同方式先校验名称和人数，再为合法记录提供两个访问方法。',
+          ],
+          run: {
+            language: 'java',
+            expectedOutput: '4\ninvalid people',
+            starter: `public class Main {
+    static class Reservation {
+        final int people;
+
+        Reservation(int people) {
+            // 在赋值前检查人数是否在 1 到 12 之间。
+            this.people = people;
+        }
+    }
+
+    public static void main(String[] args) {
+        for (int count : new int[]{4, 0}) {
+            try {
+                System.out.println(new Reservation(count).people);
+            } catch (IllegalArgumentException problem) {
+                System.out.println(problem.getMessage());
+            }
+        }
+    }
+}`,
+          },
         },
       ],
       pitfalls: [

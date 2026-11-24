@@ -12,13 +12,13 @@ function sceneFor(path: string): SkyName {
   if (path.startsWith('/library')) return 'library'
   if (path.startsWith('/lab')) return 'lab'
   if (path.startsWith('/my-universe')) return 'universe'
-  if (/\/(lesson|learn)(\/|$)/.test(path)) return 'lesson'
+  if (/^\/academy\/[^/]+\/(lesson|learn|project)(\/|$)/.test(path)) return 'lesson'
   return 'academy'
 }
 
 function pickStage(path: string, root: HTMLElement) {
   const stages: Record<SkyName, string> = {
-    home: '.hero-art', map: path === '/explore' ? '.learn-map' : '.learn-header',
+    home: '.hero-art', map: '.learn-header',
     library: '.learn-screen[data-view="resource"] .learn-header',
     lab: '.lab-intro', universe: '.learn-screen[data-view="universe"] .learn-header',
     lesson: '.workspace-header', academy: '.learn-header',
@@ -30,6 +30,10 @@ function pickStage(path: string, root: HTMLElement) {
 export function RouteAtmosphere({ path, paused }: { path: string; paused: boolean }) {
   const [host, setHost] = useState<HTMLElement | null>(null)
   useEffect(() => {
+    if (path === '/explore' || path.startsWith('/explore/major-')) {
+      setHost(null)
+      return
+    }
     const root = document.getElementById('main-content')
     if (!root) return
     let active: HTMLElement | null = null

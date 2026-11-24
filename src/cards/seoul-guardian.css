@@ -1,0 +1,782 @@
+/* ============================================================================
+   SEOUL SERVER GUARDIAN (MYTHIC / GENESIS NODE) — 3D MULTI-LAYER HOLOGRAPHIC CARD
+   Palette: Deep Obsidian (#07090F) + Seoul Neon Cyan (#00F5D4) + Molten Gold (#FFD166)
+   ============================================================================ */
+
+.sg-card-root {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+}
+
+.sg-stage {
+  --h-px: 50%;
+  --h-py: 35%;
+  --h-bg-x: 50%;
+  --h-bg-y: 50%;
+  --h-rx: 0deg;
+  --h-ry: 0deg;
+  --h-turn: 0deg;
+  --h-lift: 0;
+  --h-gain: 0.45;
+  --h-sx: 0px;
+  --h-sy: 12px;
+  width: min(358px, calc(100vw - 36px));
+  aspect-ratio: 63 / 88;
+  perspective: 1250px;
+  cursor: grab;
+  user-select: none;
+  touch-action: none;
+  position: relative;
+}
+.sg-card-root.is-compact .sg-stage {
+  width: min(296px, calc(100vw - 44px));
+}
+.sg-stage:active { cursor: grabbing; }
+
+.sg-card-rotator {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform:
+    translateZ(calc(var(--h-lift) * 48px))
+    rotateX(var(--h-rx))
+    rotateY(calc(var(--h-ry) + var(--h-turn)));
+  will-change: transform;
+}
+
+.sg-face {
+  position: absolute;
+  inset: 0;
+  border-radius: 22px;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  background:
+    radial-gradient(ellipse at 50% 18%, rgba(0, 245, 212, .16), transparent 56%),
+    radial-gradient(ellipse at 82% 84%, rgba(255, 209, 102, .12), transparent 54%),
+    #07090F;
+  box-shadow:
+    var(--h-sx) calc(var(--h-sy) + 18px) 48px rgba(0, 0, 0, .78),
+    0 0 38px rgba(0, 245, 212, calc(.18 + var(--h-gain) * .22)),
+    0 0 60px rgba(255, 209, 102, calc(.08 + var(--h-gain) * .16)),
+    inset 0 0 0 1px rgba(255, 209, 102, .45);
+  overflow: hidden;
+}
+
+.sg-back {
+  transform: rotateY(180deg);
+}
+
+/* Molten-Gold + Cyber-Cyan Pulsing Mythic Border */
+.sg-border-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from calc(var(--h-px) * 1.8deg),
+    #FFD166,
+    #00F5D4,
+    #7B61FF,
+    #FFD166,
+    #00F5D4,
+    #FFD166
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 9;
+  animation: sg-border-glow 4s ease-in-out infinite;
+}
+@keyframes sg-border-glow {
+  0%, 100% { filter: drop-shadow(0 0 6px rgba(255, 209, 102, .5)); opacity: .88; }
+  50% { filter: drop-shadow(0 0 14px rgba(0, 245, 212, .75)); opacity: 1; }
+}
+
+/* ================= 3D PARALLAX LAYERS ================= */
+.sg-layer {
+  position: absolute;
+  inset: 0;
+  transform-style: preserve-3d;
+  pointer-events: none;
+}
+
+/* Base Layer (Z: 0px): Cyber Code Matrix Rain + N Seoul Tower Wireframe */
+.sg-layer-base {
+  transform: translateZ(0px);
+  overflow: hidden;
+  border-radius: inherit;
+}
+.sg-matrix-rain {
+  position: absolute;
+  inset: -24px 0;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  opacity: .22;
+  mask-image: linear-gradient(180deg, transparent, #000 18%, #000 72%, transparent);
+}
+.sg-matrix-col {
+  margin: 0;
+  text-align: center;
+  font: 600 10px/1.65 "Geist Mono", Consolas, monospace;
+  color: #00F5D4;
+  text-shadow: 0 0 8px rgba(0, 245, 212, .7);
+  animation: sg-matrix-fall calc(6.5s + var(--col-idx, 0) * 1.1s) linear infinite;
+}
+.sg-matrix-col:nth-child(even) {
+  color: #FFD166;
+  opacity: .68;
+  animation-direction: reverse;
+}
+@keyframes sg-matrix-fall {
+  from { transform: translateY(-28%); }
+  to { transform: translateY(24%); }
+}
+
+.sg-seoul-tower {
+  position: absolute;
+  inset: 4px 0 0;
+  width: 100%;
+  height: 78%;
+  opacity: .76;
+}
+.sg-beacon { animation: sg-beacon-pulse 1.8s ease-in-out infinite; transform-origin: 160px 22px; }
+.sg-beacon-ring { animation: sg-beacon-ring 2.4s ease-out infinite; transform-origin: 160px 22px; }
+@keyframes sg-beacon-pulse { 0%, 100% { opacity: .6; } 50% { opacity: 1; } }
+@keyframes sg-beacon-ring {
+  0% { transform: scale(.55); opacity: .85; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+/* Mid Layer (Z: 20px): Quantum Server Rack Core + Fiber Streams */
+.sg-layer-mid {
+  transform: translateZ(20px) scale(.97);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 56px;
+}
+.sg-quantum-core {
+  position: relative;
+  width: 78%;
+  aspect-ratio: 260 / 210;
+  display: grid;
+  place-items: center;
+}
+.sg-core-halo {
+  position: absolute;
+  inset: 8% 12%;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(0, 245, 212, .34), rgba(255, 209, 102, .12) 48%, transparent 72%);
+  filter: blur(14px);
+  animation: sg-core-breathe 3.2s ease-in-out infinite;
+}
+@keyframes sg-core-breathe {
+  0%, 100% { transform: scale(.92); opacity: .7; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+.sg-rack-svg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter: drop-shadow(0 12px 20px rgba(0, 0, 0, .75));
+}
+.sg-fan-spin {
+  transform-origin: 130px 103px;
+  animation: sg-spin 4.2s linear infinite;
+}
+.sg-fiber-flow {
+  stroke-dasharray: 18 10;
+  animation: sg-fiber 2.1s linear infinite;
+}
+.sg-fiber-flow.is-alt { animation-duration: 2.7s; animation-direction: reverse; }
+.sg-led { animation: sg-led-blink 1.4s ease-in-out infinite alternate; }
+.sg-led.is-fast { animation-duration: .85s; }
+@keyframes sg-spin { to { transform: rotate(360deg); } }
+@keyframes sg-fiber { to { stroke-dashoffset: -56; } }
+@keyframes sg-led-blink { from { opacity: .35; } to { opacity: 1; } }
+
+/* Top Layer (Z: 40px): Floating Embossed Nameplate, Mythic Header & Geek Traits */
+.sg-layer-top {
+  transform: translateZ(40px) scale(.94);
+  padding: 16px 16px 15px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  z-index: 4;
+}
+
+.sg-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sg-rarity-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 9px;
+  border-radius: 99px;
+  border: 1px solid rgba(0, 245, 212, .52);
+  background: rgba(7, 13, 22, .84);
+  color: #00F5D4;
+  font: 700 10px/1 "Geist Mono", Consolas, monospace;
+  letter-spacing: .12em;
+  box-shadow: 0 4px 14px rgba(0, 245, 212, .22);
+}
+
+/* Dynamic Embossed Laser Gold Nameplate (NO.00XX / 0100) */
+.sg-serial-plate {
+  display: inline-flex;
+  align-items: center;
+  padding: 5px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 209, 102, .75);
+  background: linear-gradient(125deg, #271E0B, #4A3712 45%, #1E1608 100%);
+  color: #FFE7A3;
+  font: 750 11px/1 "Geist Mono", Consolas, monospace;
+  letter-spacing: .1em;
+  text-shadow: 0 0 10px rgba(255, 209, 102, .65);
+  box-shadow:
+    0 4px 16px rgba(0, 0, 0, .65),
+    0 0 14px rgba(255, 209, 102, .28),
+    inset 0 1px rgba(255, 246, 204, .45);
+}
+.sg-serial-plate[data-top100='false'] {
+  border-color: rgba(0, 245, 212, .68);
+  background: linear-gradient(125deg, #092529, #114348 48%, #07191D);
+  color: #9FFDF0;
+}
+
+.sg-card-spacer {
+  flex: 1;
+  display: flex;
+  align-items: flex-end;
+  justify-content: flex-start;
+  padding-bottom: 8px;
+}
+.sg-limited-tag {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 209, 102, .4);
+  background: rgba(7, 9, 15, .82);
+  color: #FFD166;
+  font: 650 10px/1.2 "Geist Mono", Consolas, sans-serif;
+  letter-spacing: .08em;
+}
+
+.sg-card-body {
+  display: grid;
+  gap: 7px;
+  padding: 11px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 245, 212, .26);
+  background: linear-gradient(165deg, rgba(8, 13, 23, .92), rgba(7, 9, 15, .95));
+  box-shadow: 0 10px 26px rgba(0, 0, 0, .65), inset 0 1px rgba(0, 245, 212, .16);
+}
+.sg-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: -.015em;
+  background: linear-gradient(90deg, #FFFFFF 0%, #9EFDF0 54%, #FFE18C 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.sg-subtitle {
+  margin: -3px 0 1px;
+  font: 600 9.5px/1.3 "Geist Mono", Consolas, monospace;
+  letter-spacing: .08em;
+  color: #00F5D4;
+  opacity: .88;
+}
+
+.sg-traits {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+  font-size: 11px;
+  line-height: 1.45;
+  color: #D8E6EE;
+}
+.sg-traits li {
+  display: block;
+}
+.sg-trait-key {
+  color: #FFD166;
+  font-weight: 680;
+  margin-right: 4px;
+}
+
+.sg-flavor {
+  margin: 2px 0 0;
+  padding-top: 6px;
+  border-top: 1px dashed rgba(255, 209, 102, .26);
+  font-size: 10.5px;
+  line-height: 1.45;
+  color: #A7BEC7;
+  font-style: italic;
+}
+.sg-flavor span {
+  font-style: normal;
+  color: #00F5D4;
+  font-weight: 600;
+}
+
+/* ================= VIOLENT RAINBOW HOLOGRAPHIC LASER FOIL ================= */
+.sg-holo-foil {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 6;
+  mix-blend-mode: color-dodge;
+  opacity: calc(.14 + var(--h-gain) * .36);
+  background-image:
+    repeating-linear-gradient(
+      128deg,
+      rgba(0, 245, 212, .68) 0%,
+      rgba(74, 136, 255, .52) 14%,
+      rgba(220, 96, 255, .56) 28%,
+      rgba(255, 209, 102, .72) 42%,
+      rgba(0, 245, 212, .64) 56%,
+      rgba(255, 110, 199, .50) 70%,
+      rgba(255, 209, 102, .66) 84%,
+      rgba(0, 245, 212, .68) 100%
+    ),
+    repeating-linear-gradient(
+      -35deg,
+      rgba(255, 255, 255, .18) 0 1.5px,
+      transparent 1.5px 6px
+    );
+  background-size: 260% 260%, 100% 100%;
+  background-position: var(--h-bg-x) var(--h-bg-y), center;
+  mask-image: radial-gradient(circle 250px at var(--h-px) var(--h-py), #000 15%, rgba(0, 0, 0, .42) 62%, rgba(0, 0, 0, .14) 100%);
+  -webkit-mask-image: radial-gradient(circle 250px at var(--h-px) var(--h-py), #000 15%, rgba(0, 0, 0, .42) 62%, rgba(0, 0, 0, .14) 100%);
+  filter: saturate(1.55) contrast(1.24);
+  transition: opacity 180ms ease;
+}
+
+.sg-holo-glare {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 7;
+  mix-blend-mode: screen;
+  opacity: calc(.22 + var(--h-gain) * .62);
+  background:
+    radial-gradient(
+      circle 170px at var(--h-px) var(--h-py),
+      rgba(255, 255, 255, .65) 0%,
+      rgba(0, 245, 212, .32) 28%,
+      rgba(255, 209, 102, .16) 52%,
+      transparent 75%
+    );
+}
+
+.sg-holo-etch {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  z-index: 5;
+  opacity: calc(.16 + var(--h-gain) * .22);
+  background-image:
+    radial-gradient(rgba(0, 245, 212, .45) .75px, transparent 1px),
+    radial-gradient(rgba(255, 209, 102, .4) .75px, transparent 1px);
+  background-size: 14px 14px, 21px 21px;
+  background-position: 0 0, 7px 7px;
+}
+
+/* ================= CARD BACK ================= */
+.sg-back-inner {
+  position: relative;
+  z-index: 3;
+  height: 100%;
+  padding: 18px 16px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.sg-back-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.sg-back-emblem {
+  position: relative;
+  align-self: center;
+  width: 112px;
+  height: 112px;
+  display: grid;
+  place-items: center;
+  color: #00F5D4;
+}
+.sg-back-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px dashed rgba(255, 209, 102, .65);
+  box-shadow: 0 0 28px rgba(0, 245, 212, .25), inset 0 0 24px rgba(255, 209, 102, .14);
+  animation: sg-spin 14s linear infinite;
+}
+.sg-back-meta {
+  padding: 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 209, 102, .28);
+  background: rgba(8, 14, 24, .88);
+}
+.sg-back-meta h4 {
+  margin: 0 0 10px;
+  font: 700 11px/1.3 "Geist Mono", Consolas, monospace;
+  letter-spacing: .1em;
+  color: #FFD166;
+}
+.sg-back-meta dl {
+  margin: 0;
+  display: grid;
+  gap: 7px;
+}
+.sg-back-meta dl > div {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+}
+.sg-back-meta dt { color: #8FA3B0; }
+.sg-back-meta dd { margin: 0; color: #EEF5F8; font-weight: 600; text-align: right; }
+.sg-perk-accent {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #00F5D4 !important;
+}
+.sg-back-sign {
+  margin: 0;
+  text-align: center;
+  font: 600 9.5px/1 "Geist Mono", Consolas, monospace;
+  letter-spacing: .16em;
+  color: rgba(255, 209, 102, .7);
+}
+
+/* Controls below card */
+.sg-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 8px 10px;
+}
+.sg-ctrl-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 6px 13px;
+  border-radius: 99px;
+  border: 1px solid rgba(0, 245, 212, .35);
+  background: rgba(10, 18, 28, .88);
+  color: #E5F5F5;
+  font-size: .8rem;
+  cursor: pointer;
+  transition: border-color 160ms, background 160ms, transform 160ms;
+}
+.sg-ctrl-btn:is(:hover, :focus-visible),
+.sg-ctrl-btn[aria-pressed='true'] {
+  border-color: #FFD166;
+  background: rgba(26, 36, 48, .94);
+  color: #FFE7A3;
+}
+.sg-ctrl-hint {
+  width: 100%;
+  text-align: center;
+  font-size: .74rem;
+  color: #93A7B3;
+}
+.sg-ctrl-note {
+  width: 100%;
+  text-align: center;
+  font-size: .75rem;
+  color: #FFD166;
+}
+
+/* ================= GOLDEN BOOSTER TEAR & REVEAL MODAL ================= */
+.sg-reveal-dialog {
+  position: fixed;
+  inset: 0;
+  margin: auto;
+  width: min(620px, calc(100vw - 20px));
+  max-height: calc(100dvh - 20px);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #F2F6F8;
+  overflow: visible;
+}
+.sg-reveal-dialog::backdrop {
+  background: radial-gradient(circle at 50% 42%, rgba(9, 24, 34, .86), rgba(4, 6, 11, .94));
+  backdrop-filter: blur(10px);
+}
+.sg-reveal-shell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: clamp(18px, 3vw, 28px);
+  max-height: calc(100dvh - 20px);
+  overflow-y: auto;
+}
+.sg-modal-close {
+  position: fixed;
+  top: max(16px, env(safe-area-inset-top));
+  right: max(16px, env(safe-area-inset-right));
+  width: 44px;
+  height: 44px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 209, 102, .4);
+  background: rgba(10, 16, 26, .88);
+  color: #EEF5F7;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  z-index: 20;
+}
+.sg-modal-close:is(:hover, :focus-visible) {
+  border-color: #00F5D4;
+  background: #172736;
+}
+
+/* Sealed Pack Tear Animation */
+.sg-booster-ceremony {
+  position: relative;
+  width: 260px;
+  height: 370px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+}
+.sg-booster-aura {
+  position: absolute;
+  inset: -44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 209, 102, .45), rgba(0, 245, 212, .22) 48%, transparent 72%);
+  filter: blur(22px);
+  animation: sg-pack-charge .65s ease-in-out infinite alternate;
+}
+.sg-booster-pack {
+  position: relative;
+  width: 240px;
+  height: 344px;
+  display: grid;
+  grid-template-rows: 78px 6px 1fr;
+  filter: drop-shadow(0 24px 44px rgba(0, 0, 0, .82));
+}
+.sg-booster-top,
+.sg-booster-bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1.5px solid #FFD166;
+  background:
+    linear-gradient(135deg, rgba(255, 209, 102, .22), rgba(7, 11, 20, .96) 38%, rgba(0, 245, 212, .2) 100%);
+  transition: transform 420ms cubic-bezier(.16, 1, .3, 1), opacity 380ms ease;
+}
+.sg-booster-top {
+  border-bottom: 0;
+  border-radius: 18px 18px 0 0;
+  color: #FFE7A3;
+}
+.sg-booster-top em {
+  font: 700 10px/1 "Geist Mono", Consolas, monospace;
+  letter-spacing: .16em;
+  color: #00F5D4;
+}
+.sg-booster-top strong {
+  font-size: 13px;
+  letter-spacing: .14em;
+}
+.sg-booster-seam {
+  display: block;
+  background: repeating-linear-gradient(90deg, #FFD166 0 10px, #00F5D4 10px 20px);
+  box-shadow: 0 0 18px #FFD166;
+}
+.sg-booster-bottom {
+  border-top: 0;
+  border-radius: 0 0 18px 18px;
+  color: #FFD166;
+}
+.sg-booster-bottom strong {
+  font: 700 15px/1 "Geist Mono", Consolas, monospace;
+  letter-spacing: .12em;
+  color: #FFFFFF;
+}
+.sg-booster-bottom small { color: #00F5D4; font-size: 12px; }
+
+.sg-booster-ceremony[data-phase='burst'] .sg-booster-top {
+  transform: translateY(-68px) rotate(-9deg);
+  opacity: 0;
+}
+.sg-booster-ceremony[data-phase='burst'] .sg-booster-bottom {
+  transform: translateY(48px) scale(1.06);
+  opacity: 0;
+}
+.sg-booster-ceremony[data-phase='burst'] .sg-booster-seam {
+  opacity: 0;
+}
+
+.sg-shockwave {
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  opacity: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, #FFFFFF 0%, #FFD166 35%, #00F5D4 65%, transparent 80%);
+}
+.sg-booster-ceremony[data-phase='burst'] .sg-shockwave {
+  animation: sg-shockwave-pop 520ms cubic-bezier(.16, 1, .3, 1) forwards;
+}
+@keyframes sg-pack-charge { from { transform: scale(.94); opacity: .75; } to { transform: scale(1.08); opacity: 1; } }
+@keyframes sg-shockwave-pop {
+  0% { transform: scale(.4); opacity: 1; }
+  60% { transform: scale(4.8); opacity: .88; }
+  100% { transform: scale(6.4); opacity: 0; }
+}
+
+.sg-shards {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.sg-shards i {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: var(--s);
+  height: var(--s);
+  border-radius: 2px;
+  background: #00F5D4;
+  box-shadow: 0 0 12px #00F5D4;
+  opacity: 0;
+}
+.sg-shards i[data-gold='true'] {
+  background: #FFD166;
+  box-shadow: 0 0 12px #FFD166;
+}
+.sg-booster-ceremony[data-phase='burst'] .sg-shards i {
+  animation: sg-shard-fly 540ms cubic-bezier(.12, .8, .25, 1) var(--delay) forwards;
+}
+@keyframes sg-shard-fly {
+  0% { opacity: 1; transform: translate(-50%, -50%) rotate(var(--a)) translateY(0) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -50%) rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(140deg) scale(.25); }
+}
+
+/* Showcase Phase */
+.sg-showcase {
+  display: grid;
+  justify-items: center;
+  gap: 18px;
+  width: 100%;
+  animation: sg-showcase-in 480ms cubic-bezier(.16, 1, .3, 1) both;
+}
+@keyframes sg-showcase-in {
+  from { opacity: 0; transform: scale(.86) translateY(20px); }
+  to { opacity: 1; transform: none; }
+}
+.sg-showcase-head {
+  text-align: center;
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+}
+.sg-showcase-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(255, 209, 102, .5);
+  background: rgba(255, 209, 102, .12);
+  color: #FFD166;
+  font-size: .76rem;
+  font-weight: 600;
+}
+.sg-showcase-head h2 {
+  margin: 0;
+  font-size: clamp(1.25rem, 3.2vw, 1.68rem);
+  letter-spacing: -.02em;
+}
+.sg-showcase-head p {
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: .82rem;
+  color: #00F5D4;
+}
+
+.sg-showcase-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+}
+.sg-foot-primary,
+.sg-foot-secondary {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 44px;
+  padding: 0 18px;
+  border-radius: 99px;
+  font-size: .86rem;
+  font-weight: 640;
+  cursor: pointer;
+}
+.sg-foot-primary {
+  background: linear-gradient(110deg, #00F5D4, #FFD166);
+  color: #070B12;
+  border: 0;
+  text-decoration: none;
+  box-shadow: 0 8px 26px rgba(0, 245, 212, .28);
+}
+.sg-foot-primary:hover { filter: brightness(1.08); }
+.sg-foot-secondary {
+  background: rgba(14, 22, 34, .9);
+  color: #DCE8EE;
+  border: 1px solid rgba(164, 196, 208, .35);
+}
+.sg-foot-secondary:hover { border-color: #00F5D4; }
+
+@media (prefers-reduced-motion: reduce) {
+  .sg-border-pulse,
+  .sg-matrix-col,
+  .sg-beacon,
+  .sg-beacon-ring,
+  .sg-core-halo,
+  .sg-fan-spin,
+  .sg-fiber-flow,
+  .sg-led,
+  .sg-back-ring,
+  .sg-booster-aura,
+  .sg-showcase {
+    animation: none !important;
+  }
+}
