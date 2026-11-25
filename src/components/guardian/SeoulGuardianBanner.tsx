@@ -1,6 +1,8 @@
 import { ArrowUpRight, Flame, ShieldCheck, Sparkles, Star, Zap } from 'lucide-react'
 import { lazy, Suspense, useCallback, useEffect, useState } from 'react'
+import type { MouseEvent } from 'react'
 import { Link } from 'react-router-dom'
+import { useOptionalStation } from '../observatory/StationProvider'
 import {
   SEOUL_GUARDIAN_LIMIT,
   SEOUL_GUARDIAN_NODE_LABEL,
@@ -25,6 +27,12 @@ interface GuardianStatusResponse {
   debug_mock_enabled?: boolean
   is_genesis_guardian?: boolean
   daily_ai_bonus?: number
+  guardian?: {
+    rank: number
+    githubUser: string
+    claimedAt: string
+    aiDailyBonus: number
+  } | null
 }
 
 const DEFAULT_STATUS: GuardianStatusResponse = {
@@ -52,6 +60,7 @@ export interface SeoulGuardianBannerProps {
 
 export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }: SeoulGuardianBannerProps) {
   const claimedCard = useSeoulGuardian()
+  const station = useOptionalStation()
   const [status, setStatus] = useState<GuardianStatusResponse>(DEFAULT_STATUS)
   const [loading, setLoading] = useState(false)
   const [notice, setNotice] = useState('')
@@ -67,6 +76,14 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
       if (typeof data.stars === 'number' && typeof data.limit === 'number') {
         setStatus(data)
       }
+      if (data.guardian && typeof data.guardian.rank === 'number' && data.guardian.rank >= 1) {
+        saveSeoulGuardian({
+          rank: data.guardian.rank,
+          githubUser: data.guardian.githubUser,
+          claimedAt: data.guardian.claimedAt,
+          aiDailyBonus: data.guardian.aiDailyBonus,
+        })
+      }
     } catch {
       // Pure frontend local preview without FastAPI running stays gracefully functional
     }
@@ -74,7 +91,7 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
 
   useEffect(() => {
     void fetchStatus()
-  }, [fetchStatus])
+  }, [fetchStatus, station?.user?.id])
 
   // Open 3D card inspect modal if parent (e.g. Vesper click) requests it
   useEffect(() => {
@@ -130,7 +147,39 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
     return () => window.removeEventListener('message', onMessage)
   }, [completeStarClaim])
 
-  function startOAuthStar() {
+  // Recover mobile in-tab OAuth callback redirect (`/?guardian_reveal=1` + sessionStorage)
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem('learnverse.guardian.oauth_result')
+      if (raw) {
+        sessionStorage.removeItem('learnverse.guardian.oauth_result')
+        const parsed = JSON.parse(raw) as Record<string, unknown>
+        if (parsed?.type === 'STAR_SUCCESS') {
+          completeStarClaim(
+            typeof parsed.rank === 'number' ? parsed.rank : 1,
+            typeof parsed.githubUser === 'string' ? parsed.githubUser : 'genesis-pilot',
+            typeof parsed.aiDailyBonus === 'number' ? parsed.aiDailyBonus : 10,
+          )
+        } else if (parsed?.type === 'STAR_ERROR' && typeof parsed.error === 'string') {
+          setNotice(parsed.error)
+        }
+      }
+      const url = new URL(window.location.href)
+      if (url.searchParams.has('guardian_reveal')) {
+        url.searchParams.delete('guardian_reveal')
+        window.history.replaceState({}, '', url.pathname + url.search + url.hash)
+      }
+    } catch {
+      // Ignore storage or URL parse issues
+    }
+  }, [completeStarClaim])
+
+  function startOAuthStar(event?: MouseEvent<HTMLButtonElement>) {
+    if (station && !station.user) {
+      setNotice('请先登录观测站账号，以便将创世守护者限定卡与 +10 AI 额度绑定到你的云端账户。')
+      station.openAuth('sync_cards', event?.currentTarget ?? null)
+      return
+    }
     setNotice('')
     setLoading(true)
     const width = 540
@@ -144,19 +193,24 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
       `width=${width},height=${height},left=${left},top=${top},noopener=no,resizable=yes,scrollbars=yes`,
     )
     if (!popup) {
-      setLoading(false)
-      setNotice('浏览器拦截了授权弹窗，请允许本站弹窗后重试。')
+      // Mobile browsers / WebViews that block popups navigate in-tab and return via `/?guardian_reveal=1`
+      window.location.assign(loginUrl)
       return
     }
     const poll = window.setInterval(() => {
       if (popup.closed) {
         window.clearInterval(poll)
         setLoading(false)
+        void fetchStatus()
       }
     }, 500)
   }
 
-  async function triggerDebugMockStar() {
+  async function triggerDebugMockStar(event?: MouseEvent<HTMLButtonElement>) {
+    if (station && !station.user && !import.meta.env.DEV) {
+      station.openAuth('sync_cards', event?.currentTarget ?? null)
+      return
+    }
     setNotice('')
     setLoading(true)
     try {
@@ -265,7 +319,7 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
               type="button"
               className="sg-debug-mock-btn"
               disabled={loading}
-              onClick={() => void triggerDebugMockStar()}
+              onClick={event => void triggerDebugMockStar(event)}
               title="本地 DEBUG 模式快速触发 STAR_SUCCESS 揭晓动画与收藏馆入库"
             >
               <Sparkles size={14} aria-hidden />
@@ -297,10 +351,10 @@ export function SeoulGuardianBanner({ onStarSuccess, externalInspectNonce = 0 }:
         className="sg-banner-preview"
         aria-label={claimedCard ? '检视我的首尔服务器守护者 3D 限定卡' : '预览首尔服务器守护者限定卡信息'}
         onPointerEnter={() => { void loadSeoulGuardianRevealModal() }}
-        onClick={() => {
+        onClick={event => {
           if (claimedCard) setModal({ mode: 'inspect', record: claimedCard })
-          else if (showDebugMock) void triggerDebugMockStar()
-          else startOAuthStar()
+          else if (showDebugMock) void triggerDebugMockStar(event)
+          else startOAuthStar(event)
         }}
       >
         <span className="sg-preview-glow" aria-hidden="true" />

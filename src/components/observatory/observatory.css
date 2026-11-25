@@ -696,6 +696,17 @@
 .lvo-drawer-name { flex: 1; min-width: 0; }
 .lvo-drawer-name h2 { font-size: 1.12rem; font-weight: 630; margin-bottom: 3px; }
 .lvo-header-telemetry { font-style: normal; color: var(--lvo-thinking); font-size: .74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lvo-quota-pill {
+  flex: none;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: .73rem;
+  font-weight: 600;
+  color: var(--lvo-accent);
+  background: rgba(154, 188, 174, .12);
+  border: 1px solid rgba(154, 188, 174, .34);
+  white-space: nowrap;
+}
 .lvo-drawer .lvo-resize { display: none; }
 
 .lvo-thread { display: flex; flex-direction: column; flex: 1; min-height: 0; overflow-y: auto; overscroll-behavior: contain; padding: 16px; gap: 14px; font-size: .91rem; line-height: 1.65; }

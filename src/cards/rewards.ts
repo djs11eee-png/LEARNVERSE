@@ -43,12 +43,15 @@ window.addEventListener('storage', event => {
   refresh()
 })
 
-function write(key: string, value: string) {
+function write(key: string, value: string, emitMutation = true) {
   load()
   if (memory.get(key) === value) return
   try { localStorage.setItem(prefix + key, value) } catch { saved = false }
   memory.set(key, value)
   refresh()
+  if (emitMutation) {
+    window.dispatchEvent(new CustomEvent('learnverse:local-mutated', { detail: { scope: 'vault' } }))
+  }
 }
 
 export function earnLesson(course: string, lesson: string) {
@@ -174,6 +177,24 @@ export async function openPack(key: string, cards: HoloCard[]) {
 
 export function saveCardNote(id: string, value: string) {
   if (byId.has(id)) write('note/' + id, value.slice(0, 600))
+}
+
+export function resetVaultToEmpty() {
+  load()
+  try {
+    const toRemove: string[] = []
+    for (let index = 0; index < localStorage.length; index++) {
+      const k = localStorage.key(index)
+      if (k?.startsWith(prefix) && !k.endsWith('genesis/seoul-node')) {
+        toRemove.push(k)
+      }
+    }
+    for (const k of toRemove) localStorage.removeItem(k)
+  } catch {
+    // Ignore storage removal errors
+  }
+  memory.clear()
+  refresh()
 }
 
 export function applySyncedVault(vault: {

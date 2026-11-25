@@ -98,10 +98,17 @@ function useLessonRecord(course: WorkspaceCourse) {
       if (stored) lastStored.current = stored
       const record = mergeRecord(lastStored.current, pending.current)
       if (stored) {
+        const prevSerialized = JSON.stringify(lastStored.current)
+        const nextSerialized = JSON.stringify(record)
         try {
-          localStorage.setItem(storagePrefix + course.id, JSON.stringify(record))
+          if (nextSerialized !== prevSerialized) {
+            localStorage.setItem(storagePrefix + course.id, nextSerialized)
+          }
           lastStored.current = record
           pending.current = null
+          if (nextSerialized !== prevSerialized) {
+            window.dispatchEvent(new CustomEvent('learnverse:local-mutated', { detail: { scope: 'workspace' } }))
+          }
         } catch {
           // Retry applies the unsaved changes to the latest stored copy.
         }

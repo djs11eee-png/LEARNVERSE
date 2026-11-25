@@ -6,8 +6,9 @@ import sqlite3
 import threading
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import contextmanager
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Callable, Iterator, ParamSpec, TypeVar
+from typing import Any, Callable, Iterator, ParamSpec, TypeVar
 
 P = ParamSpec("P")
 T = TypeVar("T")
@@ -132,6 +133,23 @@ CREATE TABLE IF NOT EXISTS ai_user_lock (user_id INTEGER PRIMARY KEY, owner TEXT
 CREATE TABLE IF NOT EXISTS jwt_revocations (jti TEXT PRIMARY KEY, expires INTEGER NOT NULL);
 CREATE INDEX IF NOT EXISTS jwt_revocations_exp ON jwt_revocations(expires);
 CREATE TABLE IF NOT EXISTS schema_migrations (name TEXT PRIMARY KEY);
+
+-- 9. Durable Seoul Genesis Node Guardian Ledger & Per-User Claims
+CREATE TABLE IF NOT EXISTS guardian_github_ranks (
+    github_user_id TEXT PRIMARY KEY,
+    github_login TEXT NOT NULL DEFAULT '',
+    rank INTEGER NOT NULL UNIQUE CHECK (rank >= 1),
+    claimed_at TEXT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS user_guardian_claims (
+    user_id INTEGER PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+    github_user_id TEXT NOT NULL,
+    github_login TEXT NOT NULL,
+    rank INTEGER NOT NULL CHECK (rank >= 1),
+    ai_daily_bonus INTEGER NOT NULL DEFAULT 10,
+    claimed_at TEXT NOT NULL
+);
 """
 
 
@@ -198,6 +216,103 @@ class DatabaseManager:
         with self.write_transaction() as conn:
             conn.execute("DELETE FROM jwt_revocations WHERE expires <= unixepoch()")
             conn.execute("INSERT OR REPLACE INTO jwt_revocations VALUES (?,?)", (jti, expires))
+
+    def claim_guardian_durable(
+        self,
+        *,
+        user_id: int,
+        github_user_id: str,
+        github_login: str,
+        ai_daily_bonus: int = 10,
+        preferred_rank: int | None = None,
+        count_in_global_ledger: bool = True,
+    ) -> dict[str, Any]:
+        """
+        Durably records a Seoul Genesis Node Guardian claim in SQLite so neither
+        cross-device logins nor ephemeral Redis restarts ever lose a user's rank or +10 AI bonus.
+        """
+        now_iso = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
+        clean_gh_id = str(github_user_id).strip()[:96]
+        clean_login = (str(github_login).strip() or "GitHub Star")[:64]
+
+        with self.write_transaction() as conn:
+            existing_user = conn.execute(
+                """
+                SELECT rank, github_login, ai_daily_bonus, claimed_at
+                FROM user_guardian_claims WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+
+            if count_in_global_ledger:
+                ledger_row = conn.execute(
+                    "SELECT rank, claimed_at FROM guardian_github_ranks WHERE github_user_id = ?",
+                    (clean_gh_id,),
+                ).fetchone()
+                if ledger_row is not None:
+                    rank = int(ledger_row["rank"])
+                    claimed_at = str(ledger_row["claimed_at"])
+                else:
+                    max_row = conn.execute(
+                        "SELECT COALESCE(MAX(rank), 0) AS max_rank FROM guardian_github_ranks"
+                    ).fetchone()
+                    next_db_rank = int(max_row["max_rank"] if max_row else 0) + 1
+                    rank = max(next_db_rank, int(preferred_rank or 1))
+                    claimed_at = str(existing_user["claimed_at"]) if existing_user else now_iso
+                    conn.execute(
+                        """
+                        INSERT INTO guardian_github_ranks (github_user_id, github_login, rank, claimed_at)
+                        VALUES (?, ?, ?, ?)
+                        """,
+                        (clean_gh_id, clean_login, rank, claimed_at),
+                    )
+            else:
+                rank = int(existing_user["rank"]) if existing_user else max(1, int(preferred_rank or 1))
+                claimed_at = str(existing_user["claimed_at"]) if existing_user else now_iso
+
+            conn.execute(
+                """
+                INSERT INTO user_guardian_claims (
+                    user_id, github_user_id, github_login, rank, ai_daily_bonus, claimed_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    github_user_id = excluded.github_user_id,
+                    github_login = excluded.github_login,
+                    rank = excluded.rank,
+                    ai_daily_bonus = excluded.ai_daily_bonus
+                """,
+                (user_id, clean_gh_id, clean_login, rank, int(ai_daily_bonus), claimed_at),
+            )
+
+        return {
+            "rank": rank,
+            "githubUser": clean_login,
+            "claimedAt": claimed_at,
+            "aiDailyBonus": int(ai_daily_bonus),
+        }
+
+    def get_user_guardian(self, user_id: int) -> dict[str, Any] | None:
+        with self.read_connection() as conn:
+            row = conn.execute(
+                """
+                SELECT rank, github_login, ai_daily_bonus, claimed_at
+                FROM user_guardian_claims WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return {
+            "rank": int(row["rank"]),
+            "githubUser": str(row["github_login"]),
+            "claimedAt": str(row["claimed_at"]),
+            "aiDailyBonus": int(row["ai_daily_bonus"]),
+        }
+
+    def get_durable_guardian_claimed_count(self) -> int:
+        with self.read_connection() as conn:
+            row = conn.execute("SELECT COUNT(*) AS cnt FROM guardian_github_ranks").fetchone()
+        return int(row["cnt"]) if row else 0
 
     def _create_connection(self) -> sqlite3.Connection:
         conn = sqlite3.connect(

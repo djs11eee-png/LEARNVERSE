@@ -38,24 +38,46 @@ async function readLocalJson(response: Response, maxBytes: number): Promise<unkn
   }
 }
 
-async function runnerStatus(signal?: AbortSignal) {
-  if (!isLocalLabOrigin()) return null
-  const response = await fetch(endpoint, { cache: 'no-store', signal })
-  if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) return null
+export type NativeRunnerProbe = 'available' | 'auth_required' | 'unavailable'
+
+async function runnerStatus(signal?: AbortSignal): Promise<
+  | { state: 'ok'; token: string; languages: ('c' | 'java')[] }
+  | { state: 'auth_required' }
+  | { state: 'unavailable' }
+> {
+  if (!isLocalLabOrigin()) return { state: 'unavailable' }
+  const response = await fetch(endpoint, {
+    cache: 'no-store',
+    credentials: 'include',
+    signal,
+  })
+  if (response.status === 401) return { state: 'auth_required' }
+  if (!response.ok || !response.headers.get('content-type')?.includes('application/json')) {
+    return { state: 'unavailable' }
+  }
   const value = await readLocalJson(response, 512)
   if (!isRunnerRecord(value) || typeof value.token !== 'string' || !/^[a-f0-9]{64}$/.test(value.token)
     || !Array.isArray(value.languages) || value.languages.length > 2
-    || !value.languages.every((language) => language === 'c' || language === 'java')) return null
-  return { token: value.token, languages: value.languages }
+    || !value.languages.every((language) => language === 'c' || language === 'java')) {
+    return { state: 'unavailable' }
+  }
+  return { state: 'ok', token: value.token, languages: value.languages }
+}
+
+export async function probeNativeRunner(language: RunLanguage, signal?: AbortSignal): Promise<NativeRunnerProbe> {
+  if (!isNativeLanguage(language)) return 'unavailable'
+  try {
+    const status = await runnerStatus(signal)
+    if (status.state === 'auth_required') return 'auth_required'
+    if (status.state === 'ok' && status.languages.includes(language)) return 'available'
+    return 'unavailable'
+  } catch {
+    return 'unavailable'
+  }
 }
 
 export async function checkNativeRunner(language: RunLanguage, signal?: AbortSignal): Promise<boolean> {
-  if (!isNativeLanguage(language)) return false
-  try {
-    return (await runnerStatus(signal))?.languages.includes(language) ?? false
-  } catch {
-    return false
-  }
+  return (await probeNativeRunner(language, signal)) === 'available'
 }
 
 export async function runWithNativeSupport(request: RunRequest, signal?: AbortSignal): Promise<RunResult> {
@@ -70,9 +92,16 @@ export async function runWithNativeSupport(request: RunRequest, signal?: AbortSi
   }
   try {
     const status = await runnerStatus(signal)
-    if (!status?.languages.includes(request.language)) return unavailable
+    if (status.state === 'auth_required') {
+      return {
+        output: '',
+        diagnostics: [{ severity: 'error', message: '请先登录观测站账号后再使用云端 C / Java 安全沙盒。' }],
+      }
+    }
+    if (status.state !== 'ok' || !status.languages.includes(request.language)) return unavailable
     const response = await fetch(endpoint, {
       method: 'POST',
+      credentials: 'include',
       headers: { 'Content-Type': 'application/json', 'X-Learnverse-Lab': status.token },
       body: JSON.stringify(request),
       signal,
@@ -81,9 +110,11 @@ export async function runWithNativeSupport(request: RunRequest, signal?: AbortSi
       const payload = response.headers.get('content-type')?.includes('application/json')
         ? parseNativeResult(await readLocalJson(response, 16_000)) : undefined
       if (payload?.diagnostics.length) return payload
-      const message = response.status === 409 || response.status === 429
-        ? '本机运行环境正忙。请稍后重试。'
-        : response.status === 413 ? '代码或标准输入超过本机请求上限。请缩短后重试。' : '本机编译服务未能读取这次请求。'
+      const message = response.status === 401
+        ? '登录状态已过期，请重新登录后再运行 C / Java 代码。'
+        : response.status === 409 || response.status === 429
+          ? '编译运行环境正忙，请稍后重试。'
+          : response.status === 413 ? '代码或标准输入超过请求上限。请缩短后重试。' : '编译服务未能读取这次请求。'
       return {
         output: '',
         diagnostics: [{ severity: 'error', message }],

@@ -21,6 +21,22 @@ class Admission:
     reserved: int
     deadline: float
     reported_tokens: int | None = None
+    used_today: int = 0
+    daily_limit: int = 0
+
+
+def get_daily_usage(db: DatabaseManager, user_id: int) -> tuple[int, int]:
+    """Returns `(used_today, seconds_until_shanghai_midnight_reset)`."""
+    now = time.time()
+    day = int((now + 8 * 3600) // 86400)
+    reset = math.ceil((day + 1) * 86400 - 8 * 3600 - now)
+    with db.read_connection() as conn:
+        row = conn.execute(
+            "SELECT calls FROM ai_user_day WHERE day=? AND user_id=?",
+            (day, user_id),
+        ).fetchone()
+        used = int(row["calls"]) if row else 0
+    return used, reset
 
 
 def admit(db: DatabaseManager, user_id: int, daily_limit: int, reserved: int,
@@ -38,9 +54,18 @@ def admit(db: DatabaseManager, user_id: int, daily_limit: int, reserved: int,
             raise HTTPException(429, message, headers={"Retry-After": str(retry)})
         row = conn.execute("SELECT calls FROM ai_user_day WHERE day=? AND user_id=?",
                            (day, user_id)).fetchone()
-        if (row["calls"] if row else 0) >= daily_limit:
-            raise HTTPException(429, f"今日 {daily_limit} 次免费提问额度已用完，明天再来吧。",
-                                headers={"Retry-After": str(reset)})
+        calls_before = int(row["calls"]) if row else 0
+        if calls_before >= daily_limit:
+            raise HTTPException(
+                429,
+                f"今日 {daily_limit} 次免费提问额度已用完，明天再来吧。",
+                headers={
+                    "Retry-After": str(reset),
+                    "X-AI-Daily-Limit": str(daily_limit),
+                    "X-AI-Daily-Used": str(calls_before),
+                    "X-AI-Daily-Remaining": "0",
+                },
+            )
         if reserved:
             row = conn.execute("SELECT tokens FROM ai_token_day WHERE day=?", (day,)).fetchone()
             if (row["tokens"] if row else 0) + reserved > budget:
@@ -51,7 +76,16 @@ def admit(db: DatabaseManager, user_id: int, daily_limit: int, reserved: int,
                          (day, reserved))
         conn.execute("""INSERT INTO ai_user_day VALUES (?, ?, 1)
                         ON CONFLICT(day,user_id) DO UPDATE SET calls=calls+1""", (day, user_id))
-        lease = Admission(uuid.uuid4().hex, user_id, day, reserved, time.monotonic() + STREAM_SECONDS)
+        used_today = calls_before + 1
+        lease = Admission(
+            uuid.uuid4().hex,
+            user_id,
+            day,
+            reserved,
+            time.monotonic() + STREAM_SECONDS,
+            used_today=used_today,
+            daily_limit=daily_limit,
+        )
         conn.execute("INSERT OR REPLACE INTO ai_user_lock VALUES (?,?,?)",
                      (user_id, lease.owner, now + STREAM_SECONDS + COOLDOWN_SECONDS + 5))
         return lease

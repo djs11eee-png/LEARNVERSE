@@ -160,6 +160,53 @@ class TestGitHubGuardianAndAIQuota(unittest.TestCase):
         finally:
             prod_ctx.close()
 
+    def test_guardian_durability_across_redis_flush_and_cross_device_sync_and_quota(self) -> None:
+        token = self._register_user("cross_device_guardian")
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Initial quota before guardian claim: 0 used / 2 daily limit
+        q0 = self.client.get("/api/ai/quota", headers=headers)
+        self.assertEqual(q0.status_code, 200)
+        self.assertEqual(q0.json()["used_today"], 0)
+        self.assertEqual(q0.json()["daily_limit"], 2)
+        self.assertEqual(q0.json()["remaining_today"], 2)
+        self.assertFalse(q0.json()["is_genesis_guardian"])
+
+        # Claim guardian via mock-star
+        m = self.client.get("/api/github/mock-star", headers=headers)
+        self.assertEqual(m.status_code, 200)
+
+        # Simulate ephemeral Redis container restart (--save "" --appendonly no)
+        asyncio.run(self.container.redis.flushall())
+
+        # /api/github/status MUST still return guardian card + bonus from SQLite and re-warm Redis!
+        st = self.client.get("/api/github/status", headers=headers)
+        self.assertEqual(st.status_code, 200)
+        self.assertTrue(st.json()["is_genesis_guardian"])
+        self.assertIsNotNone(st.json()["guardian"])
+        self.assertEqual(st.json()["guardian"]["rank"], 1)
+
+        # Ask 1 AI question on PC -> headers report used=1, remaining=11, limit=12
+        chat_resp = self.client.post(
+            "/api/ai/chat",
+            headers=headers,
+            json={"language": "python", "code": "if True\n    pass", "question": "q"},
+        )
+        self.assertEqual(chat_resp.status_code, 200)
+        self.assertEqual(chat_resp.headers.get("X-AI-Daily-Limit"), "12")
+        self.assertEqual(chat_resp.headers.get("X-AI-Daily-Used"), "1")
+        self.assertEqual(chat_resp.headers.get("X-AI-Daily-Remaining"), "11")
+
+        # Phone calls /api/sync/union -> receives both guardian card AND live remainingToday=11!
+        sync_resp = self.client.post("/api/sync/union", headers=headers, json={})
+        self.assertEqual(sync_resp.status_code, 200)
+        synced = sync_resp.json()
+        self.assertEqual(synced["guardian"]["rank"], 1)
+        self.assertEqual(synced["ai_quota"]["usedToday"], 1)
+        self.assertEqual(synced["ai_quota"]["dailyLimit"], 12)
+        self.assertEqual(synced["ai_quota"]["remainingToday"], 11)
+        self.assertTrue(synced["ai_quota"]["isGenesisGuardian"])
+
 
 if __name__ == "__main__":
     unittest.main()

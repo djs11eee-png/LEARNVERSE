@@ -49,6 +49,7 @@ class VaultSyncPayload(BaseModel):
 class UnionSyncRequest(BaseModel):
     profile: StudentProfilePayload | None = None
     progress: ProgressSyncPayload = Field(default_factory=ProgressSyncPayload)
+    unfavorited: list[str] = Field(default_factory=list, max_length=256)
     courses: dict[str, CourseRecordPayload] = Field(default_factory=dict)
     vault: VaultSyncPayload = Field(default_factory=VaultSyncPayload)
 
@@ -63,9 +64,26 @@ class VaultSyncResponse(BaseModel):
     rejected_packs: list[str] = Field(default_factory=list)
 
 
+class GuardianSyncPayload(BaseModel):
+    rank: int
+    githubUser: str
+    claimedAt: str
+    aiDailyBonus: int
+
+
+class AIQuotaSyncPayload(BaseModel):
+    usedToday: int
+    dailyLimit: int
+    remainingToday: int
+    isGenesisGuardian: bool
+    dailyBonus: int
+
+
 class UnionSyncResponse(BaseModel):
     synced_at: str
     profile: StudentProfilePayload
     progress: ProgressSyncPayload
     courses: dict[str, CourseRecordPayload]
     vault: VaultSyncResponse
+    guardian: GuardianSyncPayload | None = None
+    ai_quota: AIQuotaSyncPayload | None = None

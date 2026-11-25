@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, rmSync, rmdirSync } from 'node:fs'
+import { mkdtempSync, readFileSync, rmSync, rmdirSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { after, before, test } from 'node:test'
@@ -239,4 +239,24 @@ test('Chinese diagnostic hints cover common C, Java, SQL, JavaScript and Python 
   for (const [message, expected] of samples) {
     assert.match(diagnosticHint(message), expected, message)
   }
+})
+
+test('backend catalog_manifest.json stays in exact parity with all 33 courses, 132 rooms and 420 cards', async () => {
+  const { workspaceCourses } = await vite.ssrLoadModule('/src/data/workspaceCourses.ts')
+  const { cardCatalog } = await vite.ssrLoadModule('/src/cards/catalog.ts')
+  const manifest = JSON.parse(readFileSync('backend/app/data/catalog_manifest.json', 'utf8'))
+
+  const expectedRooms = workspaceCourses.flatMap((course) =>
+    course.lessons.map((lesson) => `${course.id}/${lesson.id}`),
+  )
+  assert.equal(manifest.courses.length, workspaceCourses.length)
+  assert.equal(manifest.courses.length, 33)
+  assert.deepEqual(manifest.rooms, expectedRooms)
+  assert.equal(manifest.rooms.length, 132)
+  assert.equal(manifest.cards.length, cardCatalog.length)
+  assert.equal(manifest.cards.length, 420)
+  assert.deepEqual(
+    manifest.cards.map((c) => [c.id, c.slot, c.courseId, c.lessonId]),
+    cardCatalog.map((c) => [c.id, c.slot, c.courseId, c.lessonId]),
+  )
 })

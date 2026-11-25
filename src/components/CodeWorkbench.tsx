@@ -1,8 +1,9 @@
 import { useEffect, useId, useRef, useState } from 'react';
 import type { ClipboardEvent, KeyboardEvent } from 'react';
-import { Check, Code2, Copy, Download, Play, RotateCcw, ShieldCheck, Sparkles, Square, Terminal } from 'lucide-react';
+import { Check, Code2, Copy, Download, LogIn, Play, RotateCcw, ShieldCheck, Sparkles, Square, Terminal } from 'lucide-react';
 import { diagnosticHint } from '../code/diagnostics';
-import { checkNativeRunner, isLocalLabOrigin, isNativeLanguage, runWithNativeSupport } from '../code/localRunner';
+import { isLocalLabOrigin, isNativeLanguage, probeNativeRunner, runWithNativeSupport } from '../code/localRunner';
+import { useOptionalStation } from './observatory/StationProvider';
 import { hasInlineScript } from '../code/preview';
 import type { Diagnostic, RunLanguage, RunResult } from '../code/runner';
 import { maxEditorLines, workbenchInputLimits } from '../code/runnerLimits';
@@ -126,8 +127,9 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
   const [execution, setExecution] = useState<Execution>({ kind: 'idle' });
   const [copyStatus, setCopyStatus] = useState<'copied' | 'unavailable'>();
   const [limitedField, setLimitedField] = useState<keyof Draft>();
-  const [nativeStatus, setNativeStatus] = useState<'checking' | 'available' | 'unavailable'>('checking');
+  const [nativeStatus, setNativeStatus] = useState<'checking' | 'available' | 'auth_required' | 'unavailable'>('checking');
   const [probe, setProbe] = useState(0);
+  const station = useOptionalStation();
   const [previewMode, setPreviewMode] = useState<'auto' | 'static' | 'interactive'>('auto');
   const [previewRunId, setPreviewRunId] = useState(0);
   const [previewToken, setPreviewToken] = useState('');
@@ -168,19 +170,20 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
 
   useEffect(() => {
     if (!labOrigin) return;
+    setNativeStatus('checking');
     const controller = new AbortController();
     let active = true;
     const timeout = window.setTimeout(() => controller.abort(), 5000);
-    void checkNativeRunner(language, controller.signal).then((available) => {
+    void probeNativeRunner(language, controller.signal).then((state) => {
       window.clearTimeout(timeout);
-      if (active) setNativeStatus(available ? 'available' : 'unavailable');
+      if (active) setNativeStatus(state);
     });
     return () => {
       active = false;
       window.clearTimeout(timeout);
       controller.abort();
     };
-  }, [labOrigin, language, probe]);
+  }, [labOrigin, language, probe, station?.user?.id]);
 
   useEffect(() => {
     if (!native) return;
@@ -466,9 +469,20 @@ function WorkbenchSession({ language, starter, stdin, draftKey, title = '代码�
         <div className="code-workbench-notice">
           <p className="code-workbench-note" id={`${id}-availability`} role="status">
             {language === 'text' ? '可以在这里编辑或复制文本。'
-              : labOrigin && nativeStatus === 'checking' ? '正在检查本地运行环境…'
-                : '在 Windows 电脑上打开项目里的「安装并启动实验室.cmd」，再用它打开的地址运行。'}
+              : labOrigin && nativeStatus === 'checking' ? '正在检查编译运行环境…'
+                : labOrigin && nativeStatus === 'auth_required' ? '登录观测站账号后，即可在云端安全沙盒直接编译运行 C / Java 代码。'
+                  : '在 Windows 电脑上打开项目里的「安装并启动实验室.cmd」，再用它打开的地址运行。'}
           </p>
+          {labOrigin && nativeStatus === 'auth_required' && (
+            <div className="code-workbench-actions">
+              {station && (
+                <button type="button" onClick={event => station.openAuth('sync_progress', event.currentTarget)}>
+                  <LogIn size={14} aria-hidden="true" /> 登录启用云端编译沙盒
+                </button>
+              )}
+              <button type="button" onClick={retryNative}>重新检测</button>
+            </div>
+          )}
           {labOrigin && nativeStatus === 'unavailable'
             && <div className="code-workbench-actions"><button type="button" onClick={retryNative}>重新检测</button></div>}
         </div>

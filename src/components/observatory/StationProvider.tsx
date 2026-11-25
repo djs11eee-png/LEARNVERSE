@@ -11,15 +11,17 @@ const loadGuestGate = () => import('./GuestGate').then(m => ({ default: m.GuestG
 const AssistantDrawer = lazy(loadAssistantDrawer)
 const GuestGate = lazy(loadGuestGate)
 import {
+  clearAccountLocalState,
   createProductionAssistantTransport,
   createProductionAuthAdapter,
+  fetchAiQuota,
   fetchCurrentUser,
   logoutStation,
   makeErrorContext,
   StationAuthRequiredError,
   syncStationUnion,
 } from './stationClient'
-import type { AiQuotaTelemetry, StationUser, StudyContextMeta } from './stationClient'
+import type { AiQuotaTelemetry, StationUser, StudyContextMeta, UnionSyncSummary } from './stationClient'
 import { useVesperState } from './useVesperState'
 import '../../styles/observatory-tokens.css'
 import './observatory.css'
@@ -44,6 +46,8 @@ export interface StationContextValue {
   authChecked: boolean
   syncing: boolean
   syncNote: string
+  quotaTelemetry: AiQuotaTelemetry | null
+  refreshQuota: () => Promise<void>
   openAuth: (reason?: GateReason, opener?: HTMLElement | null) => void
   openAssistant: (opener?: HTMLElement | null, context?: ErrorContext, study?: StudyContextMeta) => void
   askAboutError: (issue: CodeWorkbenchIssue, opener: HTMLElement, study?: StudyContextMeta) => void
@@ -117,58 +121,151 @@ export function StationProvider({
   const [panel, setPanel] = useState<ActivePanel>()
 
   const vesper = useVesperState('idle')
+  const {
+    mood: vesperMood,
+    setMood: setVesperMood,
+    triggerSuccess,
+    triggerCelebrating,
+    triggerAlert,
+    returnToIdle,
+  } = vesper
   const studyContextRef = useRef<StudyContextMeta>({})
   const mainContentRef = useRef<HTMLElement | null>(null)
   const panelNonce = useRef(0)
+  const userRef = useRef<StationUser | null>(null)
+  const syncInFlightRef = useRef<Promise<UnionSyncSummary | null> | null>(null)
+  const pendingAutoSyncRef = useRef(false)
+  const lastAutoPullAtRef = useRef(0)
+
+  userRef.current = user
+
+  const refreshQuota = useCallback(async () => {
+    if (!userRef.current) return
+    const next = await fetchAiQuota()
+    if (next && userRef.current) {
+      setQuotaTelemetry(next)
+    }
+  }, [])
 
   // Keep ref pointed at #main-content for mobile editor collision avoidance across SPA routes
   useEffect(() => {
     mainContentRef.current = document.getElementById('main-content')
   }, [pathname])
 
-  // Check existing HttpOnly session once on boot without blocking guest browsing
-  useEffect(() => {
-    const controller = new AbortController()
-    void fetchCurrentUser(controller.signal).then(current => {
-      if (controller.signal.aborted) return
-      setUser(current)
-      setAuthChecked(true)
-    })
-    return () => controller.abort()
-  }, [])
-
-  const setStudyContext = useCallback((meta: StudyContextMeta) => {
-    studyContextRef.current = meta
-  }, [])
-
-  const runUnionSync = useCallback(async (reason: 'sync_cards' | 'sync_progress', silent = false) => {
+  const runUnionSync = useCallback(async (
+    reason: 'sync_cards' | 'sync_progress',
+    silent = false,
+    explicitUserId?: number,
+  ): Promise<UnionSyncSummary | null> => {
+    const activeUserId = explicitUserId ?? userRef.current?.id
+    if (syncInFlightRef.current) {
+      pendingAutoSyncRef.current = true
+      return syncInFlightRef.current
+    }
     if (!silent) {
       setSyncing(true)
       setSyncNote('正在与观测站云端合并进度与卡册…')
     }
-    try {
-      const summary = await syncStationUnion()
-      const label = reason === 'sync_cards'
-        ? `卡册已云端同步（共 ${summary.ownedCards} 张卡片）`
-        : `进度与卡册已云端同步（${summary.completedCourses} 门完成 · ${summary.ownedCards} 张卡片）`
-      setSyncNote(label)
-      if (!silent) {
-        setStatusHint(label)
-        vesper.triggerSuccess()
-      }
-    } catch (error) {
-      if (error instanceof StationAuthRequiredError) {
-        setUser(null)
-        if (!silent) {
-          setSyncNote('登录已失效，请重新登录后同步。')
+
+    const task = (async (): Promise<UnionSyncSummary | null> => {
+      try {
+        const summary = await syncStationUnion({ userId: activeUserId })
+        lastAutoPullAtRef.current = Date.now()
+        if (summary.aiQuota) {
+          setQuotaTelemetry(summary.aiQuota)
         }
-      } else if (!silent) {
-        setSyncNote(error instanceof Error ? error.message : '云端同步失败，请确认后端服务可用。')
+        const label = reason === 'sync_cards'
+          ? `卡册已云端同步（共 ${summary.ownedCards} 张卡片）`
+          : `进度与卡册已云端同步（${summary.completedCourses} 门完成 · ${summary.ownedCards} 张卡片）`
+        setSyncNote(label)
+        if (!silent) {
+          setStatusHint(label)
+          triggerSuccess()
+        }
+        return summary
+      } catch (error) {
+        if (error instanceof StationAuthRequiredError) {
+          userRef.current = null
+          setUser(null)
+          setQuotaTelemetry(null)
+          if (!silent) {
+            setSyncNote('登录已失效，请重新登录后同步。')
+          }
+        } else if (!silent) {
+          setSyncNote(error instanceof Error ? error.message : '云端同步失败，请确认后端服务可用。')
+        }
+        return null
+      } finally {
+        syncInFlightRef.current = null
+        if (!silent) setSyncing(false)
+        if (pendingAutoSyncRef.current && userRef.current) {
+          pendingAutoSyncRef.current = false
+          void runUnionSync('sync_progress', true, userRef.current.id)
+        } else {
+          pendingAutoSyncRef.current = false
+        }
       }
-    } finally {
-      if (!silent) setSyncing(false)
+    })()
+
+    syncInFlightRef.current = task
+    return task
+  }, [triggerSuccess])
+
+  const runUnionSyncRef = useRef(runUnionSync)
+  runUnionSyncRef.current = runUnionSync
+
+  // Check existing HttpOnly session once on boot without blocking guest browsing,
+  // and immediately auto-sync cloud state + AI quota when logged in!
+  useEffect(() => {
+    const controller = new AbortController()
+    void fetchCurrentUser(controller.signal).then(current => {
+      if (controller.signal.aborted) return
+      userRef.current = current
+      setUser(current)
+      setAuthChecked(true)
+      if (current) {
+        void runUnionSyncRef.current('sync_progress', true, current.id)
+      }
+    })
+    return () => controller.abort()
+  }, [])
+
+  // Automatic bi-directional cloud sync on local mutations (debounced) + cross-device focus/visibility resume
+  useEffect(() => {
+    if (!user) return
+    let mutationTimer: number | undefined
+
+    const onLocalMutated = () => {
+      if (mutationTimer !== undefined) window.clearTimeout(mutationTimer)
+      mutationTimer = window.setTimeout(() => {
+        mutationTimer = undefined
+        if (userRef.current) {
+          void runUnionSync('sync_progress', true, userRef.current.id)
+        }
+      }, 650)
     }
-  }, [vesper])
+
+    const onResume = () => {
+      if (document.hidden || !userRef.current) return
+      if (Date.now() - lastAutoPullAtRef.current < 2500) return
+      void runUnionSync('sync_progress', true, userRef.current.id)
+    }
+
+    window.addEventListener('learnverse:local-mutated', onLocalMutated)
+    window.addEventListener('focus', onResume)
+    document.addEventListener('visibilitychange', onResume)
+
+    return () => {
+      if (mutationTimer !== undefined) window.clearTimeout(mutationTimer)
+      window.removeEventListener('learnverse:local-mutated', onLocalMutated)
+      window.removeEventListener('focus', onResume)
+      document.removeEventListener('visibilitychange', onResume)
+    }
+  }, [user, runUnionSync])
+
+  const setStudyContext = useCallback((meta: StudyContextMeta) => {
+    studyContextRef.current = meta
+  }, [])
 
   const executeAction = useCallback((action: StationAction) => {
     if (action.study) {
@@ -184,14 +281,14 @@ export function StationProvider({
   }, [runUnionSync])
 
   const requestAction = useCallback((action: StationAction) => {
-    if (action.context) vesper.triggerAlert()
+    if (action.context) triggerAlert()
     if (user) {
       executeAction(action)
     } else {
       panelNonce.current += 1
       setPanel({ kind: 'auth', action, nonce: panelNonce.current })
     }
-  }, [user, executeAction, vesper])
+  }, [user, executeAction, triggerAlert])
 
   const openAuth = useCallback((reason: GateReason = 'sync_progress', opener: HTMLElement | null = null) => {
     panelNonce.current += 1
@@ -236,24 +333,28 @@ export function StationProvider({
 
   const logout = useCallback(async () => {
     await logoutStation()
+    await clearAccountLocalState()
+    userRef.current = null
     setUser(null)
     setQuotaTelemetry(null)
     setSyncNote('已退出登录，当前恢复为本地游客模式。')
     if (panel?.kind === 'assistant') {
       setPanel(undefined)
-      vesper.returnToIdle()
+      returnToIdle()
     }
-  }, [panel, vesper])
+  }, [panel, returnToIdle])
 
   const celebrateStar = useCallback(({ rank }: { rank: number; githubUser: string }) => {
     setCelebrateMessage(
       `检测到第 ${rank} 号创世守护者接入！首尔服务器散热风扇已全速运转，专属全息卡已存入收藏馆啦~`,
     )
-    vesper.triggerCelebrating(3000)
-  }, [vesper])
+    triggerCelebrating(3000)
+    void refreshQuota()
+  }, [triggerCelebrating, refreshQuota])
 
   const authAdapter = useMemo(
     () => createProductionAuthAdapter(loggedInUser => {
+      userRef.current = loggedInUser
       setUser(loggedInUser)
       setAuthChecked(true)
     }),
@@ -263,7 +364,11 @@ export function StationProvider({
   const assistantTransport = useMemo(
     () => createProductionAssistantTransport({
       getStudyContext: () => studyContextRef.current,
-      onUnauthorized: () => setUser(null),
+      onUnauthorized: () => {
+        userRef.current = null
+        setUser(null)
+        setQuotaTelemetry(null)
+      },
       onQuotaTelemetry: telemetry => setQuotaTelemetry(telemetry),
     }),
     [],
@@ -276,11 +381,24 @@ export function StationProvider({
     return DEFAULT_AMBIENT_LINES
   }, [zone])
 
+  const quotaBadge = useMemo(() => {
+    if (!quotaTelemetry) return undefined
+    if (typeof quotaTelemetry.remainingToday === 'number') {
+      return quotaTelemetry.isGenesisGuardian
+        ? `守护者 · 今日剩余 ${quotaTelemetry.remainingToday} / ${quotaTelemetry.dailyLimit} 次`
+        : `今日剩余 ${quotaTelemetry.remainingToday} / ${quotaTelemetry.dailyLimit} 次`
+    }
+    return `每日额度 ${quotaTelemetry.dailyLimit} 次`
+  }, [quotaTelemetry])
+
   const drawerFooterNote = useMemo(() => {
     if (quotaTelemetry) {
+      const quotaDetail = typeof quotaTelemetry.remainingToday === 'number'
+        ? `今日剩余 ${quotaTelemetry.remainingToday} / ${quotaTelemetry.dailyLimit} 次`
+        : `每日额度 ${quotaTelemetry.dailyLimit} 次`
       return quotaTelemetry.isGenesisGuardian
-        ? `Enter 发送，Shift + Enter 换行 · 创世守护者已激活（每日额度 ${quotaTelemetry.dailyLimit} 次）`
-        : `Enter 发送，Shift + Enter 换行 · 实时流式答疑（每日额度 ${quotaTelemetry.dailyLimit} 次）`
+        ? `Enter 发送，Shift + Enter 换行 · 创世守护者已激活（${quotaDetail}）`
+        : `Enter 发送，Shift + Enter 换行 · 实时流式答疑（${quotaDetail}）`
     }
     if (seoulGuardian) {
       return `Enter 发送，Shift + Enter 换行 · 创世守护者每日 AI 额度 +${seoulGuardian.aiDailyBonus} 次`
@@ -293,6 +411,8 @@ export function StationProvider({
     authChecked,
     syncing,
     syncNote,
+    quotaTelemetry,
+    refreshQuota,
     openAuth,
     openAssistant,
     askAboutError,
@@ -305,6 +425,8 @@ export function StationProvider({
     authChecked,
     syncing,
     syncNote,
+    quotaTelemetry,
+    refreshQuota,
     openAuth,
     openAssistant,
     askAboutError,
@@ -316,6 +438,12 @@ export function StationProvider({
 
   const drawerOpen = panel?.kind === 'assistant'
 
+  useEffect(() => {
+    if (drawerOpen && userRef.current) {
+      void refreshQuota()
+    }
+  }, [drawerOpen, refreshQuota])
+
   return (
     <StationContext.Provider value={contextValue}>
       {children}
@@ -323,11 +451,11 @@ export function StationProvider({
       {!isolated && (
         <div className="lv-observatory lvo-station-host" data-zone={zone}>
           <AssistantPet
-            mood={vesper.mood}
+            mood={vesperMood}
             editorRegion={mainContentRef}
             observeKey={pathname}
             drawerOpen={drawerOpen || introActive}
-            statusHint={vesper.mood === 'success' ? statusHint : undefined}
+            statusHint={vesperMood === 'success' ? statusHint : undefined}
             celebrateMessage={celebrateMessage}
             ambientLines={ambientLines}
             onOpen={opener => openAssistant(opener)}
@@ -362,15 +490,16 @@ export function StationProvider({
                 context={panel.action.context}
                 opener={panel.action.opener}
                 transport={assistantTransport}
-                mood={vesper.mood}
+                mood={vesperMood}
+                quotaBadge={quotaBadge}
                 footerNote={drawerFooterNote}
                 onDismiss={() => {
                   setPanel(undefined)
-                  if (vesper.mood === 'thinking') vesper.returnToIdle()
+                  if (vesperMood === 'thinking') returnToIdle()
                 }}
                 onMoodChange={nextMood => {
                   setStatusHint(undefined)
-                  vesper.setMood(nextMood)
+                  setVesperMood(nextMood)
                 }}
               />
             </Suspense>
@@ -387,4 +516,8 @@ export function useStation(): StationContextValue {
     throw new Error('useStation must be used inside StationProvider')
   }
   return ctx
+}
+
+export function useOptionalStation(): StationContextValue | null {
+  return useContext(StationContext)
 }

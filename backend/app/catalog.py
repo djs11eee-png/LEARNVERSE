@@ -28,8 +28,8 @@ class CourseMeta:
 
 class AuthoritativeCatalog:
     """
-    Loads the authoritative LEARNVERSE curriculum (32 courses, 128 chapters)
-    and Card Vault catalog (90 cards across 5 slots) to validate discussion rooms,
+    Loads the authoritative LEARNVERSE curriculum (33 courses, 132 chapters)
+    and Card Vault catalog (420 cards across 5 slots) to validate discussion rooms,
     course/lesson progress, and prevent card-pack farming or slot-forging attacks.
     """
 

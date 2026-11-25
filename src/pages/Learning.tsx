@@ -3,7 +3,7 @@ import {
   Check, CircleDot, Clock3, Cloud, Compass, Flame, GitBranch, Layers3, RefreshCw, Search, Target, Trophy,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
-import { lazy, Suspense, useRef, useState } from 'react';
+import { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import { ThemeSelect } from '../components/ThemeSelect';
 import { useStation } from '../components/observatory/StationProvider';
@@ -321,6 +321,19 @@ function Catalog({ mode }: { mode: 'course' | 'resource' }) {
 
 function CourseDetail({ course }: { course: Resource }) {
   const { started, completed, activeRoute, favorites, uncompleteCourse, toggleFavorite } = useProgress();
+  const [, setWorkspaceRev] = useState(0);
+  useEffect(() => {
+    const bump = () => setWorkspaceRev((v) => v + 1);
+    const onStorage = (event: StorageEvent) => {
+      if (event.key === null || event.key?.startsWith('learnverse.workspace.v1.')) bump();
+    };
+    window.addEventListener('learnverse:workspace-synced', bump);
+    window.addEventListener('storage', onStorage);
+    return () => {
+      window.removeEventListener('learnverse:workspace-synced', bump);
+      window.removeEventListener('storage', onStorage);
+    };
+  }, []);
   const isComplete = completed.includes(course.id);
   const isActive = started.includes(course.id);
   const saved = favorites.includes(course.id);
@@ -566,6 +579,11 @@ export function Dashboard() {
           </button>
           {observatory.user && (
             <span className="universe-sync-badge">@{observatory.user.username}</span>
+          )}
+          {observatory.user && typeof observatory.quotaTelemetry?.remainingToday === 'number' && (
+            <span className="universe-sync-badge" data-testid="dashboard-ai-quota">
+              AI 问答剩余 {observatory.quotaTelemetry.remainingToday}/{observatory.quotaTelemetry.dailyLimit} 次
+            </span>
           )}
         </div>
       </div>

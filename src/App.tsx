@@ -207,6 +207,11 @@ function AppShell({
                       : profile.nickname}
                   </span>
                 )}
+                {station.user && typeof station.quotaTelemetry?.remainingToday === 'number' && (
+                  <span className="student-account-name" data-testid="menu-ai-quota">
+                    今日 AI 剩余 {station.quotaTelemetry.remainingToday} / {station.quotaTelemetry.dailyLimit} 次
+                  </span>
+                )}
                 <Link to="/my-universe" onClick={() => { if (account.current) account.current.open = false }}>
                   <UserRound size={15} /> 我的宇宙
                 </Link>

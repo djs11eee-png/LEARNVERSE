@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Depends, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from ..catalog import catalog
@@ -69,7 +69,17 @@ async def handle_chapter_discussion(
     service = container.discussion_service
     room = f"{course_id}/{lesson_id}"
 
-    user = await get_current_user(request) if request.method == "POST" else None
+    if request.method == "POST":
+        try:
+            user = await get_current_user(request)
+        except HTTPException as exc:
+            return _discussion_json(
+                {"error": str(exc.detail), "detail": str(exc.detail)},
+                status_code=exc.status_code,
+                extra_headers=dict(exc.headers) if exc.headers else None,
+            )
+    else:
+        user = None
 
     try:
         if not catalog.is_valid_room(room):
@@ -116,16 +126,16 @@ async def handle_chapter_discussion(
         raw_body = await request.body()
         post = service.validate_and_parse_post(raw_body)
 
+        assert user is not None
+        user_id = int(user["id"])
+        if post["name"] == "访客" and user.get("nickname"):
+            post["name"] = user["nickname"][:24]
+
         # Check nonce idempotency first: if this exact nonce was already committed
         # (e.g. client retrying after a lost network ACK), return 200 without charging rate limit!
         nonce_state = await container.db.run_sync(service.check_nonce_state, room, post)
         if nonce_state == "duplicate_exact":
             return _discussion_json({"saved": True})
-
-        assert user is not None
-        user_id = int(user["id"])
-        if post["name"] == "访客" and user.get("nickname"):
-            post["name"] = user["nickname"][:24]
 
         # Dual-dimension rate limit: per real client IP and (if logged in) per user_id
         limit = container.settings.discussion_rate_limit_per_minute

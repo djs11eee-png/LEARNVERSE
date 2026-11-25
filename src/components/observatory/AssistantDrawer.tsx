@@ -24,6 +24,7 @@ interface AssistantDrawerProps {
   opener: HTMLElement | null
   transport: AssistantTransport
   mood: PetMood
+  quotaBadge?: string
   footerNote?: string
   onDismiss: () => void
   onMoodChange: (mood: PetMood) => void
@@ -37,7 +38,7 @@ const STREAM_TELEMETRY = [
 
 const MOBILE_DRAWER_MQ = '(max-width: 860px), (pointer: coarse) and (max-width: 940px)'
 
-export function AssistantDrawer({ context, opener, transport, mood, footerNote, onDismiss, onMoodChange }: AssistantDrawerProps) {
+export function AssistantDrawer({ context, opener, transport, mood, quotaBadge, footerNote, onDismiss, onMoodChange }: AssistantDrawerProps) {
   const id = useId()
   const dialog = useRef<HTMLDialogElement>(null)
   const heading = useRef<HTMLHeadingElement>(null)
@@ -251,6 +252,11 @@ export function AssistantDrawer({ context, opener, transport, mood, footerNote, 
               {mood === 'thinking' && <em className="lvo-header-telemetry">· {STREAM_TELEMETRY[telemetryStep]}</em>}
             </span>
           </div>
+          {quotaBadge && (
+            <span className="lvo-quota-pill" data-testid="ai-quota-pill" role="status">
+              {quotaBadge}
+            </span>
+          )}
           <button
             type="button"
             className="lvo-icon lvo-resize"

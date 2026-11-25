@@ -1,6 +1,7 @@
-import { ArrowLeft, ArrowRight, CornerDownRight, MessageCircle, RefreshCw, Send } from 'lucide-react'
+import { ArrowLeft, ArrowRight, CornerDownRight, LogIn, MessageCircle, RefreshCw, Send } from 'lucide-react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { FormEvent } from 'react'
+import { useOptionalStation } from './observatory/StationProvider'
 import { useStudentProfile } from '../state/studentProfile'
 import './chapter-discussion.css'
 
@@ -9,6 +10,15 @@ type ReplyPage = { replies: Post[]; olderRepliesBefore: number | null }
 type Thread = Post & ReplyPage
 type Listing = { threads: Thread[]; nextBefore: number | null }
 type Draft = { name: string; body: string; id: string }
+
+class DiscussionHttpError extends Error {
+  status: number
+  constructor(message: string, status: number) {
+    super(message)
+    this.name = 'DiscussionHttpError'
+    this.status = status
+  }
+}
 
 function submissionId() {
   return Array.from(crypto.getRandomValues(new Uint8Array(16)), byte => byte.toString(16).padStart(2, '0')).join('')
@@ -23,13 +33,25 @@ function readDraft(key: string): Draft {
 }
 
 async function request<T>(url: string, options?: RequestInit): Promise<T> {
-  const response = await fetch(url, { ...options, signal: options?.signal ?? AbortSignal.timeout(12_000) })
+  const response = await fetch(url, {
+    credentials: 'include',
+    ...options,
+    signal: options?.signal ?? AbortSignal.timeout(12_000),
+  })
   if (response.headers.get('Content-Type')?.includes('application/json')) {
     const value = await response.json()
     if (response.ok) return value as T
-    if (typeof value?.error === 'string') throw new Error(value.error)
+    const msg = typeof value?.error === 'string'
+      ? value.error
+      : typeof value?.detail === 'string'
+        ? value.detail
+        : ''
+    if (msg) throw new DiscussionHttpError(msg, response.status)
   }
-  throw new Error('本站暂时无法连接讨论服务。')
+  if (response.status === 401) {
+    throw new DiscussionHttpError('请先登录账号后再执行此操作。', 401)
+  }
+  throw new DiscussionHttpError('本站暂时无法连接讨论服务。', response.status)
 }
 
 function readableError(error: unknown) {
@@ -39,12 +61,21 @@ function readableError(error: unknown) {
 
 function Composer({ url, parent, onSent }: { url: string; parent: number | null; onSent: () => void }) {
   const { nickname } = useStudentProfile()
+  const station = useOptionalStation()
   const storageKey = 'learnverse.discussion.draft.' + url + '/' + (parent ?? 'new')
   const [draft, setDraft] = useState(() => readDraft(storageKey))
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
+  const [needsLogin, setNeedsLogin] = useState(false)
   const [storageUnavailable, setStorageUnavailable] = useState(false)
   const sending = useRef(false)
+
+  useEffect(() => {
+    if (station?.user && needsLogin) {
+      setNeedsLogin(false)
+      setError('')
+    }
+  }, [station?.user, needsLogin])
 
   function update(next: Draft) {
     setDraft(next)
@@ -61,12 +92,18 @@ function Composer({ url, parent, onSent }: { url: string; parent: number | null;
     sending.current = true
     setBusy(true)
     setError('')
+    setNeedsLogin(false)
     try {
       await request(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...draft, parent }) })
       update({ ...draft, body: '', id: submissionId() })
       onSent()
     } catch (reason) {
-      setError(readableError(reason) + ' 输入内容仍保留在这里。')
+      if (reason instanceof DiscussionHttpError && reason.status === 401) {
+        setNeedsLogin(true)
+        setError('发布讨论需要先登录观测站账号。 输入内容仍保留在这里。')
+      } else {
+        setError(readableError(reason) + ' 输入内容仍保留在这里。')
+      }
     } finally {
       sending.current = false
       setBusy(false)
@@ -94,7 +131,23 @@ function Composer({ url, parent, onSent }: { url: string; parent: number | null;
       </button>
     </div>
     {storageUnavailable && <p role="status">此浏览器只能在当前页面保留草稿。</p>}
-    {error && <p className="discussion-error" role="alert">{error}</p>}
+    {error && (
+      <div className="discussion-error" role="alert">
+        <span>{error}</span>
+        {needsLogin && station && !station.user && (
+          <>
+            {' '}
+            <button
+              type="button"
+              className="discussion-text-button"
+              onClick={event => station.openAuth('sync_progress', event.currentTarget)}
+            >
+              <LogIn size={14} aria-hidden="true" />立即登录 / 注册
+            </button>
+          </>
+        )}
+      </div>
+    )}
   </form>
 }
 

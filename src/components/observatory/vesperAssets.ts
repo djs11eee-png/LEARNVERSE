@@ -74,10 +74,18 @@ class VesperMediaPool {
   private listeners = new Set<Listener>()
   private endedListeners = new Set<() => void>()
   private unlockBound = false
-  private secondaryScheduled = false
 
   private isReducedMotion(): boolean {
     return typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  }
+
+  private shouldSaveBandwidth(): boolean {
+    if (typeof navigator === 'undefined') return false
+    const conn = (navigator as Navigator & {
+      connection?: { saveData?: boolean; effectiveType?: string }
+    }).connection
+    if (!conn) return false
+    return Boolean(conn.saveData || conn.effectiveType === 'slow-2g' || conn.effectiveType === '2g')
   }
 
   private ensureHostElement(): HTMLDivElement | null {
@@ -128,41 +136,6 @@ class VesperMediaPool {
     }
   }
 
-  private scheduleSecondaryWarmup() {
-    if (this.secondaryScheduled || typeof window === 'undefined' || this.isReducedMotion()) return
-    this.secondaryScheduled = true
-    const runIdle = (fn: () => void, delayMs: number) => {
-      const win = window as Window & {
-        requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
-      }
-      window.setTimeout(() => {
-        if (typeof win.requestIdleCallback === 'function') {
-          win.requestIdleCallback(fn, { timeout: 2500 })
-        } else {
-          fn()
-        }
-      }, delayMs)
-    }
-
-    runIdle(() => {
-      if (!this.entries || this.isReducedMotion()) return
-      const thinking = this.entries.thinking
-      this.ensureVideoLoaded(thinking)
-      const warmSuccess = () => {
-        runIdle(() => {
-          if (!this.entries || this.isReducedMotion()) return
-          this.ensureVideoLoaded(this.entries.success)
-        }, 800)
-      }
-      if (thinking.videoReady) {
-        warmSuccess()
-      } else {
-        thinking.video.addEventListener('loadeddata', warmSuccess, { once: true })
-        thinking.video.addEventListener('error', warmSuccess, { once: true })
-      }
-    }, 1800)
-  }
-
   ensureInitialized(): Record<PetAnimationState, VesperVideoEntry> | null {
     if (typeof document === 'undefined') return null
     if (this.entries) return this.entries
@@ -190,11 +163,11 @@ class VesperMediaPool {
       video.setAttribute('disablepictureinpicture', '')
       video.setAttribute('disableremoteplayback', '')
 
-      // Prefer zero-B-frame single-GOP H.264 MP4 first everywhere for hardware zero-copy decode & zero loop-wrap stutter;
-      // fall back to zero-lag VP9 WebM seamlessly if needed.
+      // Prefer compact VP9 WebM first on Chromium/Firefox/Android (~25% smaller over 1 Mbps links),
+      // falling back automatically to zero-B-frame H.264 MP4 on Safari / iOS.
       const sources = [
-        { src: cfg.mp4, type: 'video/mp4' },
         { src: cfg.webm, type: 'video/webm; codecs="vp9"' },
+        { src: cfg.mp4, type: 'video/mp4' },
       ]
 
       for (const item of sources) {
@@ -233,9 +206,6 @@ class VesperMediaPool {
           if (!entry.hasRvfc) {
             entry.presentedFrame += 1
           }
-          if (state === 'idle') {
-            this.scheduleSecondaryWarmup()
-          }
           this.notify()
         }
       }
@@ -245,9 +215,6 @@ class VesperMediaPool {
       video.addEventListener('playing', markVideoReady)
       video.addEventListener('error', () => {
         entry.failed = true
-        if (state === 'idle') {
-          this.scheduleSecondaryWarmup()
-        }
         this.notify()
       })
       if (state === 'success') {
@@ -266,8 +233,34 @@ class VesperMediaPool {
     }
 
     this.entries = created
-    if (!this.isReducedMotion()) {
-      this.ensureVideoLoaded(created.idle)
+    // Defer idle video network fetch until after critical page assets & API calls complete,
+    // keeping poster WebP instant and avoiding saturating 1 Mbps server bandwidth on initial load.
+    if (!this.isReducedMotion() && !this.shouldSaveBandwidth() && typeof window !== 'undefined') {
+      const loadIdleWhenCalm = () => {
+        const win = window as Window & {
+          requestIdleCallback?: (cb: () => void, opts?: { timeout: number }) => number
+        }
+        window.setTimeout(() => {
+          const trigger = () => {
+            if (!this.isReducedMotion() && !this.shouldSaveBandwidth()) {
+              this.ensureVideoLoaded(created.idle)
+              if (created.idle.video.dataset.vesperActive === '1') {
+                void created.idle.video.play().catch(() => {})
+              }
+            }
+          }
+          if (typeof win.requestIdleCallback === 'function') {
+            win.requestIdleCallback(trigger, { timeout: 2000 })
+          } else {
+            trigger()
+          }
+        }, 600)
+      }
+      if (document.readyState === 'complete') {
+        loadIdleWhenCalm()
+      } else {
+        window.addEventListener('load', loadIdleWhenCalm, { once: true })
+      }
     }
     this.bindGestureUnlock()
     return created
@@ -289,14 +282,17 @@ class VesperMediaPool {
     window.addEventListener('keydown', unlock, { passive: true })
   }
 
-  activate(state: PetAnimationState, { restart = false }: { restart?: boolean } = {}) {
+  activate(state: PetAnimationState, { restart = false, deferLoad = false }: { restart?: boolean; deferLoad?: boolean } = {}) {
     const pool = this.ensureInitialized()
     if (!pool) return
     const target = pool[state]
-    this.ensureVideoLoaded(target)
     target.video.dataset.vesperActive = '1'
     target.video.muted = true
     target.video.defaultMuted = true
+    if (deferLoad && !target.videoRequested) {
+      return
+    }
+    this.ensureVideoLoaded(target)
     if (restart || state === 'success') {
       try {
         // Avoid triggering a redundant `seeking = true` flash when the clip is already parked at 0s!

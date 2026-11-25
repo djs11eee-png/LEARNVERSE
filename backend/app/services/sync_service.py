@@ -10,6 +10,7 @@ from ..schemas.auth import StudentProfilePayload
 from ..schemas.sync import (
     ActivityEntry,
     CourseRecordPayload,
+    GuardianSyncPayload,
     ProgressSyncPayload,
     UnionSyncRequest,
     UnionSyncResponse,
@@ -262,12 +263,21 @@ class SyncService:
                     seen_started.add(cid)
                     union_started_courses.append(cid)
 
+            unfav_set = {
+                item.strip()[:128]
+                for item in req.unfavorited
+                if isinstance(item, str) and item.strip()
+            }
             seen_fav: set[str] = set()
             union_favorites: list[str] = []
             for fav in [*srv_favorites, *inc_prog.favorites]:
                 if isinstance(fav, str):
                     cleaned_fav = fav.strip()[:128]
-                    if cleaned_fav and cleaned_fav not in seen_fav:
+                    if (
+                        cleaned_fav
+                        and cleaned_fav not in unfav_set
+                        and cleaned_fav not in seen_fav
+                    ):
                         seen_fav.add(cleaned_fav)
                         union_favorites.append(cleaned_fav)
                         if len(union_favorites) >= 200:
@@ -512,6 +522,25 @@ class SyncService:
                         (user_id, card_id, sanitized_note, now_iso),
                     )
 
+            guardian_row = conn.execute(
+                """
+                SELECT rank, github_login, ai_daily_bonus, claimed_at
+                FROM user_guardian_claims WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+
+        guardian_payload = (
+            GuardianSyncPayload(
+                rank=int(guardian_row["rank"]),
+                githubUser=str(guardian_row["github_login"]),
+                claimedAt=str(guardian_row["claimed_at"]),
+                aiDailyBonus=int(guardian_row["ai_daily_bonus"]),
+            )
+            if guardian_row is not None
+            else None
+        )
+
         # Build deterministic response
         opened_map: dict[str, list[str]] = {}
         offers_map: dict[str, list[str]] = {}
@@ -555,6 +584,7 @@ class SyncService:
                 notes=merged_notes,
                 rejected_packs=rejected_packs,
             ),
+            guardian=guardian_payload,
         )
 
     def get_state(self, user_id: int) -> UnionSyncResponse:
@@ -600,6 +630,25 @@ class SyncService:
                 "SELECT card_id, note FROM user_vault_notes WHERE user_id = ?",
                 (user_id,),
             ).fetchall()
+
+            guardian_row = conn.execute(
+                """
+                SELECT rank, github_login, ai_daily_bonus, claimed_at
+                FROM user_guardian_claims WHERE user_id = ?
+                """,
+                (user_id,),
+            ).fetchone()
+
+        guardian_payload = (
+            GuardianSyncPayload(
+                rank=int(guardian_row["rank"]),
+                githubUser=str(guardian_row["github_login"]),
+                claimedAt=str(guardian_row["claimed_at"]),
+                aiDailyBonus=int(guardian_row["ai_daily_bonus"]),
+            )
+            if guardian_row is not None
+            else None
+        )
 
         merged_courses: dict[str, CourseRecordPayload] = {}
         completed_rooms: set[str] = set()
@@ -760,4 +809,5 @@ class SyncService:
                 notes=merged_notes,
                 rejected_packs=[],
             ),
+            guardian=guardian_payload,
         )

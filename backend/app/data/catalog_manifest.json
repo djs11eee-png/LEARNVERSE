@@ -309,7 +309,7 @@
     },
     {
       "id": "lv-c-records",
-      "title": "C 语言进阶：结构体与文件",
+      "title": "C 语言进阶：结构体、文件与位运算",
       "difficulty": "Intermediate",
       "lessons": [
         {
@@ -323,6 +323,10 @@
         {
           "id": "text-files",
           "title": "从文本文件读取有效记录"
+        },
+        {
+          "id": "bitwise-and-frames",
+          "title": "位运算、传感帧解包与 scanf 衔接"
         },
         {
           "id": "decomposition",
@@ -735,6 +739,25 @@
           "title": "中断之后怎样恢复数据"
         }
       ]
+    },
+    {
+      "id": "lv-iot-protocols",
+      "title": "物联网传感通信协议",
+      "difficulty": "Advanced",
+      "lessons": [
+        {
+          "id": "iot-frames-and-qos",
+          "title": "传感帧解码、主题路由与 QoS 匹配"
+        },
+        {
+          "id": "iot-heartbeat-and-dedup",
+          "title": "设备心跳、离线判定与确认去重"
+        },
+        {
+          "id": "iot-gateway-backpressure",
+          "title": "边缘网关的有界缓冲与背压分流"
+        }
+      ]
     }
   ],
   "rooms": [
@@ -795,6 +818,7 @@
     "lv-c-records/structures",
     "lv-c-records/capacity",
     "lv-c-records/text-files",
+    "lv-c-records/bitwise-and-frames",
     "lv-c-records/decomposition",
     "lv-algorithms-efficiency/recursion",
     "lv-algorithms-efficiency/merge-sort",
@@ -865,7 +889,10 @@
     "lv-computer-architecture/memory-and-io",
     "lv-operating-systems/round-robin",
     "lv-operating-systems/virtual-memory",
-    "lv-operating-systems/journal-replay"
+    "lv-operating-systems/journal-replay",
+    "lv-iot-protocols/iot-frames-and-qos",
+    "lv-iot-protocols/iot-heartbeat-and-dedup",
+    "lv-iot-protocols/iot-gateway-backpressure"
   ],
   "cards": [
     {
@@ -1169,6 +1196,126 @@
       "title": "两道检查"
     },
     {
+      "id": "python-031",
+      "number": "PY-031",
+      "slot": 1,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "lazy-iteration",
+      "galaxy": "python",
+      "finish": "reverse",
+      "title": "游标只向前不回头"
+    },
+    {
+      "id": "python-032",
+      "number": "PY-032",
+      "slot": 2,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "lazy-iteration",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "交出才算读"
+    },
+    {
+      "id": "python-033",
+      "number": "PY-033",
+      "slot": 3,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "lazy-iteration",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "停在第一条合格处"
+    },
+    {
+      "id": "python-034",
+      "number": "PY-034",
+      "slot": 1,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "typed-records",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "冻结的记录契约"
+    },
+    {
+      "id": "python-035",
+      "number": "PY-035",
+      "slot": 3,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "typed-records",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "布尔值也是 int 子类"
+    },
+    {
+      "id": "python-036",
+      "number": "PY-036",
+      "slot": 4,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "typed-records",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "注解不会自动转型"
+    },
+    {
+      "id": "python-037",
+      "number": "PY-037",
+      "slot": 2,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "jsonl-input",
+      "galaxy": "python",
+      "finish": "cosmos",
+      "title": "行号先于过滤"
+    },
+    {
+      "id": "python-038",
+      "number": "PY-038",
+      "slot": 4,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "jsonl-input",
+      "galaxy": "python",
+      "finish": "crosshatch",
+      "title": "合法 null 变成报错"
+    },
+    {
+      "id": "python-039",
+      "number": "PY-039",
+      "slot": 5,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "jsonl-input",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "JSONL 流式解析清单"
+    },
+    {
+      "id": "python-040",
+      "number": "PY-040",
+      "slot": 3,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "pipeline-regression",
+      "galaxy": "python",
+      "finish": "rainbow",
+      "title": "一次遍历出总榜"
+    },
+    {
+      "id": "python-041",
+      "number": "PY-041",
+      "slot": 4,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "pipeline-regression",
+      "galaxy": "python",
+      "finish": "rainbow",
+      "title": "第二遍统计全归零"
+    },
+    {
+      "id": "python-042",
+      "number": "PY-042",
+      "slot": 5,
+      "courseId": "lv-python-pipeline",
+      "lessonId": "pipeline-regression",
+      "galaxy": "python",
+      "finish": "gold",
+      "title": "数据处理流水线四准则"
+    },
+    {
       "id": "c-001",
       "number": "C-001",
       "slot": 1,
@@ -1469,6 +1616,276 @@
       "title": "谁真的变了"
     },
     {
+      "id": "c-031",
+      "number": "C-031",
+      "slot": 1,
+      "courseId": "lv-c-records",
+      "lessonId": "structures",
+      "galaxy": "c",
+      "finish": "standard",
+      "title": "整条记录一起走"
+    },
+    {
+      "id": "c-032",
+      "number": "C-032",
+      "slot": 2,
+      "courseId": "lv-c-records",
+      "lessonId": "structures",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "只读借用结构体数组"
+    },
+    {
+      "id": "c-033",
+      "number": "C-033",
+      "slot": 3,
+      "courseId": "lv-c-records",
+      "lessonId": "structures",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "交换一半出事故"
+    },
+    {
+      "id": "c-034",
+      "number": "C-034",
+      "slot": 1,
+      "courseId": "lv-c-records",
+      "lessonId": "capacity",
+      "galaxy": "c",
+      "finish": "reverse",
+      "title": "先守容量门，再写下一格"
+    },
+    {
+      "id": "c-035",
+      "number": "C-035",
+      "slot": 3,
+      "courseId": "lv-c-records",
+      "lessonId": "capacity",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "未写入的尾巴"
+    },
+    {
+      "id": "c-036",
+      "number": "C-036",
+      "slot": 4,
+      "courseId": "lv-c-records",
+      "lessonId": "capacity",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "满容后计数歪了"
+    },
+    {
+      "id": "c-037",
+      "number": "C-037",
+      "slot": 2,
+      "courseId": "lv-c-records",
+      "lessonId": "text-files",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "用 strtol 抓出整行坏字符"
+    },
+    {
+      "id": "c-038",
+      "number": "C-038",
+      "slot": 4,
+      "courseId": "lv-c-records",
+      "lessonId": "text-files",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "文件末尾多算一行"
+    },
+    {
+      "id": "c-039",
+      "number": "C-039",
+      "slot": 5,
+      "courseId": "lv-c-records",
+      "lessonId": "text-files",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "C 文本解析安全守则"
+    },
+    {
+      "id": "c-040",
+      "number": "C-040",
+      "slot": 2,
+      "courseId": "lv-c-records",
+      "lessonId": "bitwise-and-frames",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "先整行 fgets 再 sscanf"
+    },
+    {
+      "id": "c-041",
+      "number": "C-041",
+      "slot": 3,
+      "courseId": "lv-c-records",
+      "lessonId": "bitwise-and-frames",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "解包 16 位传感帧"
+    },
+    {
+      "id": "c-042",
+      "number": "C-042",
+      "slot": 5,
+      "courseId": "lv-c-records",
+      "lessonId": "bitwise-and-frames",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "16 位传感帧与位操作速查"
+    },
+    {
+      "id": "c-043",
+      "number": "C-043",
+      "slot": 2,
+      "courseId": "lv-c-records",
+      "lessonId": "decomposition",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "状态码与输出参数分工"
+    },
+    {
+      "id": "c-044",
+      "number": "C-044",
+      "slot": 4,
+      "courseId": "lv-c-records",
+      "lessonId": "decomposition",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "Release 模式跳过操作"
+    },
+    {
+      "id": "c-045",
+      "number": "C-045",
+      "slot": 5,
+      "courseId": "lv-c-records",
+      "lessonId": "decomposition",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "C 工程验证与不变量速查"
+    },
+    {
+      "id": "c-046",
+      "number": "C-046",
+      "slot": 1,
+      "courseId": "lv-c-memory",
+      "lessonId": "memory-ownership",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "谁申请，谁负责释放"
+    },
+    {
+      "id": "c-047",
+      "number": "C-047",
+      "slot": 2,
+      "courseId": "lv-c-memory",
+      "lessonId": "memory-ownership",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "先做除法防乘法回绕"
+    },
+    {
+      "id": "c-048",
+      "number": "C-048",
+      "slot": 3,
+      "courseId": "lv-c-memory",
+      "lessonId": "memory-ownership",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "乘法溢出逃过检查"
+    },
+    {
+      "id": "c-049",
+      "number": "C-049",
+      "slot": 2,
+      "courseId": "lv-c-memory",
+      "lessonId": "safe-allocation",
+      "galaxy": "c",
+      "finish": "cosmos",
+      "title": "realloc 必须先接临时指针"
+    },
+    {
+      "id": "c-050",
+      "number": "C-050",
+      "slot": 3,
+      "courseId": "lv-c-memory",
+      "lessonId": "safe-allocation",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "扩容后的空闲尾巴"
+    },
+    {
+      "id": "c-051",
+      "number": "C-051",
+      "slot": 4,
+      "courseId": "lv-c-memory",
+      "lessonId": "safe-allocation",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "释放后又碰同一块"
+    },
+    {
+      "id": "c-052",
+      "number": "C-052",
+      "slot": 1,
+      "courseId": "lv-c-memory",
+      "lessonId": "resource-invariants",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "空态与满态的资源不变量"
+    },
+    {
+      "id": "c-053",
+      "number": "C-053",
+      "slot": 4,
+      "courseId": "lv-c-memory",
+      "lessonId": "resource-invariants",
+      "galaxy": "c",
+      "finish": "crosshatch",
+      "title": "拒收路径留下半成品"
+    },
+    {
+      "id": "c-054",
+      "number": "C-054",
+      "slot": 5,
+      "courseId": "lv-c-memory",
+      "lessonId": "resource-invariants",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "C 动态缓冲区不变量速查"
+    },
+    {
+      "id": "c-055",
+      "number": "C-055",
+      "slot": 3,
+      "courseId": "lv-c-memory",
+      "lessonId": "allocation-tests",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "单次可控失败注入"
+    },
+    {
+      "id": "c-056",
+      "number": "C-056",
+      "slot": 4,
+      "courseId": "lv-c-memory",
+      "lessonId": "allocation-tests",
+      "galaxy": "c",
+      "finish": "rainbow",
+      "title": "失败后原数组没对上"
+    },
+    {
+      "id": "c-057",
+      "number": "C-057",
+      "slot": 5,
+      "courseId": "lv-c-memory",
+      "lessonId": "allocation-tests",
+      "galaxy": "c",
+      "finish": "gold",
+      "title": "内存故障注入测试速查"
+    },
+    {
       "id": "algorithms-001",
       "number": "AL-001",
       "slot": 1,
@@ -1767,6 +2184,2916 @@
       "galaxy": "algorithms",
       "finish": "gold",
       "title": "留一组新题"
+    },
+    {
+      "id": "algorithms-031",
+      "number": "AL-031",
+      "slot": 1,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "recursion",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "左闭右开递归切半"
+    },
+    {
+      "id": "algorithms-032",
+      "number": "AL-032",
+      "slot": 2,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "recursion",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "沿返回路径汇总结果"
+    },
+    {
+      "id": "algorithms-033",
+      "number": "AL-033",
+      "slot": 3,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "recursion",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "少算了中间那一个"
+    },
+    {
+      "id": "algorithms-034",
+      "number": "AL-034",
+      "slot": 1,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "merge-sort",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "同值先拿左半段"
+    },
+    {
+      "id": "algorithms-035",
+      "number": "AL-035",
+      "slot": 3,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "merge-sort",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "平局之后的排位"
+    },
+    {
+      "id": "algorithms-036",
+      "number": "AL-036",
+      "slot": 4,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "merge-sort",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "尾巴留在半空中"
+    },
+    {
+      "id": "algorithms-037",
+      "number": "AL-037",
+      "slot": 2,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "prefix-sums",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "从零起点建前缀表"
+    },
+    {
+      "id": "algorithms-038",
+      "number": "AL-038",
+      "slot": 4,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "prefix-sums",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "越界算出 NaN 没人管"
+    },
+    {
+      "id": "algorithms-039",
+      "number": "AL-039",
+      "slot": 5,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "prefix-sums",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "前缀和公式速查"
+    },
+    {
+      "id": "algorithms-040",
+      "number": "AL-040",
+      "slot": 2,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "operation-counts",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "把三本账摊在桌面上"
+    },
+    {
+      "id": "algorithms-041",
+      "number": "AL-041",
+      "slot": 3,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "operation-counts",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "单次查询别硬预处理"
+    },
+    {
+      "id": "algorithms-042",
+      "number": "AL-042",
+      "slot": 5,
+      "courseId": "lv-algorithms-efficiency",
+      "lessonId": "operation-counts",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "算法成本账本速查"
+    },
+    {
+      "id": "algorithms-043",
+      "number": "AL-043",
+      "slot": 1,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-adjacency",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "先把地点登记进表"
+    },
+    {
+      "id": "algorithms-044",
+      "number": "AL-044",
+      "slot": 2,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-adjacency",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "双向连接要写两笔"
+    },
+    {
+      "id": "algorithms-045",
+      "number": "AL-045",
+      "slot": 3,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-adjacency",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "孤点在哪儿"
+    },
+    {
+      "id": "algorithms-046",
+      "number": "AL-046",
+      "slot": 2,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "bfs-path",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "用父节点表倒推路线"
+    },
+    {
+      "id": "algorithms-047",
+      "number": "AL-047",
+      "slot": 3,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "bfs-path",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "为什么必须先看层序"
+    },
+    {
+      "id": "algorithms-048",
+      "number": "AL-048",
+      "slot": 4,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "bfs-path",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "同一顶点挤满队列"
+    },
+    {
+      "id": "algorithms-049",
+      "number": "AL-049",
+      "slot": 1,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "dijkstra-queue",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "只让严格更短的路线胜出"
+    },
+    {
+      "id": "algorithms-050",
+      "number": "AL-050",
+      "slot": 4,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "dijkstra-queue",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "入队就提前收工"
+    },
+    {
+      "id": "algorithms-051",
+      "number": "AL-051",
+      "slot": 5,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "dijkstra-queue",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "图搜索与最短路速查"
+    },
+    {
+      "id": "algorithms-052",
+      "number": "AL-052",
+      "slot": 1,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-validation",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "坏边绝不静默放行"
+    },
+    {
+      "id": "algorithms-053",
+      "number": "AL-053",
+      "slot": 4,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-validation",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "拿 BFS 核对加权图"
+    },
+    {
+      "id": "algorithms-054",
+      "number": "AL-054",
+      "slot": 5,
+      "courseId": "lv-algorithms-graph",
+      "lessonId": "graph-validation",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "图算法校验三件套"
+    },
+    {
+      "id": "algorithms-055",
+      "number": "AL-055",
+      "slot": 1,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-chunk-records",
+      "galaxy": "algorithms",
+      "finish": "standard",
+      "title": "切分资料别丢原始编号"
+    },
+    {
+      "id": "algorithms-056",
+      "number": "AL-056",
+      "slot": 2,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-chunk-records",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "一条记录尽量不腰斩"
+    },
+    {
+      "id": "algorithms-057",
+      "number": "AL-057",
+      "slot": 3,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-chunk-records",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "第一道分隔线之后"
+    },
+    {
+      "id": "algorithms-058",
+      "number": "AL-058",
+      "slot": 1,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-keyword-retrieval",
+      "galaxy": "algorithms",
+      "finish": "reverse",
+      "title": "先去重，再数命中词"
+    },
+    {
+      "id": "algorithms-059",
+      "number": "AL-059",
+      "slot": 3,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-keyword-retrieval",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "零分不该凑数进前 K"
+    },
+    {
+      "id": "algorithms-060",
+      "number": "AL-060",
+      "slot": 4,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-keyword-retrieval",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "同分候选顺序漂移"
+    },
+    {
+      "id": "algorithms-061",
+      "number": "AL-061",
+      "slot": 2,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-check-evidence",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "引用与重算双道锁"
+    },
+    {
+      "id": "algorithms-062",
+      "number": "AL-062",
+      "slot": 4,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-check-evidence",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "0 分钟被当成缺席"
+    },
+    {
+      "id": "algorithms-063",
+      "number": "AL-063",
+      "slot": 5,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-check-evidence",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "证据核验门禁速查"
+    },
+    {
+      "id": "algorithms-064",
+      "number": "AL-064",
+      "slot": 2,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-batch-error-types",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "按流水线顺序抓首个断点"
+    },
+    {
+      "id": "algorithms-065",
+      "number": "AL-065",
+      "slot": 3,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-batch-error-types",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "总体 90% 藏住了什么"
+    },
+    {
+      "id": "algorithms-066",
+      "number": "AL-066",
+      "slot": 5,
+      "courseId": "lv-ai-grounded-qa",
+      "lessonId": "ai-batch-error-types",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "问答批测诊断速查"
+    },
+    {
+      "id": "algorithms-067",
+      "number": "AL-067",
+      "slot": 1,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-retrieval-quality",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "Top-K 三个核心指标分工"
+    },
+    {
+      "id": "algorithms-068",
+      "number": "AL-068",
+      "slot": 2,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-retrieval-quality",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "空标准答案不是召回零"
+    },
+    {
+      "id": "algorithms-069",
+      "number": "AL-069",
+      "slot": 3,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-retrieval-quality",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "分母到底写谁"
+    },
+    {
+      "id": "algorithms-070",
+      "number": "AL-070",
+      "slot": 2,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-evidence-support-matching",
+      "galaxy": "algorithms",
+      "finish": "cosmos",
+      "title": "摘句对上再对事实字段"
+    },
+    {
+      "id": "algorithms-071",
+      "number": "AL-071",
+      "slot": 4,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-evidence-support-matching",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "只验第一条就放行"
+    },
+    {
+      "id": "algorithms-072",
+      "number": "AL-072",
+      "slot": 3,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-evidence-support-matching",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "出处和摘句先过哪一关"
+    },
+    {
+      "id": "algorithms-073",
+      "number": "AL-073",
+      "slot": 1,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-abstention-thresholds",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "低分、歧义与缺项三道闸门"
+    },
+    {
+      "id": "algorithms-074",
+      "number": "AL-074",
+      "slot": 3,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-abstention-thresholds",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "高阈值带来的另一半代价"
+    },
+    {
+      "id": "algorithms-075",
+      "number": "AL-075",
+      "slot": 5,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-abstention-thresholds",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "可控拒答策略速查"
+    },
+    {
+      "id": "algorithms-076",
+      "number": "AL-076",
+      "slot": 1,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-offline-regression-groups",
+      "galaxy": "algorithms",
+      "finish": "crosshatch",
+      "title": "用稳定样本 ID 配对版本"
+    },
+    {
+      "id": "algorithms-077",
+      "number": "AL-077",
+      "slot": 4,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-offline-regression-groups",
+      "galaxy": "algorithms",
+      "finish": "rainbow",
+      "title": "增删样本没对上号"
+    },
+    {
+      "id": "algorithms-078",
+      "number": "AL-078",
+      "slot": 5,
+      "courseId": "lv-ai-retrieval-evaluation",
+      "lessonId": "ai-offline-regression-groups",
+      "galaxy": "algorithms",
+      "finish": "gold",
+      "title": "离线问答回归对比速查"
+    },
+    {
+      "id": "web-001",
+      "number": "WB-001",
+      "slot": 1,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "variables",
+      "galaxy": "web",
+      "finish": "standard",
+      "title": "绑定先算右边表达式"
+    },
+    {
+      "id": "web-002",
+      "number": "WB-002",
+      "slot": 2,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "variables",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "修剪空白再转整数"
+    },
+    {
+      "id": "web-003",
+      "number": "WB-003",
+      "slot": 3,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "variables",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "同名的块级遮蔽"
+    },
+    {
+      "id": "web-004",
+      "number": "WB-004",
+      "slot": 1,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "conditions",
+      "galaxy": "web",
+      "finish": "standard",
+      "title": "严苛门槛排前面"
+    },
+    {
+      "id": "web-005",
+      "number": "WB-005",
+      "slot": 3,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "conditions",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "短路保护先验类型"
+    },
+    {
+      "id": "web-006",
+      "number": "WB-006",
+      "slot": 4,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "conditions",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "或运算吞掉了上界"
+    },
+    {
+      "id": "web-007",
+      "number": "WB-007",
+      "slot": 2,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "arrays",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "先筛选，再做映射标签"
+    },
+    {
+      "id": "web-008",
+      "number": "WB-008",
+      "slot": 4,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "arrays",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "循环里总和又清零"
+    },
+    {
+      "id": "web-009",
+      "number": "WB-009",
+      "slot": 5,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "arrays",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "JS 数组安全操作速查"
+    },
+    {
+      "id": "web-010",
+      "number": "WB-010",
+      "slot": 2,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "functions",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "不可变更新与结果封箱"
+    },
+    {
+      "id": "web-011",
+      "number": "WB-011",
+      "slot": 3,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "functions",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "只打印却没 return"
+    },
+    {
+      "id": "web-012",
+      "number": "WB-012",
+      "slot": 5,
+      "courseId": "lv-javascript-foundations",
+      "lessonId": "functions",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "JSON 与集合工具速查"
+    },
+    {
+      "id": "web-013",
+      "number": "WB-013",
+      "slot": 1,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-objects",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "由外向内核对对象形状"
+    },
+    {
+      "id": "web-014",
+      "number": "WB-014",
+      "slot": 2,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-objects",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "解构并产出干净新记录"
+    },
+    {
+      "id": "web-015",
+      "number": "WB-015",
+      "slot": 3,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-objects",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "数组也冒充 object"
+    },
+    {
+      "id": "web-016",
+      "number": "WB-016",
+      "slot": 2,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-map-filter",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "让中间数组暴露故障点"
+    },
+    {
+      "id": "web-017",
+      "number": "WB-017",
+      "slot": 3,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-map-filter",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "大括号吞掉了返回值"
+    },
+    {
+      "id": "web-018",
+      "number": "WB-018",
+      "slot": 4,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-map-filter",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "filter 结果全是一堆布尔值"
+    },
+    {
+      "id": "web-019",
+      "number": "WB-019",
+      "slot": 1,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-group-sort",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "Map 累计加一的标准写法"
+    },
+    {
+      "id": "web-020",
+      "number": "WB-020",
+      "slot": 4,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-group-sort",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "并列第二名互相覆盖"
+    },
+    {
+      "id": "web-021",
+      "number": "WB-021",
+      "slot": 5,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-group-sort",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "JS 分组与多级排序速查"
+    },
+    {
+      "id": "web-022",
+      "number": "WB-022",
+      "slot": 1,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-functions-testing",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "按稳定 ID 去重保留首次"
+    },
+    {
+      "id": "web-023",
+      "number": "WB-023",
+      "slot": 3,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-functions-testing",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "为什么不能按姓名去重"
+    },
+    {
+      "id": "web-024",
+      "number": "WB-024",
+      "slot": 5,
+      "courseId": "lv-javascript-data",
+      "lessonId": "signup-functions-testing",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "数据清洗管道测试清单"
+    },
+    {
+      "id": "web-025",
+      "number": "WB-025",
+      "slot": 1,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "promise-await",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "先拿凭证，await 再拆箱"
+    },
+    {
+      "id": "web-026",
+      "number": "WB-026",
+      "slot": 4,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "promise-await",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "0 分钟被当成没查到"
+    },
+    {
+      "id": "web-027",
+      "number": "WB-027",
+      "slot": 3,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "promise-await",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "忘了写 await 发生什么"
+    },
+    {
+      "id": "web-028",
+      "number": "WB-028",
+      "slot": 2,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "bounded-async-work",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "先分批切片，再发请求"
+    },
+    {
+      "id": "web-029",
+      "number": "WB-029",
+      "slot": 4,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "bounded-async-work",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "一颗老鼠屎毁了整批"
+    },
+    {
+      "id": "web-030",
+      "number": "WB-030",
+      "slot": 5,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "bounded-async-work",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "异步并发与容错速查"
+    },
+    {
+      "id": "web-031",
+      "number": "WB-031",
+      "slot": 1,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "request-tickets",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "用单调票号挡住旧回复"
+    },
+    {
+      "id": "web-032",
+      "number": "WB-032",
+      "slot": 4,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "request-tickets",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "迟到的报错砸坏了新页面"
+    },
+    {
+      "id": "web-033",
+      "number": "WB-033",
+      "slot": 3,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "request-tickets",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "为什么 await 之后不能再拿当前票号"
+    },
+    {
+      "id": "web-034",
+      "number": "WB-034",
+      "slot": 2,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "deterministic-async-tests",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "把兑现开关攥在测试手里"
+    },
+    {
+      "id": "web-035",
+      "number": "WB-035",
+      "slot": 4,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "deterministic-async-tests",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "只看结局漏掉中间闪烁"
+    },
+    {
+      "id": "web-036",
+      "number": "WB-036",
+      "slot": 5,
+      "courseId": "lv-javascript-async-state",
+      "lessonId": "deterministic-async-tests",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "可确定性异步测试速查"
+    },
+    {
+      "id": "web-037",
+      "number": "WB-037",
+      "slot": 1,
+      "courseId": "lv-web-foundations",
+      "lessonId": "html-structure",
+      "galaxy": "web",
+      "finish": "standard",
+      "title": "标题层级只看大纲不看字号"
+    },
+    {
+      "id": "web-038",
+      "number": "WB-038",
+      "slot": 2,
+      "courseId": "lv-web-foundations",
+      "lessonId": "html-structure",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "元数据留 head，正文进 body"
+    },
+    {
+      "id": "web-039",
+      "number": "WB-039",
+      "slot": 3,
+      "courseId": "lv-web-foundations",
+      "lessonId": "html-structure",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "页面的主内容容器"
+    },
+    {
+      "id": "web-040",
+      "number": "WB-040",
+      "slot": 1,
+      "courseId": "lv-web-foundations",
+      "lessonId": "css-style",
+      "galaxy": "web",
+      "finish": "standard",
+      "title": "算准盒子占地的真实宽度"
+    },
+    {
+      "id": "web-041",
+      "number": "WB-041",
+      "slot": 3,
+      "courseId": "lv-web-foundations",
+      "lessonId": "css-style",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "谁的颜色最终生效"
+    },
+    {
+      "id": "web-042",
+      "number": "WB-042",
+      "slot": 4,
+      "courseId": "lv-web-foundations",
+      "lessonId": "css-style",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "手机端卡片撑出横向滚动条"
+    },
+    {
+      "id": "web-043",
+      "number": "WB-043",
+      "slot": 2,
+      "courseId": "lv-web-foundations",
+      "lessonId": "links-and-forms",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "表单提交必须带 name 与 label"
+    },
+    {
+      "id": "web-044",
+      "number": "WB-044",
+      "slot": 4,
+      "courseId": "lv-web-foundations",
+      "lessonId": "links-and-forms",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "点提示按钮竟然提交了表单"
+    },
+    {
+      "id": "web-045",
+      "number": "WB-045",
+      "slot": 5,
+      "courseId": "lv-web-foundations",
+      "lessonId": "links-and-forms",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "Web 原生控件语义速查"
+    },
+    {
+      "id": "web-046",
+      "number": "WB-046",
+      "slot": 2,
+      "courseId": "lv-web-foundations",
+      "lessonId": "browser-interaction",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "状态驱动显示，别把状态藏在 DOM"
+    },
+    {
+      "id": "web-047",
+      "number": "WB-047",
+      "slot": 4,
+      "courseId": "lv-web-foundations",
+      "lessonId": "browser-interaction",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "未勾选复选框也返回 \"on\""
+    },
+    {
+      "id": "web-048",
+      "number": "WB-048",
+      "slot": 3,
+      "courseId": "lv-web-foundations",
+      "lessonId": "browser-interaction",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "querySelector 找不到元素返回什么"
+    },
+    {
+      "id": "web-049",
+      "number": "WB-049",
+      "slot": 1,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-form-validation",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "统一在 form 的 submit 事件校验"
+    },
+    {
+      "id": "web-050",
+      "number": "WB-050",
+      "slot": 2,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-form-validation",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "校验失败保留用户输入不清空"
+    },
+    {
+      "id": "web-051",
+      "number": "WB-051",
+      "slot": 4,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-form-validation",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "先入库再校验留下脏任务"
+    },
+    {
+      "id": "web-052",
+      "number": "WB-052",
+      "slot": 2,
+      "courseId": "lv-web-interaction",
+      "lessonId": "data-driven-task-list",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "给每条任务配稳定 ID 与 textContent"
+    },
+    {
+      "id": "web-053",
+      "number": "WB-053",
+      "slot": 3,
+      "courseId": "lv-web-interaction",
+      "lessonId": "data-driven-task-list",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "同名任务点错了行"
+    },
+    {
+      "id": "web-054",
+      "number": "WB-054",
+      "slot": 5,
+      "courseId": "lv-web-interaction",
+      "lessonId": "data-driven-task-list",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "数据驱动列表渲染速查"
+    },
+    {
+      "id": "web-055",
+      "number": "WB-055",
+      "slot": 2,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-filter-edit",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "筛选只改视图，编辑回溯主表"
+    },
+    {
+      "id": "web-056",
+      "number": "WB-056",
+      "slot": 4,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-filter-edit",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "改完标题状态被洗白"
+    },
+    {
+      "id": "web-057",
+      "number": "WB-057",
+      "slot": 3,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-filter-edit",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "筛选视图里的下标陷阱"
+    },
+    {
+      "id": "web-058",
+      "number": "WB-058",
+      "slot": 1,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-keyboard-feedback",
+      "galaxy": "web",
+      "finish": "reverse",
+      "title": "可访问按钮与 live 状态播报"
+    },
+    {
+      "id": "web-059",
+      "number": "WB-059",
+      "slot": 4,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-keyboard-feedback",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "按 Escape 取消竟然保存了草稿"
+    },
+    {
+      "id": "web-060",
+      "number": "WB-060",
+      "slot": 5,
+      "courseId": "lv-web-interaction",
+      "lessonId": "task-keyboard-feedback",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "键盘交互与焦点回路速查"
+    },
+    {
+      "id": "web-061",
+      "number": "WB-061",
+      "slot": 1,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "state-action-render",
+      "galaxy": "web",
+      "finish": "cosmos",
+      "title": "纯函数 reducer 管状态，render 管画面"
+    },
+    {
+      "id": "web-062",
+      "number": "WB-062",
+      "slot": 4,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "state-action-render",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "画面改了，状态没跟上"
+    },
+    {
+      "id": "web-063",
+      "number": "WB-063",
+      "slot": 3,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "state-action-render",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "不存在的档期别放进状态"
+    },
+    {
+      "id": "web-064",
+      "number": "WB-064",
+      "slot": 2,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "modal-dialog-focus",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "模态框的键盘来回闭环"
+    },
+    {
+      "id": "web-065",
+      "number": "WB-065",
+      "slot": 4,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "modal-dialog-focus",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "Esc 关闭后状态还开着"
+    },
+    {
+      "id": "web-066",
+      "number": "WB-066",
+      "slot": 3,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "modal-dialog-focus",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "原按钮已被移除怎么办"
+    },
+    {
+      "id": "web-067",
+      "number": "WB-067",
+      "slot": 2,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "web-async-stale-state",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "区分合法空结果与加载失败"
+    },
+    {
+      "id": "web-068",
+      "number": "WB-068",
+      "slot": 4,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "web-async-stale-state",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "快速切课显示了上节课的列表"
+    },
+    {
+      "id": "web-069",
+      "number": "WB-069",
+      "slot": 3,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "web-async-stale-state",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "加载期间禁不禁用切换按钮"
+    },
+    {
+      "id": "web-070",
+      "number": "WB-070",
+      "slot": 1,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "keyboard-workflow-testing",
+      "galaxy": "web",
+      "finish": "crosshatch",
+      "title": "同时验收状态、反馈与焦点"
+    },
+    {
+      "id": "web-071",
+      "number": "WB-071",
+      "slot": 4,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "keyboard-workflow-testing",
+      "galaxy": "web",
+      "finish": "rainbow",
+      "title": "按钮禁用就省了状态防重"
+    },
+    {
+      "id": "web-072",
+      "number": "WB-072",
+      "slot": 5,
+      "courseId": "lv-web-accessible-state",
+      "lessonId": "keyboard-workflow-testing",
+      "galaxy": "web",
+      "finish": "gold",
+      "title": "Web 状态与可访问性终极速查"
+    },
+    {
+      "id": "backend-001",
+      "number": "SV-001",
+      "slot": 1,
+      "courseId": "lv-java-foundations",
+      "lessonId": "types-and-programs",
+      "galaxy": "backend",
+      "finish": "standard",
+      "title": "源码文件名与运行类名"
+    },
+    {
+      "id": "backend-002",
+      "number": "SV-002",
+      "slot": 2,
+      "courseId": "lv-java-foundations",
+      "lessonId": "types-and-programs",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "宽类型后缀与显式强转"
+    },
+    {
+      "id": "backend-003",
+      "number": "SV-003",
+      "slot": 4,
+      "courseId": "lv-java-foundations",
+      "lessonId": "types-and-programs",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "大数乘法溢出成负数"
+    },
+    {
+      "id": "backend-004",
+      "number": "SV-004",
+      "slot": 2,
+      "courseId": "lv-java-foundations",
+      "lessonId": "branches-and-loops",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "需要改数组就用下标 for"
+    },
+    {
+      "id": "backend-005",
+      "number": "SV-005",
+      "slot": 4,
+      "courseId": "lv-java-foundations",
+      "lessonId": "branches-and-loops",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "最后一个下标越界抛异常"
+    },
+    {
+      "id": "backend-006",
+      "number": "SV-006",
+      "slot": 3,
+      "courseId": "lv-java-foundations",
+      "lessonId": "branches-and-loops",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "增强循环改值无效"
+    },
+    {
+      "id": "backend-007",
+      "number": "SV-007",
+      "slot": 1,
+      "courseId": "lv-java-foundations",
+      "lessonId": "methods",
+      "galaxy": "backend",
+      "finish": "standard",
+      "title": "基本类型按值传入副本"
+    },
+    {
+      "id": "backend-008",
+      "number": "SV-008",
+      "slot": 3,
+      "courseId": "lv-java-foundations",
+      "lessonId": "methods",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "传进方法后原变量变了吗"
+    },
+    {
+      "id": "backend-009",
+      "number": "SV-009",
+      "slot": 5,
+      "courseId": "lv-java-foundations",
+      "lessonId": "methods",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "Java 方法设计与边界速查"
+    },
+    {
+      "id": "backend-010",
+      "number": "SV-010",
+      "slot": 1,
+      "courseId": "lv-java-foundations",
+      "lessonId": "objects",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "用构造方法守住对象出生点"
+    },
+    {
+      "id": "backend-011",
+      "number": "SV-011",
+      "slot": 4,
+      "courseId": "lv-java-foundations",
+      "lessonId": "objects",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "构造方法加了 void 没执行"
+    },
+    {
+      "id": "backend-012",
+      "number": "SV-012",
+      "slot": 3,
+      "courseId": "lv-java-foundations",
+      "lessonId": "objects",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "两个同内容对象用 == 比较"
+    },
+    {
+      "id": "backend-013",
+      "number": "SV-013",
+      "slot": 1,
+      "courseId": "lv-java-collections",
+      "lessonId": "array-list",
+      "galaxy": "backend",
+      "finish": "standard",
+      "title": "动态长度的 ArrayList"
+    },
+    {
+      "id": "backend-014",
+      "number": "SV-014",
+      "slot": 3,
+      "courseId": "lv-java-collections",
+      "lessonId": "array-list",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "Integer 列表的 remove 陷阱"
+    },
+    {
+      "id": "backend-015",
+      "number": "SV-015",
+      "slot": 4,
+      "courseId": "lv-java-collections",
+      "lessonId": "array-list",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "取末项写了 get(size())"
+    },
+    {
+      "id": "backend-016",
+      "number": "SV-016",
+      "slot": 2,
+      "courseId": "lv-java-collections",
+      "lessonId": "map",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "用 LinkedHashMap 计数与保序"
+    },
+    {
+      "id": "backend-017",
+      "number": "SV-017",
+      "slot": 4,
+      "courseId": "lv-java-collections",
+      "lessonId": "map",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "直接拆箱 null 炸出空指针"
+    },
+    {
+      "id": "backend-018",
+      "number": "SV-018",
+      "slot": 5,
+      "courseId": "lv-java-collections",
+      "lessonId": "map",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "Java 集合选型与安全速查"
+    },
+    {
+      "id": "backend-019",
+      "number": "SV-019",
+      "slot": 1,
+      "courseId": "lv-java-collections",
+      "lessonId": "exceptions",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "用特定异常区分错误类型"
+    },
+    {
+      "id": "backend-020",
+      "number": "SV-020",
+      "slot": 4,
+      "courseId": "lv-java-collections",
+      "lessonId": "exceptions",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "抛异常前就把库存扣掉了"
+    },
+    {
+      "id": "backend-021",
+      "number": "SV-021",
+      "slot": 3,
+      "courseId": "lv-java-collections",
+      "lessonId": "exceptions",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "在批处理里局部捕获恢复"
+    },
+    {
+      "id": "backend-022",
+      "number": "SV-022",
+      "slot": 2,
+      "courseId": "lv-java-collections",
+      "lessonId": "model-service",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "实体存状态，服务管规则"
+    },
+    {
+      "id": "backend-023",
+      "number": "SV-023",
+      "slot": 4,
+      "courseId": "lv-java-collections",
+      "lessonId": "model-service",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "借用冲突把原借用人清没了"
+    },
+    {
+      "id": "backend-024",
+      "number": "SV-024",
+      "slot": 5,
+      "courseId": "lv-java-collections",
+      "lessonId": "model-service",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "Java 模型与服务边界速查"
+    },
+    {
+      "id": "backend-025",
+      "number": "SV-025",
+      "slot": 1,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "generic-types",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "把类型契约交给编译器"
+    },
+    {
+      "id": "backend-026",
+      "number": "SV-026",
+      "slot": 2,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "generic-types",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "给集合写一个通用的泛型方法"
+    },
+    {
+      "id": "backend-027",
+      "number": "SV-027",
+      "slot": 3,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "generic-types",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "原始类型的延迟暴雷"
+    },
+    {
+      "id": "backend-028",
+      "number": "SV-028",
+      "slot": 2,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "interface-substitution",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "依赖接口，测试时替换内存替身"
+    },
+    {
+      "id": "backend-029",
+      "number": "SV-029",
+      "slot": 4,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "interface-substitution",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "强转接口暴露了耦合"
+    },
+    {
+      "id": "backend-030",
+      "number": "SV-030",
+      "slot": 3,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "interface-substitution",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "为什么测试喜欢用接口替身"
+    },
+    {
+      "id": "backend-031",
+      "number": "SV-031",
+      "slot": 1,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "ordering-and-clock",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "长整型比较器绝不直接强转相减"
+    },
+    {
+      "id": "backend-032",
+      "number": "SV-032",
+      "slot": 2,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "ordering-and-clock",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "把时间变成可拨动的接口"
+    },
+    {
+      "id": "backend-033",
+      "number": "SV-033",
+      "slot": 4,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "ordering-and-clock",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "多余的次级排序键破坏契约"
+    },
+    {
+      "id": "backend-034",
+      "number": "SV-034",
+      "slot": 1,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "service-tests",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "隔离用例状态再测时间边界"
+    },
+    {
+      "id": "backend-035",
+      "number": "SV-035",
+      "slot": 4,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "service-tests",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "冲突返回 busy 却换了主人"
+    },
+    {
+      "id": "backend-036",
+      "number": "SV-036",
+      "slot": 5,
+      "courseId": "lv-java-tested-design",
+      "lessonId": "service-tests",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "Java 可测试设计四件套速查"
+    },
+    {
+      "id": "backend-037",
+      "number": "SV-037",
+      "slot": 1,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "http",
+      "galaxy": "backend",
+      "finish": "standard",
+      "title": "拆开路径、查询参数与状态码"
+    },
+    {
+      "id": "backend-038",
+      "number": "SV-038",
+      "slot": 4,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "http",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "404 响应体被当成正常课程读"
+    },
+    {
+      "id": "backend-039",
+      "number": "SV-039",
+      "slot": 3,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "http",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "空搜索结果返回什么状态码"
+    },
+    {
+      "id": "backend-040",
+      "number": "SV-040",
+      "slot": 2,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "validation",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "先防 JSON null 再验逐字段"
+    },
+    {
+      "id": "backend-041",
+      "number": "SV-041",
+      "slot": 4,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "validation",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "报错 400 了库里却多出一条"
+    },
+    {
+      "id": "backend-042",
+      "number": "SV-042",
+      "slot": 3,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "validation",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "字符串数字也算类型错"
+    },
+    {
+      "id": "backend-043",
+      "number": "SV-043",
+      "slot": 1,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "data",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "拆表外键与参数绑定查询"
+    },
+    {
+      "id": "backend-044",
+      "number": "SV-044",
+      "slot": 4,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "data",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "没学习过的课程竟然计成 1 次"
+    },
+    {
+      "id": "backend-045",
+      "number": "SV-045",
+      "slot": 5,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "data",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "SQL 存储与查询安全速查"
+    },
+    {
+      "id": "backend-046",
+      "number": "SV-046",
+      "slot": 2,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "testing",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "创建之后再回读确认持久化"
+    },
+    {
+      "id": "backend-047",
+      "number": "SV-047",
+      "slot": 4,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "testing",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "打乱测试执行顺序就失败"
+    },
+    {
+      "id": "backend-048",
+      "number": "SV-048",
+      "slot": 5,
+      "courseId": "lv-backend-foundations",
+      "lessonId": "testing",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "后端接口测试基线速查"
+    },
+    {
+      "id": "backend-049",
+      "number": "SV-049",
+      "slot": 1,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-routing-contracts",
+      "galaxy": "backend",
+      "finish": "reverse",
+      "title": "路径、方法与参数三权分立"
+    },
+    {
+      "id": "backend-050",
+      "number": "SV-050",
+      "slot": 3,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-routing-contracts",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "参数没传 vs 传了空值"
+    },
+    {
+      "id": "backend-051",
+      "number": "SV-051",
+      "slot": 4,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-routing-contracts",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "带个查询参数路由就 404 了"
+    },
+    {
+      "id": "backend-052",
+      "number": "SV-052",
+      "slot": 2,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-joins-reporting",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "左连接过滤放在 ON 还是 WHERE"
+    },
+    {
+      "id": "backend-053",
+      "number": "SV-053",
+      "slot": 4,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-joins-reporting",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "冷门课程在月报里神秘消失"
+    },
+    {
+      "id": "backend-054",
+      "number": "SV-054",
+      "slot": 5,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-joins-reporting",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "SQL 报表联表聚合速查"
+    },
+    {
+      "id": "backend-055",
+      "number": "SV-055",
+      "slot": 1,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-transaction-safety",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "让关联写入同生共死"
+    },
+    {
+      "id": "backend-056",
+      "number": "SV-056",
+      "slot": 4,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-transaction-safety",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "报错后库里还是多了半条记录"
+    },
+    {
+      "id": "backend-057",
+      "number": "SV-057",
+      "slot": 3,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-transaction-safety",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "事务里的未提交修改谁能看见"
+    },
+    {
+      "id": "backend-058",
+      "number": "SV-058",
+      "slot": 2,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-request-storage",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "写前拍快照，错后全核对"
+    },
+    {
+      "id": "backend-059",
+      "number": "SV-059",
+      "slot": 4,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-request-storage",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "接口返回 201 数据却丢了"
+    },
+    {
+      "id": "backend-060",
+      "number": "SV-060",
+      "slot": 5,
+      "courseId": "lv-backend-consistency",
+      "lessonId": "backend-request-storage",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "接口一致性与事务测试速查"
+    },
+    {
+      "id": "backend-061",
+      "number": "SV-061",
+      "slot": 1,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-idempotency-keys",
+      "galaxy": "backend",
+      "finish": "cosmos",
+      "title": "用幂等键和指纹接住超时重试"
+    },
+    {
+      "id": "backend-062",
+      "number": "SV-062",
+      "slot": 4,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-idempotency-keys",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "重试一次竟然报了两次名"
+    },
+    {
+      "id": "backend-063",
+      "number": "SV-063",
+      "slot": 3,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-idempotency-keys",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "同键不同内容怎么处置"
+    },
+    {
+      "id": "backend-064",
+      "number": "SV-064",
+      "slot": 2,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-concurrent-enrollment",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "写入边界才是余量裁判"
+    },
+    {
+      "id": "backend-065",
+      "number": "SV-065",
+      "slot": 4,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-concurrent-enrollment",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "加了唯一约束名额还是超卖"
+    },
+    {
+      "id": "backend-066",
+      "number": "SV-066",
+      "slot": 3,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-concurrent-enrollment",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "复现并发竞争的靠谱方法"
+    },
+    {
+      "id": "backend-067",
+      "number": "SV-067",
+      "slot": 2,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-outbox-replay",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "本地事务带上 Outbox 发件箱"
+    },
+    {
+      "id": "backend-068",
+      "number": "SV-068",
+      "slot": 4,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-outbox-replay",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "没等确认就先勾了已发送"
+    },
+    {
+      "id": "backend-069",
+      "number": "SV-069",
+      "slot": 3,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-outbox-replay",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "事务回滚连同待发事件一起抹掉"
+    },
+    {
+      "id": "backend-070",
+      "number": "SV-070",
+      "slot": 1,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-recovery-scenarios",
+      "galaxy": "backend",
+      "finish": "crosshatch",
+      "title": "三个关键故障边界对照表"
+    },
+    {
+      "id": "backend-071",
+      "number": "SV-071",
+      "slot": 4,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-recovery-scenarios",
+      "galaxy": "backend",
+      "finish": "rainbow",
+      "title": "重试返回 201 底下却生成了两行"
+    },
+    {
+      "id": "backend-072",
+      "number": "SV-072",
+      "slot": 5,
+      "courseId": "lv-backend-reliability",
+      "lessonId": "backend-recovery-scenarios",
+      "galaxy": "backend",
+      "finish": "gold",
+      "title": "后端可靠性工程四支柱速查"
+    },
+    {
+      "id": "systems-001",
+      "number": "CS-001",
+      "slot": 1,
+      "courseId": "lv-computer-science",
+      "lessonId": "binary",
+      "galaxy": "systems",
+      "finish": "standard",
+      "title": "按位权展开二进制数"
+    },
+    {
+      "id": "systems-002",
+      "number": "CS-002",
+      "slot": 2,
+      "courseId": "lv-computer-science",
+      "lessonId": "binary",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "定宽拼接字段必须左补零"
+    },
+    {
+      "id": "systems-003",
+      "number": "CS-003",
+      "slot": 3,
+      "courseId": "lv-computer-science",
+      "lessonId": "binary",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "4 位无符号能表示的最大值"
+    },
+    {
+      "id": "systems-004",
+      "number": "CS-004",
+      "slot": 1,
+      "courseId": "lv-computer-science",
+      "lessonId": "algorithms",
+      "galaxy": "systems",
+      "finish": "standard",
+      "title": "排序前先捆绑原始下标"
+    },
+    {
+      "id": "systems-005",
+      "number": "CS-005",
+      "slot": 4,
+      "courseId": "lv-computer-science",
+      "lessonId": "algorithms",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "候选只剩一项时死循环了"
+    },
+    {
+      "id": "systems-006",
+      "number": "CS-006",
+      "slot": 3,
+      "courseId": "lv-computer-science",
+      "lessonId": "algorithms",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "线性查找最坏检查几次"
+    },
+    {
+      "id": "systems-007",
+      "number": "CS-007",
+      "slot": 2,
+      "courseId": "lv-computer-science",
+      "lessonId": "structures",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "主键查唯一，名称索引用列表"
+    },
+    {
+      "id": "systems-008",
+      "number": "CS-008",
+      "slot": 4,
+      "courseId": "lv-computer-science",
+      "lessonId": "structures",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "零库存被当成查无此书"
+    },
+    {
+      "id": "systems-009",
+      "number": "CS-009",
+      "slot": 3,
+      "courseId": "lv-computer-science",
+      "lessonId": "structures",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "撤销历史与排队任务"
+    },
+    {
+      "id": "systems-010",
+      "number": "CS-010",
+      "slot": 2,
+      "courseId": "lv-computer-science",
+      "lessonId": "testing",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "选好能区分错解的边界样本"
+    },
+    {
+      "id": "systems-011",
+      "number": "CS-011",
+      "slot": 5,
+      "courseId": "lv-computer-science",
+      "lessonId": "testing",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "程序验证思维速查"
+    },
+    {
+      "id": "systems-012",
+      "number": "CS-012",
+      "slot": 4,
+      "courseId": "lv-computer-science",
+      "lessonId": "testing",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "除数为零悄悄溜过去了"
+    },
+    {
+      "id": "systems-013",
+      "number": "CS-013",
+      "slot": 1,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "record-representation",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "编号用字符串，状态分三态"
+    },
+    {
+      "id": "systems-014",
+      "number": "CS-014",
+      "slot": 3,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "record-representation",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "把 null、0、-1 混为一谈"
+    },
+    {
+      "id": "systems-015",
+      "number": "CS-015",
+      "slot": 2,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "record-representation",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "可改标题与不可变主键分离"
+    },
+    {
+      "id": "systems-016",
+      "number": "CS-016",
+      "slot": 1,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "ordered-catalog-index",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "左闭右开上下界二分定位同名区间"
+    },
+    {
+      "id": "systems-017",
+      "number": "CS-017",
+      "slot": 4,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "ordered-catalog-index",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "单元素区间 lo = mid 无限循环"
+    },
+    {
+      "id": "systems-018",
+      "number": "CS-018",
+      "slot": 3,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "ordered-catalog-index",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "如何不漏地取出全部同名记录"
+    },
+    {
+      "id": "systems-019",
+      "number": "CS-019",
+      "slot": 2,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "search-work-count",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "将一次性建表成本和单次查询成本拆开算"
+    },
+    {
+      "id": "systems-020",
+      "number": "CS-020",
+      "slot": 3,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "search-work-count",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "什么时候建索引反而不划算"
+    },
+    {
+      "id": "systems-021",
+      "number": "CS-021",
+      "slot": 5,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "search-work-count",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "查找成本核算速查"
+    },
+    {
+      "id": "systems-022",
+      "number": "CS-022",
+      "slot": 2,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "lookup-edge-model",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "用统一响应结构区三态结果"
+    },
+    {
+      "id": "systems-023",
+      "number": "CS-023",
+      "slot": 4,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "lookup-edge-model",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "未命中越界读到了 index[length]"
+    },
+    {
+      "id": "systems-024",
+      "number": "CS-024",
+      "slot": 5,
+      "courseId": "lv-computer-science-cost",
+      "lessonId": "lookup-edge-model",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "目录索引查询模型速查"
+    },
+    {
+      "id": "systems-025",
+      "number": "CS-025",
+      "slot": 1,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "locality-working-set",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "地址切进内存块号"
+    },
+    {
+      "id": "systems-026",
+      "number": "CS-026",
+      "slot": 2,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "locality-working-set",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "滑动窗口里算工作集大小"
+    },
+    {
+      "id": "systems-027",
+      "number": "CS-027",
+      "slot": 3,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "locality-working-set",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "四舍五入分错缓存块"
+    },
+    {
+      "id": "systems-028",
+      "number": "CS-028",
+      "slot": 2,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-fifo-lru",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "FIFO 命中不动队，LRU 命中移队尾"
+    },
+    {
+      "id": "systems-029",
+      "number": "CS-029",
+      "slot": 4,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-fifo-lru",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "容量为 0 竟然还能命中"
+    },
+    {
+      "id": "systems-030",
+      "number": "CS-030",
+      "slot": 3,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-fifo-lru",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "A B A C A 序列谁命中更多"
+    },
+    {
+      "id": "systems-031",
+      "number": "CS-031",
+      "slot": 1,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-weighted-cost",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "把命中率和维护开销放同一张成本表"
+    },
+    {
+      "id": "systems-032",
+      "number": "CS-032",
+      "slot": 3,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-weighted-cost",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "高命中率为何总成本反而不占优"
+    },
+    {
+      "id": "systems-033",
+      "number": "CS-033",
+      "slot": 5,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "cache-weighted-cost",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "缓存代价模型速查"
+    },
+    {
+      "id": "systems-034",
+      "number": "CS-034",
+      "slot": 2,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "reproducible-cache-comparison",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "每次对照都要冷启动新建缓存"
+    },
+    {
+      "id": "systems-035",
+      "number": "CS-035",
+      "slot": 4,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "reproducible-cache-comparison",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "第二个策略白捡了热缓存"
+    },
+    {
+      "id": "systems-036",
+      "number": "CS-036",
+      "slot": 5,
+      "courseId": "lv-computer-science-cache",
+      "lessonId": "reproducible-cache-comparison",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "可复现缓存对比速查"
+    },
+    {
+      "id": "systems-037",
+      "number": "CS-037",
+      "slot": 1,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "fixed-width",
+      "galaxy": "systems",
+      "finish": "reverse",
+      "title": "四位寄存器的溢出与进位标志"
+    },
+    {
+      "id": "systems-038",
+      "number": "CS-038",
+      "slot": 3,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "fixed-width",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "别拿格式化灯串再去算加法"
+    },
+    {
+      "id": "systems-039",
+      "number": "CS-039",
+      "slot": 4,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "fixed-width",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "4 位寄存器想塞进 16"
+    },
+    {
+      "id": "systems-040",
+      "number": "CS-040",
+      "slot": 1,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "instruction-cycle",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "PC、译码与 HALT 停机边界"
+    },
+    {
+      "id": "systems-041",
+      "number": "CS-041",
+      "slot": 4,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "instruction-cycle",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "故障报错指到了下一行指令"
+    },
+    {
+      "id": "systems-042",
+      "number": "CS-042",
+      "slot": 3,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "instruction-cycle",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "停机后面的指令执行了吗"
+    },
+    {
+      "id": "systems-043",
+      "number": "CS-043",
+      "slot": 2,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "memory-and-io",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "主存、外设端口与非法地址映射表"
+    },
+    {
+      "id": "systems-044",
+      "number": "CS-044",
+      "slot": 4,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "memory-and-io",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "JS 数组自动拉长掩盖了越界写"
+    },
+    {
+      "id": "systems-045",
+      "number": "CS-045",
+      "slot": 5,
+      "courseId": "lv-computer-architecture",
+      "lessonId": "memory-and-io",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "微型计算机组成原理速查"
+    },
+    {
+      "id": "systems-046",
+      "number": "CS-046",
+      "slot": 1,
+      "courseId": "lv-operating-systems",
+      "lessonId": "round-robin",
+      "galaxy": "systems",
+      "finish": "cosmos",
+      "title": "时间片轮转（Round-Robin）调度队列"
+    },
+    {
+      "id": "systems-047",
+      "number": "CS-047",
+      "slot": 4,
+      "courseId": "lv-operating-systems",
+      "lessonId": "round-robin",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "已完成任务又钻回队列空转"
+    },
+    {
+      "id": "systems-048",
+      "number": "CS-048",
+      "slot": 3,
+      "courseId": "lv-operating-systems",
+      "lessonId": "round-robin",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "哪个作业首次等待更短"
+    },
+    {
+      "id": "systems-049",
+      "number": "CS-049",
+      "slot": 1,
+      "courseId": "lv-operating-systems",
+      "lessonId": "virtual-memory",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "页号、页内偏移与进程隔离"
+    },
+    {
+      "id": "systems-050",
+      "number": "CS-050",
+      "slot": 4,
+      "courseId": "lv-operating-systems",
+      "lessonId": "virtual-memory",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "0 号物理页框被当成了缺页"
+    },
+    {
+      "id": "systems-051",
+      "number": "CS-051",
+      "slot": 3,
+      "courseId": "lv-operating-systems",
+      "lessonId": "virtual-memory",
+      "galaxy": "systems",
+      "finish": "crosshatch",
+      "title": "同一虚拟地址指到两处物理内存"
+    },
+    {
+      "id": "systems-052",
+      "number": "CS-052",
+      "slot": 2,
+      "courseId": "lv-operating-systems",
+      "lessonId": "journal-replay",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "先写日志暂存，见提交才可见"
+    },
+    {
+      "id": "systems-053",
+      "number": "CS-053",
+      "slot": 4,
+      "courseId": "lv-operating-systems",
+      "lessonId": "journal-replay",
+      "galaxy": "systems",
+      "finish": "rainbow",
+      "title": "断电前写的草稿居然提前生效了"
+    },
+    {
+      "id": "systems-054",
+      "number": "CS-054",
+      "slot": 5,
+      "courseId": "lv-operating-systems",
+      "lessonId": "journal-replay",
+      "galaxy": "systems",
+      "finish": "gold",
+      "title": "操作系统三大核心机制速查"
+    },
+    {
+      "id": "robotics-001",
+      "number": "IO-001",
+      "slot": 1,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-frames-and-qos",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "无符号右移与位掩码拆解 16 位传感帧"
+    },
+    {
+      "id": "robotics-002",
+      "number": "IO-002",
+      "slot": 4,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-frames-and-qos",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "温度算出了两千多度"
+    },
+    {
+      "id": "robotics-003",
+      "number": "IO-003",
+      "slot": 3,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-frames-and-qos",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "主题与 QoS 双向匹配规则"
+    },
+    {
+      "id": "robotics-004",
+      "number": "IO-004",
+      "slot": 2,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-heartbeat-and-dedup",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "单调序号挡住乱序与重传心跳"
+    },
+    {
+      "id": "robotics-005",
+      "number": "IO-005",
+      "slot": 4,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-heartbeat-and-dedup",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "重传的陈旧心跳把掉线设备复活了"
+    },
+    {
+      "id": "robotics-006",
+      "number": "IO-006",
+      "slot": 3,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-heartbeat-and-dedup",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "从未上线 vs 心跳超时"
+    },
+    {
+      "id": "robotics-007",
+      "number": "IO-007",
+      "slot": 2,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-gateway-backpressure",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "常规遥测丢旧保新，告警进独立通道"
+    },
+    {
+      "id": "robotics-008",
+      "number": "IO-008",
+      "slot": 4,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-gateway-backpressure",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "零缓冲网关竟然攒出了 1 条队列"
+    },
+    {
+      "id": "robotics-009",
+      "number": "IO-009",
+      "slot": 5,
+      "courseId": "lv-iot-protocols",
+      "lessonId": "iot-gateway-backpressure",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "物联网传感通信协议速查"
+    },
+    {
+      "id": "robotics-010",
+      "number": "IO-010",
+      "slot": 1,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "nodes",
+      "galaxy": "robotics",
+      "finish": "standard",
+      "title": "按职责拆分节点与显式话题契约"
+    },
+    {
+      "id": "robotics-011",
+      "number": "IO-011",
+      "slot": 2,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "nodes",
+      "galaxy": "robotics",
+      "finish": "reverse",
+      "title": "滑动窗口求最近最高温"
+    },
+    {
+      "id": "robotics-012",
+      "number": "IO-012",
+      "slot": 3,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "nodes",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "节点连上线就有数据了吗"
+    },
+    {
+      "id": "robotics-013",
+      "number": "IO-013",
+      "slot": 1,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "topics",
+      "galaxy": "robotics",
+      "finish": "standard",
+      "title": "发布-订阅一对多广播与 QoS 门槛"
+    },
+    {
+      "id": "robotics-014",
+      "number": "IO-014",
+      "slot": 3,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "topics",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "新打开的面板能补全昨天温度吗"
+    },
+    {
+      "id": "robotics-015",
+      "number": "IO-015",
+      "slot": 4,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "topics",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "名字和类型都一样却死活收不到"
+    },
+    {
+      "id": "robotics-016",
+      "number": "IO-016",
+      "slot": 2,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "services",
+      "galaxy": "robotics",
+      "finish": "reverse",
+      "title": "用查询编号拦住乱序到达的旧响应"
+    },
+    {
+      "id": "robotics-017",
+      "number": "IO-017",
+      "slot": 4,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "services",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "把服务超时当成资源不存在"
+    },
+    {
+      "id": "robotics-018",
+      "number": "IO-018",
+      "slot": 3,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "services",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "慢回复后发先至怎么办"
+    },
+    {
+      "id": "robotics-019",
+      "number": "IO-019",
+      "slot": 2,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "actions",
+      "galaxy": "robotics",
+      "finish": "reverse",
+      "title": "动作的三段生命：目标、反馈与终态"
+    },
+    {
+      "id": "robotics-020",
+      "number": "IO-020",
+      "slot": 4,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "actions",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "一点取消就全标“已取消”"
+    },
+    {
+      "id": "robotics-021",
+      "number": "IO-021",
+      "slot": 5,
+      "courseId": "lv-ros2-foundations",
+      "lessonId": "actions",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "ROS 2 三大通信原语速查"
+    },
+    {
+      "id": "robotics-022",
+      "number": "IO-022",
+      "slot": 1,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-message-contracts",
+      "galaxy": "robotics",
+      "finish": "reverse",
+      "title": "先验消息字段契约与按站序号"
+    },
+    {
+      "id": "robotics-023",
+      "number": "IO-023",
+      "slot": 3,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-message-contracts",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "西站消息把东站序号打断了"
+    },
+    {
+      "id": "robotics-024",
+      "number": "IO-024",
+      "slot": 4,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-message-contracts",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "字符串温度溜进了求平均函数"
+    },
+    {
+      "id": "robotics-025",
+      "number": "IO-025",
+      "slot": 2,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-connection-qos",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "逐个订阅端核对连接与实际接收"
+    },
+    {
+      "id": "robotics-026",
+      "number": "IO-026",
+      "slot": 4,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-connection-qos",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "比较发布与订阅 QoS 方向写反"
+    },
+    {
+      "id": "robotics-027",
+      "number": "IO-027",
+      "slot": 3,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-connection-qos",
+      "galaxy": "robotics",
+      "finish": "cosmos",
+      "title": "面板有数为何归档却是空的"
+    },
+    {
+      "id": "robotics-028",
+      "number": "IO-028",
+      "slot": 1,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-timeout-state",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "编号未过时且未超 deadline 才更新面板"
+    },
+    {
+      "id": "robotics-029",
+      "number": "IO-029",
+      "slot": 4,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-timeout-state",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "超时之后迟到的旧回包覆盖了错误提示"
+    },
+    {
+      "id": "robotics-030",
+      "number": "IO-030",
+      "slot": 5,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-timeout-state",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "ROS 2 联调与超时排查速查"
+    },
+    {
+      "id": "robotics-031",
+      "number": "IO-031",
+      "slot": 2,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-log-replay",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "逐条重放混合日志揪出首个状态断点"
+    },
+    {
+      "id": "robotics-032",
+      "number": "IO-032",
+      "slot": 4,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-log-replay",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "只看结局放过了中间错误状态"
+    },
+    {
+      "id": "robotics-033",
+      "number": "IO-033",
+      "slot": 5,
+      "courseId": "lv-ros2-integration",
+      "lessonId": "ros-log-replay",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "故障日志重放定位速查"
+    },
+    {
+      "id": "robotics-034",
+      "number": "IO-034",
+      "slot": 1,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-heartbeat-and-reorder",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "数值鲜活度与节点在线分开判"
+    },
+    {
+      "id": "robotics-035",
+      "number": "IO-035",
+      "slot": 4,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-heartbeat-and-reorder",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "迟到旧读数把温度拉回了过去"
+    },
+    {
+      "id": "robotics-036",
+      "number": "IO-036",
+      "slot": 3,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-heartbeat-and-reorder",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "刚好踩在超时限上的节点"
+    },
+    {
+      "id": "robotics-037",
+      "number": "IO-037",
+      "slot": 2,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-retry-and-deduplicate",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "有上限的重试与稳定编号去重"
+    },
+    {
+      "id": "robotics-038",
+      "number": "IO-038",
+      "slot": 4,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-retry-and-deduplicate",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "重试一次，归档表多了一模一样的三行"
+    },
+    {
+      "id": "robotics-039",
+      "number": "IO-039",
+      "slot": 3,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-retry-and-deduplicate",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "重试上限到头之后怎么办"
+    },
+    {
+      "id": "robotics-040",
+      "number": "IO-040",
+      "slot": 2,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-bounded-backpressure",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "有界队列的淘汰规则与峰值不变量"
+    },
+    {
+      "id": "robotics-041",
+      "number": "IO-041",
+      "slot": 4,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-bounded-backpressure",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "高频温度把高危告警挤出队列了"
+    },
+    {
+      "id": "robotics-042",
+      "number": "IO-042",
+      "slot": 5,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-bounded-backpressure",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "ROS 2 可靠性工程速查"
+    },
+    {
+      "id": "robotics-043",
+      "number": "IO-043",
+      "slot": 1,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-fault-trace-regression",
+      "galaxy": "robotics",
+      "finish": "crosshatch",
+      "title": "冻结事件剧本与多维度不变量"
+    },
+    {
+      "id": "robotics-044",
+      "number": "IO-044",
+      "slot": 4,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-fault-trace-regression",
+      "galaxy": "robotics",
+      "finish": "rainbow",
+      "title": "只看最终“恢复在线”掩盖了漏报超时"
+    },
+    {
+      "id": "robotics-045",
+      "number": "IO-045",
+      "slot": 5,
+      "courseId": "lv-ros2-reliability",
+      "lessonId": "ros-fault-trace-regression",
+      "galaxy": "robotics",
+      "finish": "gold",
+      "title": "全栈故障轨迹回归终极速查"
     }
   ]
 }

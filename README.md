@@ -9,13 +9,13 @@ Live site: [golearnverse.com](https://golearnverse.com)
 ## Features
 
 - **3D Star Atlas & Guided Learning Routes**
-  Explore **19 major engineering and computer science tracks** mapped across **32 courses** and **128 interactive lessons** in a WebGL / Three.js observatory. Completing lessons lights up planetary nodes and records milestone progress along your chosen path.
+  Explore **19 major engineering and computer science tracks** mapped across **33 courses** and **132 interactive lessons** in a WebGL / Three.js observatory. Completing lessons lights up planetary nodes and records milestone progress along your chosen path.
 - **In-Browser & Hardened Sandbox Code Execution**
   Edit, run, and verify exercises directly in the lesson workbench or open lab:
   - **Client-side runtimes**: JavaScript (Acorn AST + isolated worker/frame), Python (Pyodide CPython WebAssembly), SQL (`sql.js`), and live HTML/CSS previews.
   - **C & Java execution**: Run locally on Windows via `scripts/setup-lab.ps1` (GCC & JDK) or in hardened Docker micro-sandboxes (`--network=none`, `--read-only`, `--cap-drop=ALL`, seccomp profile, and concurrency semaphores tuned for 2 vCPU / 2 GiB servers).
 - **Holographic Booster Packs & Card Vault**
-  Unlock 5-card booster packs by completing chapters or daily study check-ins, tear open packs interactively, and browse a **90-card Card Vault** featuring distinct holographic finishes and personal study notes.
+  Unlock 5-card booster packs by completing chapters or daily study check-ins, tear open packs interactively, and browse a **420-card Card Vault** featuring distinct holographic finishes and personal study notes.
 - **Seoul Node Guardian (Limited Genesis Edition)**
   The first 100 community supporters who star the repository via GitHub OAuth unlock the limited **Seoul Node Guardian** 3D holographic card, pinned in the Card Vault with a `+10` bonus to daily Vesper AI questions. OAuth tokens are used ephemerally in memory and never stored.
 - **Vesper AI Coding Assistant**

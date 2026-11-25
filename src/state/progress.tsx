@@ -190,10 +190,14 @@ export function ProgressProvider({ children }: { children: ReactNode }) {
       setProgress(next);
       if (stored) {
         try {
-          if (next !== stored) window.localStorage.setItem(storageKey, JSON.stringify(next));
+          const changed = next !== stored;
+          if (changed) window.localStorage.setItem(storageKey, JSON.stringify(next));
           durable.current = next;
           pending.current = [];
           setHasUnsavedProgress(false);
+          if (changed) {
+            window.dispatchEvent(new CustomEvent('learnverse:local-mutated', { detail: { scope: 'progress' } }));
+          }
           return true;
         } catch {
           // Keep the operations for a subsequent retry or update.

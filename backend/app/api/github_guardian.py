@@ -117,12 +117,23 @@ def _render_popup_callback_html(
   <script>
     (function () {{
       var data = {js_payload};
+      var notified = false;
       try {{
         if (window.opener && !window.opener.closed) {{
           window.opener.postMessage(data, '*');
+          notified = true;
         }}
       }} catch (e) {{}}
-      window.setTimeout(function () {{ window.close(); }}, 180);
+      if (notified) {{
+        window.setTimeout(function () {{ window.close(); }}, 180);
+      }} else {{
+        try {{
+          sessionStorage.setItem('learnverse.guardian.oauth_result', JSON.stringify(data));
+        }} catch (e) {{}}
+        window.setTimeout(function () {{
+          window.location.replace(data && data.type === 'STAR_SUCCESS' ? '/?guardian_reveal=1' : '/');
+        }}, 600);
+      }}
     }})();
   </script>
 </body>
@@ -248,7 +259,9 @@ async def github_guardian_status(
     settings = container.settings
     limit = max(1, int(settings.github_guardian_limit))
 
-    claimed = await container.redis.get_guardian_claimed_count(GUARDIAN_CLAIMED_SET_KEY)
+    redis_claimed = await container.redis.get_guardian_claimed_count(GUARDIAN_CLAIMED_SET_KEY)
+    db_claimed = await container.db.run_sync(container.db.get_durable_guardian_claimed_count)
+    claimed = max(redis_claimed, db_claimed)
     cached_val = _parse_non_negative_int(await container.redis.get(STARS_CACHE_KEY))
 
     stars: int
@@ -286,7 +299,18 @@ async def github_guardian_status(
 
     remaining = max(0, limit - stars)
     next_rank = min(limit, max(claimed, stars) + 1)
-    is_guardian = bool(user) and await container.redis.is_genesis_guardian(user_id=int(user["id"]))
+
+    guardian_record: dict[str, Any] | None = None
+    is_guardian = False
+    if user:
+        uid = int(user["id"])
+        guardian_record = await container.db.run_sync(container.db.get_user_guardian, uid)
+        is_guardian = await container.redis.is_genesis_guardian(user_id=uid)
+        if guardian_record is not None and not is_guardian:
+            is_guardian = True
+            await container.redis.mark_genesis_guardian(
+                user_id=uid, rank=int(guardian_record["rank"])
+            )
 
     return {
         "stars": stars,
@@ -301,6 +325,7 @@ async def github_guardian_status(
         "debug_mock_enabled": bool(settings.debug),
         "is_genesis_guardian": is_guardian,
         "daily_ai_bonus": settings.ai_guardian_daily_bonus if is_guardian else 0,
+        "guardian": guardian_record,
     }
 
 
@@ -436,9 +461,19 @@ async def github_guardian_callback(
         access_token = ""
         del access_token
 
-    rank, _already_claimed = await container.redis.claim_guardian_rank(
+    redis_rank, _already_claimed = await container.redis.claim_guardian_rank(
         gh_user_id, claimed_set_key=GUARDIAN_CLAIMED_SET_KEY
     )
+    durable = await container.db.run_sync(
+        container.db.claim_guardian_durable,
+        user_id=int(user["id"]),
+        github_user_id=gh_user_id,
+        github_login=gh_login,
+        ai_daily_bonus=settings.ai_guardian_daily_bonus,
+        preferred_rank=redis_rank,
+        count_in_global_ledger=True,
+    )
+    rank = int(durable["rank"])
     await container.redis.mark_genesis_guardian(
         user_id=int(bound_user_id) if isinstance(bound_user_id, int) else None,
         session_id=session_id,
@@ -457,6 +492,7 @@ async def github_guardian_callback(
             "type": "STAR_SUCCESS",
             "rank": rank,
             "githubUser": gh_login,
+            "claimedAt": durable["claimedAt"],
             "isGenesisGuardian": True,
             "aiDailyBonus": settings.ai_guardian_daily_bonus,
         },
@@ -492,17 +528,29 @@ async def github_guardian_mock_star(
 
     session_id = request.cookies.get(GUARDIAN_SESSION_COOKIE) or secrets.token_hex(16)
     user = await get_current_user(request)
+    uid = int(user["id"])
+    gh_login = (user.get("username") if user else None) or "seoul-debug-pilot"
+    durable = await container.db.run_sync(
+        container.db.claim_guardian_durable,
+        user_id=uid,
+        github_user_id=f"debug-seoul-node-{uid}",
+        github_login=gh_login,
+        ai_daily_bonus=settings.ai_guardian_daily_bonus,
+        preferred_rank=1,
+        count_in_global_ledger=False,
+    )
     await container.redis.mark_genesis_guardian(
-        user_id=int(user["id"]),
+        user_id=uid,
         session_id=session_id,
-        github_user_id="debug-seoul-node-0001",
-        rank=1,
+        github_user_id=f"debug-seoul-node-{uid}",
+        rank=int(durable["rank"]),
     )
 
     payload = {
         "type": "STAR_SUCCESS",
-        "rank": 1,
-        "githubUser": (user.get("username") if user else None) or "seoul-debug-pilot",
+        "rank": int(durable["rank"]),
+        "githubUser": gh_login,
+        "claimedAt": durable["claimedAt"],
         "isGenesisGuardian": True,
         "aiDailyBonus": settings.ai_guardian_daily_bonus,
     }

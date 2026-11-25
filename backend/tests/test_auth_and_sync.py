@@ -419,6 +419,96 @@ class TestAuthAndLazySync(unittest.TestCase):
         finally:
             untrusted_ctx.close()
 
+    def test_420_card_catalog_iot_rooms_and_multi_device_scalar_protection(self) -> None:
+        from app.catalog import catalog
+
+        self.assertEqual(len(catalog.courses), 33)
+        self.assertEqual(len(catalog.valid_rooms), 132)
+        self.assertEqual(len(catalog.cards_by_id), 420)
+        self.assertTrue(catalog.is_valid_room("lv-iot-protocols/iot-frame-bits") or any(
+            r.startswith("lv-iot-protocols/") for r in catalog.valid_rooms
+        ))
+
+        token = self._register_and_login("multidevice_student", "multi@example.com")
+        self.client.cookies.clear()
+        headers = {"Authorization": f"Bearer {token}"}
+
+        # Pick 5 cards from expanded galaxies (web, backend, systems, robotics) across slots 1..5
+        expanded_pack: list[str] = []
+        for slot in (1, 2, 3, 4, 5):
+            card = next(
+                c for c in catalog.cards_by_id.values()
+                if c.slot == slot and c.galaxy in ("web", "backend", "systems", "robotics")
+            )
+            expanded_pack.append(card.id)
+
+        iot_course = catalog.courses["lv-iot-protocols"]
+        iot_first = iot_course.lesson_ids[0]
+
+        # PC syncs expanded-galaxy pack + IoT chapter + route + favorites + note
+        pc_resp = self.client.post(
+            "/api/sync/union",
+            headers=headers,
+            json={
+                "profile": {
+                    "nickname": "PC端新昵称",
+                    "avatar": "",
+                    "welcome": "finished",
+                    "path": "major",
+                    "choice": "major-080905",
+                },
+                "progress": {
+                    "favorites": ["mdn-js", "python-docs"],
+                    "activeCourse": "lv-iot-protocols",
+                    "activeRoute": "major-080905",
+                },
+                "courses": {
+                    "lv-iot-protocols": {
+                        "completed": [iot_first],
+                        "verified": [iot_first],
+                        "lastLesson": iot_first,
+                        "projectCompleted": False,
+                        "transferCompleted": False,
+                    }
+                },
+                "vault": {
+                    "earned": ["welcome", f"lesson/lv-iot-protocols/{iot_first}"],
+                    "opened": {"welcome": expanded_pack},
+                    "notes": {expanded_pack[0]: "Web/Robotics 扩展卡笔记"},
+                },
+            },
+        )
+        self.assertEqual(pc_resp.status_code, 200, pc_resp.text)
+        pc_body = pc_resp.json()
+        self.assertEqual(pc_body["vault"]["rejected_packs"], [])
+        self.assertEqual(sorted(pc_body["vault"]["owned"]), sorted(expanded_pack))
+        self.assertEqual(pc_body["vault"]["notes"][expanded_pack[0]], "Web/Robotics 扩展卡笔记")
+
+        # Phone syncs without touching profile/route and explicitly unfavorites 'mdn-js'
+        phone_resp = self.client.post(
+            "/api/sync/union",
+            headers=headers,
+            json={
+                "profile": None,
+                "progress": {
+                    "favorites": ["python-docs"],
+                    "activeCourse": None,
+                    "activeRoute": None,
+                },
+                "unfavorited": ["mdn-js"],
+                "courses": {},
+                "vault": {},
+            },
+        )
+        self.assertEqual(phone_resp.status_code, 200, phone_resp.text)
+        phone_body = phone_resp.json()
+        self.assertEqual(phone_body["profile"]["nickname"], "PC端新昵称")
+        self.assertEqual(phone_body["progress"]["activeCourse"], "lv-iot-protocols")
+        self.assertEqual(phone_body["progress"]["activeRoute"], "major-080905")
+        self.assertEqual(phone_body["progress"]["favorites"], ["python-docs"])
+        self.assertEqual(sorted(phone_body["vault"]["owned"]), sorted(expanded_pack))
+        self.assertIsNotNone(phone_body["ai_quota"])
+
 
 if __name__ == "__main__":
     unittest.main()

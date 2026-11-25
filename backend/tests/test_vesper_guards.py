@@ -28,6 +28,7 @@ class TestVesperGuards(unittest.TestCase):
 
     def test_sensitive_routes_require_jwt(self):
         for method, path, body in (
+            ("GET", "/api/ai/quota", None),
             ("POST", "/api/ai/chat", {"question": "q"}),
             ("GET", "/api/sync/state", None),
             ("POST", "/api/sync/union", {}),

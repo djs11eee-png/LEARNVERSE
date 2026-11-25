@@ -69,7 +69,7 @@ export function useStudentProfile() {
   return useSyncExternalStore(subscribe, getStudentProfile, () => empty)
 }
 
-export function updateStudentProfile(patch: Partial<StudentProfile>): boolean {
+export function updateStudentProfile(patch: Partial<StudentProfile>, options?: { fromCloud?: boolean }): boolean {
   snapshot = { ...getStudentProfile(), ...patch }
   const raw = JSON.stringify(snapshot)
   try {
@@ -80,7 +80,22 @@ export function updateStudentProfile(patch: Partial<StudentProfile>): boolean {
     temporary = true
   }
   window.dispatchEvent(new Event(changed))
+  if (!options?.fromCloud) {
+    window.dispatchEvent(new CustomEvent('learnverse:local-mutated', { detail: { scope: 'profile' } }))
+  }
   return !temporary
+}
+
+export function resetStudentProfile(): void {
+  snapshot = empty
+  lastRaw = null
+  temporary = false
+  try {
+    localStorage.removeItem(key)
+  } catch {
+    // Ignore storage removal errors
+  }
+  window.dispatchEvent(new Event(changed))
 }
 
 export async function prepareStudentAvatar(file: File): Promise<string> {

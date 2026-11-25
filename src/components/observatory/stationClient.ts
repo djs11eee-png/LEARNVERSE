@@ -1,7 +1,8 @@
 import type { RunLanguage } from '../../code/runner'
 import type { CodeWorkbenchIssue } from '../CodeWorkbench'
+import { clearSeoulGuardian, saveSeoulGuardian } from '../../cards/seoulGuardianStore'
 import { courseSummaries } from '../../data/courseCatalog'
-import { getStudentProfile, updateStudentProfile } from '../../state/studentProfile'
+import { getStudentProfile, resetStudentProfile, updateStudentProfile } from '../../state/studentProfile'
 import type { StudentProfile } from '../../state/studentProfile'
 import type {
   AssistantEvent,
@@ -21,6 +22,7 @@ import type {
 const PROGRESS_KEY = 'learnverse.learning-progress.v1'
 const WORKSPACE_PREFIX = 'learnverse.workspace.v1.'
 const VAULT_PREFIX = 'learnverse.vault.v1.'
+const CLOUD_BASE_KEY = 'learnverse.cloud-base.v1'
 const VALID_RUN_LANGUAGES = new Set<RunLanguage>(['python', 'javascript', 'sql', 'html', 'c', 'java'])
 const USERNAME_PATTERN = /^[a-zA-Z0-9_-]{3,24}$/
 
@@ -40,16 +42,20 @@ export interface StudyContextMeta {
   lessonId?: string
 }
 
+export interface AiQuotaTelemetry {
+  isGenesisGuardian: boolean
+  dailyLimit: number
+  usedToday?: number
+  remainingToday?: number
+  dailyBonus?: number
+}
+
 export interface UnionSyncSummary {
   syncedAt: string
   ownedCards: number
   completedCourses: number
   minutes: number
-}
-
-export interface AiQuotaTelemetry {
-  isGenesisGuardian: boolean
-  dailyLimit: number
+  aiQuota?: AiQuotaTelemetry
 }
 
 export class StationAuthRequiredError extends Error {
@@ -159,6 +165,40 @@ export async function fetchCurrentUser(signal?: AbortSignal): Promise<StationUse
     const raw = await res.json() as RawUserProfileResponse
     if (!raw || typeof raw.id !== 'number') return null
     return normalizeUser(raw)
+  } catch {
+    return null
+  }
+}
+
+export async function fetchAiQuota(signal?: AbortSignal): Promise<AiQuotaTelemetry | null> {
+  try {
+    const res = await fetch('/api/ai/quota', {
+      method: 'GET',
+      credentials: 'include',
+      headers: { Accept: 'application/json' },
+      cache: 'no-store',
+      signal,
+    })
+    if (!res.ok) return null
+    const raw = await res.json() as {
+      used_today?: number
+      daily_limit?: number
+      remaining_today?: number
+      is_genesis_guardian?: boolean
+      daily_bonus?: number
+    }
+    if (typeof raw?.daily_limit !== 'number' || raw.daily_limit <= 0) return null
+    const usedToday = typeof raw.used_today === 'number' ? Math.max(0, raw.used_today) : 0
+    const remainingToday = typeof raw.remaining_today === 'number'
+      ? Math.max(0, raw.remaining_today)
+      : Math.max(0, raw.daily_limit - usedToday)
+    return {
+      isGenesisGuardian: Boolean(raw.is_genesis_guardian),
+      dailyLimit: raw.daily_limit,
+      usedToday,
+      remainingToday,
+      dailyBonus: typeof raw.daily_bonus === 'number' ? raw.daily_bonus : 0,
+    }
   } catch {
     return null
   }
@@ -290,21 +330,113 @@ function safeParseJson<T>(raw: string | null): T | null {
   }
 }
 
-function collectLocalUnionPayload() {
-  const profile = getStudentProfile()
+interface CloudBaseSnapshot {
+  userId: number
+  profile: StudentProfile
+  activeCourse: string | null
+  activeRoute: string | null
+  favorites: string[]
+  lastLessons: Record<string, string>
+  notes: Record<string, string>
+}
+
+function readCloudBase(): CloudBaseSnapshot | null {
+  try {
+    const parsed = safeParseJson<Partial<CloudBaseSnapshot>>(window.localStorage.getItem(CLOUD_BASE_KEY))
+    if (!parsed || typeof parsed.userId !== 'number') return null
+    return {
+      userId: parsed.userId,
+      profile: {
+        nickname: typeof parsed.profile?.nickname === 'string' ? parsed.profile.nickname : '',
+        avatar: typeof parsed.profile?.avatar === 'string' ? parsed.profile.avatar : '',
+        welcome: parsed.profile?.welcome === 'finished' || parsed.profile?.welcome === 'skipped' ? parsed.profile.welcome : 'new',
+        path: parsed.profile?.path === 'major' || parsed.profile?.path === 'interest' || parsed.profile?.path === 'undecided'
+          ? parsed.profile.path
+          : null,
+        choice: typeof parsed.profile?.choice === 'string' ? parsed.profile.choice : '',
+      },
+      activeCourse: typeof parsed.activeCourse === 'string' ? parsed.activeCourse : null,
+      activeRoute: typeof parsed.activeRoute === 'string' ? parsed.activeRoute : null,
+      favorites: Array.isArray(parsed.favorites) ? parsed.favorites.filter((x): x is string => typeof x === 'string') : [],
+      lastLessons: parsed.lastLessons && typeof parsed.lastLessons === 'object' ? parsed.lastLessons as Record<string, string> : {},
+      notes: parsed.notes && typeof parsed.notes === 'object' ? parsed.notes as Record<string, string> : {},
+    }
+  } catch {
+    return null
+  }
+}
+
+function writeCloudBase(snapshot: CloudBaseSnapshot): void {
+  try {
+    window.localStorage.setItem(CLOUD_BASE_KEY, JSON.stringify(snapshot))
+  } catch {
+    // Ignore storage quota issues
+  }
+}
+
+export async function clearAccountLocalState(): Promise<void> {
+  try {
+    window.localStorage.removeItem(CLOUD_BASE_KEY)
+    window.localStorage.removeItem(PROGRESS_KEY)
+    for (const course of courseSummaries) {
+      window.localStorage.removeItem(WORKSPACE_PREFIX + course.id)
+    }
+  } catch {
+    // Ignore storage removal errors
+  }
+  resetStudentProfile()
+  clearSeoulGuardian()
+  try {
+    const { resetVaultToEmpty } = await import('../../cards/rewards')
+    resetVaultToEmpty()
+  } catch {
+    // Ignore module reset issues
+  }
+  window.dispatchEvent(new Event('learnverse:progress-synced'))
+  window.dispatchEvent(new Event('learnverse:workspace-synced'))
+}
+
+export async function prepareUserStorage(userId: number): Promise<void> {
+  const base = readCloudBase()
+  if (base && base.userId !== userId) {
+    await clearAccountLocalState()
+  }
+}
+
+function collectLocalUnionPayload(userId?: number) {
+  const base = userId !== undefined ? readCloudBase() : null
+  const hasSameBase = Boolean(base && base.userId === userId)
+
+  const localProfile = getStudentProfile()
+  const profileChanged = !hasSameBase
+    || localProfile.nickname !== base!.profile.nickname
+    || localProfile.avatar !== base!.profile.avatar
+    || localProfile.welcome !== base!.profile.welcome
+    || localProfile.path !== base!.profile.path
+    || localProfile.choice !== base!.profile.choice
+
   const rawProgress = safeParseJson<Record<string, unknown>>(
     (() => {
       try { return window.localStorage.getItem(PROGRESS_KEY) } catch { return null }
     })(),
   )
+  const localFavorites = Array.isArray(rawProgress?.favorites)
+    ? rawProgress.favorites.filter((x): x is string => typeof x === 'string')
+    : []
+  const localActiveCourse = typeof rawProgress?.activeCourse === 'string' ? rawProgress.activeCourse : null
+  const localActiveRoute = typeof rawProgress?.activeRoute === 'string' ? rawProgress.activeRoute : null
+  const unfavorited = hasSameBase
+    ? base!.favorites.filter(fav => !localFavorites.includes(fav))
+    : []
+
   const progress = {
     completed: Array.isArray(rawProgress?.completed) ? rawProgress.completed.filter((x): x is string => typeof x === 'string') : [],
     started: Array.isArray(rawProgress?.started) ? rawProgress.started.filter((x): x is string => typeof x === 'string') : [],
-    favorites: Array.isArray(rawProgress?.favorites) ? rawProgress.favorites.filter((x): x is string => typeof x === 'string') : [],
+    favorites: localFavorites,
     minutes: typeof rawProgress?.minutes === 'number' && Number.isFinite(rawProgress.minutes) ? Math.max(0, Math.floor(rawProgress.minutes)) : 0,
     activity: Array.isArray(rawProgress?.activity) ? rawProgress.activity.slice(0, 60) : [],
-    activeCourse: typeof rawProgress?.activeCourse === 'string' ? rawProgress.activeCourse : null,
-    activeRoute: typeof rawProgress?.activeRoute === 'string' ? rawProgress.activeRoute : null,
+    activeCourse: !hasSameBase || localActiveCourse !== base!.activeCourse ? localActiveCourse : null,
+    activeRoute: !hasSameBase || localActiveRoute !== base!.activeRoute ? localActiveRoute : null,
     studyDays: Array.isArray(rawProgress?.studyDays) ? rawProgress.studyDays.filter((x): x is string => typeof x === 'string') : [],
   }
 
@@ -320,10 +452,12 @@ function collectLocalUnionPayload() {
     try {
       const rec = safeParseJson<Record<string, unknown>>(window.localStorage.getItem(WORKSPACE_PREFIX + course.id))
       if (!rec) continue
+      const rawLast = typeof rec.lastLesson === 'string' ? rec.lastLesson : ''
+      const lastLessonChanged = !hasSameBase || rawLast !== (base!.lastLessons[course.id] ?? '')
       courses[course.id] = {
         completed: Array.isArray(rec.completed) ? rec.completed.filter((x): x is string => typeof x === 'string') : [],
         verified: Array.isArray(rec.verified) ? rec.verified.filter((x): x is string => typeof x === 'string') : [],
-        lastLesson: typeof rec.lastLesson === 'string' ? rec.lastLesson : '',
+        lastLesson: lastLessonChanged ? rawLast : '',
         projectCompleted: rec.projectCompleted === true,
         transferCompleted: rec.transferCompleted === true,
       }
@@ -353,14 +487,24 @@ function collectLocalUnionPayload() {
         const parsed = safeParseJson<unknown>(val)
         if (Array.isArray(parsed)) offers[rel.slice(6)] = parsed.filter((x): x is string => typeof x === 'string')
       } else if (rel.startsWith('note/')) {
-        notes[rel.slice(5)] = val.slice(0, 600)
+        const cardId = rel.slice(5)
+        const trimmed = val.slice(0, 600)
+        if (!hasSameBase || trimmed !== (base!.notes[cardId] ?? '')) {
+          notes[cardId] = trimmed
+        }
       }
     }
   } catch {
     // Storage unavailable
   }
 
-  return { profile, progress, courses, vault: { earned, opened, offers, notes } }
+  return {
+    profile: profileChanged ? localProfile : null,
+    progress,
+    unfavorited,
+    courses,
+    vault: { earned, opened, offers, notes },
+  }
 }
 
 interface UnionSyncResponseDto {
@@ -391,10 +535,31 @@ interface UnionSyncResponseDto {
     pending: string[]
     notes: Record<string, string>
   }
+  guardian?: {
+    rank: number
+    githubUser: string
+    claimedAt: string
+    aiDailyBonus: number
+  } | null
+  ai_quota?: {
+    usedToday: number
+    dailyLimit: number
+    remainingToday: number
+    isGenesisGuardian: boolean
+    dailyBonus: number
+  } | null
 }
 
-export async function syncStationUnion(signal?: AbortSignal): Promise<UnionSyncSummary> {
-  const payload = collectLocalUnionPayload()
+export async function syncStationUnion(
+  options?: AbortSignal | { signal?: AbortSignal; userId?: number },
+): Promise<UnionSyncSummary> {
+  const signal = options instanceof AbortSignal ? options : options?.signal
+  const userId = options instanceof AbortSignal ? undefined : options?.userId
+  if (userId !== undefined) {
+    await prepareUserStorage(userId)
+  }
+
+  const payload = collectLocalUnionPayload(userId)
   const res = await fetch('/api/sync/union', {
     method: 'POST',
     credentials: 'include',
@@ -415,9 +580,9 @@ export async function syncStationUnion(signal?: AbortSignal): Promise<UnionSyncS
 
   const merged = await res.json() as UnionSyncResponseDto
 
-  // 1. Hydrate StudentProfile
+  // 1. Hydrate StudentProfile without triggering feedback sync loop
   if (merged.profile) {
-    updateStudentProfile(merged.profile)
+    updateStudentProfile(merged.profile, { fromCloud: true })
   }
 
   // 2. Hydrate global Progress
@@ -429,7 +594,9 @@ export async function syncStationUnion(signal?: AbortSignal): Promise<UnionSyncS
   }
 
   // 3. Hydrate per-course Workspace records
+  const mergedLastLessons: Record<string, string> = {}
   for (const [courseId, record] of Object.entries(merged.courses ?? {})) {
+    mergedLastLessons[courseId] = record.lastLesson || ''
     try {
       window.localStorage.setItem(WORKSPACE_PREFIX + courseId, JSON.stringify(record))
     } catch {
@@ -444,11 +611,49 @@ export async function syncStationUnion(signal?: AbortSignal): Promise<UnionSyncS
     applySyncedVault(merged.vault)
   }
 
+  // 5. Hydrate Seoul Genesis Node Guardian limited card across devices
+  if (merged.guardian && typeof merged.guardian.rank === 'number' && merged.guardian.rank >= 1) {
+    saveSeoulGuardian({
+      rank: merged.guardian.rank,
+      githubUser: merged.guardian.githubUser,
+      claimedAt: merged.guardian.claimedAt,
+      aiDailyBonus: merged.guardian.aiDailyBonus,
+    })
+  } else if (merged.guardian === null) {
+    clearSeoulGuardian()
+  }
+
+  // 6. Save baseline snapshot so subsequent device syncs only push true local deltas
+  if (userId !== undefined && merged.profile && merged.progress) {
+    writeCloudBase({
+      userId,
+      profile: merged.profile,
+      activeCourse: merged.progress.activeCourse ?? null,
+      activeRoute: merged.progress.activeRoute ?? null,
+      favorites: merged.progress.favorites ?? [],
+      lastLessons: mergedLastLessons,
+      notes: merged.vault?.notes ?? {},
+    })
+  }
+
+  const aiQuota: AiQuotaTelemetry | undefined = merged.ai_quota
+    && typeof merged.ai_quota.dailyLimit === 'number'
+    && merged.ai_quota.dailyLimit > 0
+    ? {
+      isGenesisGuardian: Boolean(merged.ai_quota.isGenesisGuardian),
+      dailyLimit: merged.ai_quota.dailyLimit,
+      usedToday: Math.max(0, merged.ai_quota.usedToday ?? 0),
+      remainingToday: Math.max(0, merged.ai_quota.remainingToday ?? 0),
+      dailyBonus: Math.max(0, merged.ai_quota.dailyBonus ?? 0),
+    }
+    : undefined
+
   return {
     syncedAt: merged.synced_at,
     ownedCards: merged.vault?.owned?.length ?? 0,
     completedCourses: merged.progress?.completed?.length ?? 0,
     minutes: merged.progress?.minutes ?? 0,
+    aiQuota,
   }
 }
 
@@ -526,7 +731,26 @@ export function createProductionAssistantTransport(options: {
       return
     }
 
+    const reportQuotaHeaders = (res: Response) => {
+      const dailyLimitHeader = Number(res.headers.get('X-AI-Daily-Limit') ?? '0')
+      if (dailyLimitHeader > 0) {
+        const usedRaw = res.headers.get('X-AI-Daily-Used')
+        const remRaw = res.headers.get('X-AI-Daily-Remaining')
+        const usedToday = usedRaw !== null && Number.isFinite(Number(usedRaw)) ? Math.max(0, Number(usedRaw)) : undefined
+        const remainingToday = remRaw !== null && Number.isFinite(Number(remRaw))
+          ? Math.max(0, Number(remRaw))
+          : (usedToday !== undefined ? Math.max(0, dailyLimitHeader - usedToday) : undefined)
+        options.onQuotaTelemetry?.({
+          isGenesisGuardian: res.headers.get('X-Genesis-Guardian') === '1',
+          dailyLimit: dailyLimitHeader,
+          usedToday,
+          remainingToday,
+        })
+      }
+    }
+
     if (!response.ok) {
+      reportQuotaHeaders(response)
       const err = await readErrorPayload(response)
       yield next({
         type: 'response.error',
@@ -539,14 +763,7 @@ export function createProductionAssistantTransport(options: {
       return
     }
 
-    const guardianHeader = response.headers.get('X-Genesis-Guardian')
-    const dailyLimitHeader = Number(response.headers.get('X-AI-Daily-Limit') ?? '0')
-    if (dailyLimitHeader > 0) {
-      options.onQuotaTelemetry?.({
-        isGenesisGuardian: guardianHeader === '1',
-        dailyLimit: dailyLimitHeader,
-      })
-    }
+    reportQuotaHeaders(response)
 
     if (!response.body) {
       yield next({

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { PetAnimationState, PetMood } from './contracts'
 import { VESPER_CLIPS, moodToAnimationState, vesperPool } from './vesperAssets'
 
@@ -83,12 +83,13 @@ export function useVesperState(initialMood: PetMood = 'idle'): VesperStateContro
     }
   }, [clearTimers])
 
-  // Preload all 3 clips on mount & subscribe to success video `ended` event
+  // Initialize media pool on mount & subscribe to success video `ended` event
   useEffect(() => {
     vesperPool.ensureInitialized()
     const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     if (!reduced) {
-      vesperPool.activate(moodToAnimationState(moodRef.current))
+      const initialAnim = moodToAnimationState(moodRef.current)
+      vesperPool.activate(initialAnim, { deferLoad: initialAnim === 'idle' })
     }
     const unsubEnded = vesperPool.onSuccessEnded(() => {
       if (moodRef.current === 'success') {
@@ -101,21 +102,34 @@ export function useVesperState(initialMood: PetMood = 'idle'): VesperStateContro
     }
   }, [applyMood, clearTimers])
 
+  const setMood = useCallback(
+    (next: PetMood) => applyMood(next, { forceRestart: next === 'success' || next === 'celebrating' }),
+    [applyMood],
+  )
   const enterThinking = useCallback(() => applyMood('thinking'), [applyMood])
   const triggerSuccess = useCallback(() => applyMood('success', { forceRestart: true }), [applyMood])
   const triggerCelebrating = useCallback((durationMs = 3000) => applyMood('celebrating', { forceRestart: true, durationMs }), [applyMood])
   const triggerAlert = useCallback(() => applyMood('alert'), [applyMood])
   const returnToIdle = useCallback(() => applyMood('idle'), [applyMood])
 
-  return {
+  return useMemo(() => ({
     mood,
     animationState: moodToAnimationState(mood),
     playNonce,
-    setMood: useCallback((next: PetMood) => applyMood(next, { forceRestart: next === 'success' || next === 'celebrating' }), [applyMood]),
+    setMood,
     enterThinking,
     triggerSuccess,
     triggerCelebrating,
     triggerAlert,
     returnToIdle,
-  }
+  }), [
+    mood,
+    playNonce,
+    setMood,
+    enterThinking,
+    triggerSuccess,
+    triggerCelebrating,
+    triggerAlert,
+    returnToIdle,
+  ])
 }

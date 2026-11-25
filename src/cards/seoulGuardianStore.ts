@@ -66,6 +66,7 @@ export function getSeoulGuardian(): SeoulGuardianRecord | null {
 export function saveSeoulGuardian(input: {
   rank: number
   githubUser?: string
+  claimedAt?: string
   aiDailyBonus?: number
 }): SeoulGuardianRecord {
   loadOnce()
@@ -73,7 +74,7 @@ export function saveSeoulGuardian(input: {
     cardId: 'seoul-genesis-node',
     rank: Math.max(1, Math.floor(input.rank)),
     githubUser: (input.githubUser || 'genesis-pilot').trim().slice(0, 64) || 'genesis-pilot',
-    claimedAt: cachedRecord?.claimedAt || new Date().toISOString(),
+    claimedAt: input.claimedAt || cachedRecord?.claimedAt || new Date().toISOString(),
     isGenesisGuardian: true,
     aiDailyBonus: typeof input.aiDailyBonus === 'number' ? input.aiDailyBonus : 10,
   }
