@@ -1,9 +1,11 @@
 /*
- * LEARNVERSE C17 Runtime Kernel Hardening (.preinit_array)
+ * LEARNVERSE C17 Runtime Kernel Hardening (__attribute__((constructor(101))))
  * Compiled once into /usr/local/lib/lv_seccomp.o inside learnverse-sandbox-c.
- * Runs BEFORE user main() or constructors to lock down RLIMIT_AS (96 MiB),
- * disable ptrace dumpability, and block fork/clone/execve/socket/escape syscalls
- * inside the Linux kernel via seccomp-bpf (stopping macro/dlopen/asm bypasses).
+ * Runs BEFORE user main() and normal constructors (priority 101 vs default 65535)
+ * to lock down RLIMIT_AS (96 MiB), disable ptrace dumpability, and block
+ * fork/clone/execve/socket/escape syscalls inside the Linux kernel via seccomp-bpf.
+ * Note: musl libc ignores .preinit_array in static/dynamic binaries unless invoked
+ * via dynamic linker hooks cleanly; constructor(101) executes reliably under musl.
  */
 #define _GNU_SOURCE
 #include <errno.h>
@@ -15,6 +17,7 @@
 #include <sys/prctl.h>
 #include <sys/resource.h>
 #include <sys/syscall.h>
+#include <unistd.h>
 
 #if defined(__x86_64__)
 #  define LV_AUDIT_ARCH AUDIT_ARCH_X86_64
@@ -34,9 +37,21 @@
     BPF_JUMP(BPF_JMP | BPF_JEQ | BPF_K, (nr), 0, 1), \
     BPF_STMT(BPF_RET | BPF_K, SECCOMP_RET_ERRNO | (EPERM & 0x0000ffffU))
 
+__attribute__((constructor(101)))
 static void lv_sandbox_preinit(void) {
-    struct rlimit rl_as = { 96ULL * 1024ULL * 1024ULL, 96ULL * 1024ULL * 1024ULL };
-    setrlimit(RLIMIT_AS, &rl_as);
+    const rlim_t target_as = (rlim_t)(96ULL * 1024ULL * 1024ULL);
+    struct rlimit cur_as;
+    if (getrlimit(RLIMIT_AS, &cur_as) == 0) {
+        rlim_t bounded = target_as;
+        if (cur_as.rlim_max != RLIM_INFINITY && cur_as.rlim_max < bounded) {
+            bounded = cur_as.rlim_max;
+        }
+        struct rlimit rl_as = { bounded, bounded };
+        setrlimit(RLIMIT_AS, &rl_as);
+    } else {
+        struct rlimit rl_as = { target_as, target_as };
+        setrlimit(RLIMIT_AS, &rl_as);
+    }
 
     struct rlimit rl_core = { 0, 0 };
     setrlimit(RLIMIT_CORE, &rl_core);
@@ -45,7 +60,9 @@ static void lv_sandbox_preinit(void) {
     setrlimit(RLIMIT_FSIZE, &rl_fsize);
 
     prctl(PR_SET_DUMPABLE, 0, 0, 0, 0);
-    prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+    if (prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0) != 0) {
+        _exit(126);
+    }
 
     static struct sock_filter filter[] = {
         BPF_STMT(BPF_LD | BPF_W | BPF_ABS, offsetof(struct seccomp_data, arch)),
@@ -117,8 +134,7 @@ static void lv_sandbox_preinit(void) {
         .len = (unsigned short)(sizeof(filter) / sizeof(filter[0])),
         .filter = filter,
     };
-    prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog);
+    if (prctl(PR_SET_SECCOMP, SECCOMP_MODE_FILTER, &prog) != 0) {
+        _exit(126);
+    }
 }
-
-__attribute__((section(".preinit_array"), used))
-void (* const lv_preinit_hook)(void) = lv_sandbox_preinit;
