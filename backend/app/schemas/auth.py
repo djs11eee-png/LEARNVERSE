@@ -10,9 +10,23 @@ EMAIL_RE = re.compile(r"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,24}$")
 AVATAR_DATA_URL_RE = re.compile(r"^data:image/jpeg;base64,[a-zA-Z0-9+/=]+$")
 
 
+WEAK_PASSWORDS = frozenset({
+    "12345678",
+    "123456789",
+    "1234567890",
+    "password",
+    "password123",
+    "qwerty123",
+    "qwertyui",
+    "88888888",
+    "11111111",
+    "00000000",
+    "abc12345",
+})
+
+
 class CaptchaResponse(BaseModel):
     captcha_id: str
-    image_svg: str
     image_data_url: str
     expires_in: int
 
@@ -24,6 +38,22 @@ class RegisterRequest(BaseModel):
     captcha_id: str = Field(..., min_length=8, max_length=64)
     captcha_code: str = Field(..., min_length=1, max_length=16)
     nickname: str = Field(default="", max_length=24)
+
+    @field_validator("password")
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        lower = v.lower()
+        if lower in WEAK_PASSWORDS or len(set(v)) < 4:
+            raise ValueError("密码过于简单，请换用包含字母与数字或符号的组合密码。")
+        classes = sum([
+            any(ch.islower() for ch in v),
+            any(ch.isupper() for ch in v),
+            any(ch.isdigit() for ch in v),
+            any(not ch.isalnum() for ch in v),
+        ])
+        if classes < 2:
+            raise ValueError("为了保护学习记录，注册密码需至少包含大写字母、小写字母、数字或特殊符号中的两类。")
+        return v
 
     @field_validator("username")
     @classmethod

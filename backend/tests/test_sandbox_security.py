@@ -50,6 +50,19 @@ class TestSandboxSecurityAnd2C2GConcurrency(unittest.TestCase):
         vol_arg = c_args[c_args.index("-v") + 1]
         self.assertTrue(vol_arg.endswith(":/input:ro"), vol_arg)
 
+        # Also verify seccomp + lv_seccomp.o + ulimit -v 98304 are present in C args/cmd
+        self.assertTrue(any(str(a).startswith("seccomp=") for a in c_args))
+        self.assertIn("/usr/local/lib/lv_seccomp.o", c_args[-1])
+        self.assertIn("ulimit -v 98304", c_args[-1])
+
+        # Unauthenticated /api/health hides internal limits; non-admin /api/sandbox/status hides limits
+        h = self.client.get("/api/health")
+        self.assertEqual(h.status_code, 200)
+        self.assertEqual(h.json(), {"status": "ok"})
+        st_student = self.client.get("/api/sandbox/status")
+        self.assertEqual(st_student.status_code, 200)
+        self.assertNotIn("limits", st_student.json())
+
         # 2. Execute valid Java program and inspect JVM memory & GC flags
         java_code = 'public class Main {\n    public static void main(String[] args) {\n        System.out.println("Hello, LEARNVERSE!");\n    }\n}\n'
         r_java = self.client.post(
@@ -136,8 +149,39 @@ class TestSandboxSecurityAnd2C2GConcurrency(unittest.TestCase):
                 "package evil.escape;\npublic class Main { public static void main(String[] a) {} }",
                 "省略 package",
             ),
+            # 10. C token-paste macro bypass (`##`) rejected
+            (
+                "c",
+                '#define CAT(a,b) a##b\n#define XCAT(a,b) CAT(a,b)\nint main(void){ XCAT(sys,tem)("id"); return 0; }',
+                "宏拼接",
+            ),
+            # 11. C posix_spawn bypass rejected
+            (
+                "c",
+                '#include <spawn.h>\nint main(void){ posix_spawn(0, "/bin/sh", 0, 0, 0, 0); return 0; }',
+                "受限|禁止|头文件",
+            ),
+            # 12. C line-continuation evasion (`sys\\\ntem`) & function-pointer alias rejected
+            (
+                "c",
+                '#include <stdlib.h>\nint main(void){ int (*f)(const char*) = sys\\\ntem; f("id"); return 0; }',
+                "进程派生",
+            ),
+            # 13. C sensitive /proc/self/mountinfo path access rejected
+            (
+                "c",
+                '#include <stdio.h>\nint main(void){ fopen("/proc/self/mountinfo", "r"); return 0; }',
+                "敏感目录",
+            ),
+            # 14. C macro-computed #include rejected
+            (
+                "c",
+                '#define HDR "/etc/passwd"\n#include HDR\nint main(void){ return 0; }',
+                "宏展开",
+            ),
         ]
 
+        import re as _re
         for lang, bad_code, expected_keyword in malicious_cases:
             resp = self.client.post(
                 "/api/sandbox/execute",
@@ -148,7 +192,7 @@ class TestSandboxSecurityAnd2C2GConcurrency(unittest.TestCase):
             self.assertEqual(body["output"], "")
             self.assertTrue(
                 any(
-                    d["severity"] == "error" and expected_keyword in d["message"]
+                    d["severity"] == "error" and _re.search(expected_keyword, d["message"])
                     for d in body["diagnostics"]
                 ),
                 f"Failed to block ({lang}): {bad_code} -> got {body}",

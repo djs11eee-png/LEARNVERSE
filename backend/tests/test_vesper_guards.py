@@ -33,6 +33,7 @@ class TestVesperGuards(unittest.TestCase):
             ("GET", "/api/sync/state", None),
             ("POST", "/api/sync/union", {}),
             ("GET", "/api/local-runner", None),
+            ("GET", "/api/sandbox/status", None),
             ("POST", "/api/sandbox/execute", {"language": "c", "code": "int main(){}"}),
             ("POST", "/api/discussions/lv-python-foundations/values", {}),
             ("GET", "/api/admin/discussions", None),

@@ -5,6 +5,8 @@ import secrets
 from dataclasses import dataclass, field
 from pathlib import Path
 
+DEFAULT_SECCOMP_PROFILE = Path(__file__).resolve().parent / "data" / "seccomp-sandbox.json"
+
 
 def _load_dotenv() -> None:
     """零依赖加载 .env（本项目未引入 python-dotenv）。
@@ -288,7 +290,8 @@ class Settings:
         default_factory=lambda: os.getenv("SANDBOX_TEMP_ROOT", "")
     )
     sandbox_seccomp_profile: str = field(
-        default_factory=lambda: os.getenv("SANDBOX_SECCOMP_PROFILE", "")
+        default_factory=lambda: os.getenv("SANDBOX_SECCOMP_PROFILE")
+        or (str(DEFAULT_SECCOMP_PROFILE) if DEFAULT_SECCOMP_PROFILE.is_file() else "")
     )
 
     # C Sandbox: Alpine+GCC, semaphore = 2

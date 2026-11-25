@@ -39,36 +39,37 @@ COMPILER_DIAG_RE = re.compile(
 CARET_LINE_RE = re.compile(r"^(\s*)\^")
 JAVA_STACK_LINE_RE = re.compile(r"\.java:(\d+)\)")
 
-# Pre-execution defense-in-depth static security rules (complementing Docker isolation)
-C_FORBIDDEN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
-    (
-        re.compile(r'#\s*include\s*[<"]\s*(?:/|\.\.|\\)'),
-        "安全拦截：禁止在 #include 中引用绝对路径或上级目录（防路径穿越读取宿主机文件）。",
-    ),
-    (
-        re.compile(
-            r"\b(?:fork|vfork|clone|system|popen|execl|execle|execlp|execv|execve|execvp|ptrace|mount|umount|umount2|chroot|pivot_root|unshare|setns|syscall)\s*\("
-        ),
-        "安全拦截：公网沙盒禁止调用进程派生（fork/system/exec）或特权系统调用。",
-    ),
-    (
-        re.compile(
-            r"#\s*include\s*<\s*(?:sys/socket\.h|netinet/in\.h|arpa/inet\.h|netdb\.h|sys/ptrace\.h|sys/mount\.h)\s*>|\b(?:socket|connect|bind|listen|accept|sendto|recvfrom)\s*\("
-        ),
-        "安全拦截：公网沙盒已启用网络完全隔离（--network=none），禁止使用网络套接字接口。",
-    ),
-    (
-        re.compile(r"\b(?:__asm__|__asm|asm)\b"),
-        "安全拦截：公网教学沙盒禁止嵌入内联汇编指令。",
-    ),
+# Pre-execution defense-in-depth static security rules (complementing kernel seccomp & Docker isolation)
+SAFE_C_INCLUDE_RE = re.compile(
+    r'^\s*#\s*include\s*(?:<([A-Za-z0-9_./+-]+)>|"([A-Za-z0-9_.-]+)")\s*$'
+)
+C_BLOCKED_HEADERS_RE = re.compile(
+    r"^(?:spawn\.h|dlfcn\.h|sys/syscall\.h|syscall\.h|bits/syscall\.h|sys/socket\.h|netinet/|arpa/|netdb\.h|sys/ptrace\.h|sys/mount\.h|sys/mman\.h|sys/prctl\.h|sys/wait\.h|linux/|dirent\.h)$",
+    re.IGNORECASE,
+)
+C_BLOCKED_HEADER_PREFIXES = ("netinet/", "arpa/", "linux/", "asm/")
+C_DISALLOWED_PREPROC_RE = re.compile(
+    r"##|^\s*#\s*pragma\b|\b(?:__attribute__|__asm__|__asm|asm)\b|\?\?[=/'()!<>-]|<%|%>|%:",
+    re.MULTILINE,
+)
+C_FORBIDDEN_SYMBOLS_RE = re.compile(
+    r"\b(?:fork|vfork|clone|clone3|rfork|posix_spawn|posix_spawnp|system|popen|pclose|wordexp|"
+    r"execl|execle|execlp|execv|execve|execveat|execvp|execvpe|fexecve|"
+    r"dlopen|dlmopen|dlsym|dlvsym|ptrace|process_vm_readv|process_vm_writev|"
+    r"mount|umount|umount2|chroot|pivot_root|unshare|setns|syscall|__syscall|"
+    r"memfd_create|open_by_handle_at|name_to_handle_at|seccomp|prctl|mprotect|"
+    r"socket|socketpair|connect|bind|listen|accept|accept4|sendto|recvfrom|sendmsg|recvmsg)\b"
+)
+SANDBOX_SENSITIVE_PATH_RE = re.compile(
+    r"(?:/etc/|/proc/|/sys/|/var/run|/var/lib/docker|/root/|/dev/vda|/input\b|lv-job-|\.\./)"
 )
 
 JAVA_FORBIDDEN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
     (
         re.compile(
-            r"\b(?:ProcessBuilder|Runtime\s*\.\s*getRuntime\s*\(\s*\)\s*\.\s*exec|System\s*\.\s*load(?:Library)?|sun\.misc\.Unsafe)\b"
+            r"\b(?:ProcessBuilder|Process|Runtime\s*\.\s*getRuntime|System\s*\.\s*load(?:Library)?|sun\.misc\.Unsafe|MethodHandles|ScriptEngine|URLClassLoader|native\s+)\b"
         ),
-        "安全拦截：公网 Java 沙盒禁止派生外部系统进程、加载本地 JNI 库或访问 Unsafe。",
+        "安全拦截：公网 Java 沙盒禁止派生外部系统进程、加载本地 JNI 库或访问受限反射接口。",
     ),
     (
         re.compile(
@@ -77,9 +78,7 @@ JAVA_FORBIDDEN_PATTERNS: tuple[tuple[re.Pattern[str], str], ...] = (
         "安全拦截：公网 Java 沙盒已禁用网络（--network=none），禁止发起网络连接。",
     ),
     (
-        re.compile(
-            r'"\s*(?:/etc/|/proc/|/sys/|/var/run/docker|/root/|\.\./)'
-        ),
+        SANDBOX_SENSITIVE_PATH_RE,
         "安全拦截：公网沙盒根文件系统只读，禁止访问系统敏感目录。",
     ),
 )
@@ -309,18 +308,55 @@ def extract_java_entry_class(code: str) -> str | None:
 def audit_untrusted_code(language: str, code: str) -> str | None:
     """
     Pre-execution static defense-in-depth audit.
-    Returns an error message if a forbidden syscall/escape pattern is detected, or None if clean.
+    Normalizes backslash-newline continuations and inspects both code tokens and
+    sensitive path literals to defeat macro-pasting and path-traversal obfuscation.
     """
     if "\x00" in code:
         return "安全拦截：代码包含非法空字节（Null Byte）。"
 
+    # Join physical backslash line continuations so `sys\\\ntem` cannot evade regexes
+    joined = re.sub(r"\\\r?\n", "", code)
+
     if language == "c":
-        code_no_comments = COMMENT_ONLY_RE.sub(" ", code)
-        for pattern, reason in C_FORBIDDEN_PATTERNS:
-            if pattern.search(code_no_comments):
-                return reason
+        code_no_comments = COMMENT_ONLY_RE.sub(" ", joined)
+        code_tokens = COMMENT_AND_STRING_RE.sub(" ", joined)
+
+        for raw_line in code_no_comments.splitlines():
+            if re.match(r"^\s*#\s*include\b", raw_line):
+                m_inc = SAFE_C_INCLUDE_RE.match(raw_line)
+                if not m_inc:
+                    return "安全拦截：禁止在 #include 中使用宏展开、绝对路径或上级目录（防路径穿越读取宿主机文件）。"
+                hdr = (m_inc.group(1) or m_inc.group(2) or "").strip()
+                if (
+                    hdr.startswith(("/", "\\"))
+                    or ".." in hdr
+                    or "\\" in hdr
+                    or C_BLOCKED_HEADERS_RE.match(hdr)
+                    or hdr.lower().startswith(C_BLOCKED_HEADER_PREFIXES)
+                ):
+                    return (
+                        "安全拦截：公网沙盒已启用网络与隔离保护，禁止引用该受限头文件或绝对路径（防路径穿越）。"
+                        if hdr.startswith(("/", "\\")) or ".." in hdr
+                        else "安全拦截：公网沙盒禁止引入进程控制、网络或内核系统调用头文件。"
+                    )
+
+        if C_DISALLOWED_PREPROC_RE.search(code_tokens):
+            if re.search(r"\b(?:__asm__|__asm|asm)\b", code_tokens):
+                return "安全拦截：公网教学沙盒禁止嵌入内联汇编指令。"
+            return "安全拦截：公网 C 沙盒禁止使用 ## 宏拼接、#pragma、编译器扩展属性或三字符/双字符替代符。"
+
+        sym_match = C_FORBIDDEN_SYMBOLS_RE.search(code_tokens)
+        if sym_match:
+            sym = sym_match.group(0)
+            if sym in ("socket", "socketpair", "connect", "bind", "listen", "accept", "accept4", "sendto", "recvfrom", "sendmsg", "recvmsg"):
+                return "安全拦截：公网沙盒已启用网络完全隔离（--network=none），禁止使用网络套接字接口。"
+            return "安全拦截：公网沙盒禁止调用进程派生（fork/system/exec/posix_spawn）或特权系统调用。"
+
+        if SANDBOX_SENSITIVE_PATH_RE.search(code_no_comments):
+            return "安全拦截：公网沙盒根文件系统只读，禁止访问系统敏感目录或运行宿主机路径。"
+
     elif language == "java":
-        code_no_comments = COMMENT_ONLY_RE.sub(" ", code)
+        code_no_comments = COMMENT_ONLY_RE.sub(" ", joined)
         for pattern, reason in JAVA_FORBIDDEN_PATTERNS:
             if pattern.search(code_no_comments):
                 return reason
@@ -371,13 +407,19 @@ class SandboxService:
             else Path(tempfile.gettempdir()) / "learnverse-sandbox"
         )
         base_tmp.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(base_tmp, 0o700)
+        except OSError:
+            pass
         self.temp_root = Path(os.path.realpath(base_tmp))
 
-    def status(self) -> dict[str, object]:
-        return {
+    def status(self, include_limits: bool = True) -> dict[str, object]:
+        payload: dict[str, object] = {
             "languages": ["c", "java"],
             "sandbox_mode": "docker",
-            "limits": {
+        }
+        if include_limits:
+            payload["limits"] = {
                 "c": {
                     "concurrency": self.c_concurrency,
                     "active": self._c_active,
@@ -396,8 +438,8 @@ class SandboxService:
                     "java_max_heap": self.settings.sandbox_java_max_heap,
                     "pids_limit": self.settings.sandbox_java_pids_limit,
                 },
-            },
-        }
+            }
+        return payload
 
     def build_docker_args(
         self,
@@ -469,8 +511,9 @@ class SandboxService:
             shell_script = (
                 "cp /input/main.c /workspace/main.c && "
                 "gcc -std=c17 -O0 -Wall -Wextra -Wpedantic -fdiagnostics-color=never "
-                "-fmax-errors=10 main.c -o /workspace/practice -lm && "
-                f"timeout -s KILL {c_run_timeout}s /workspace/practice"
+                "-fmax-errors=10 main.c /usr/local/lib/lv_seccomp.o -o /workspace/practice -lm && "
+                "rm -f /workspace/main.c && "
+                f"ulimit -v 98304 && timeout -s KILL {c_run_timeout}s /workspace/practice"
             )
         else:
             java_run_timeout = max(

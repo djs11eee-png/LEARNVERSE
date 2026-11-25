@@ -264,6 +264,22 @@ export function createProductionAuthAdapter(onSuccess?: (user: StationUser) => v
             },
           }
         }
+        const pwClasses = [
+          /[a-z]/.test(body.password),
+          /[A-Z]/.test(body.password),
+          /[0-9]/.test(body.password),
+          /[^a-zA-Z0-9]/.test(body.password),
+        ].filter(Boolean).length
+        if (pwClasses < 2 || (body.identifier.length >= 3 && body.password.toLowerCase().includes(body.identifier.toLowerCase()))) {
+          return {
+            ok: false,
+            error: {
+              code: 'WEAK_PASSWORD',
+              field: 'password',
+              message: '注册密码需包含大小写字母、数字或特殊符号中至少两类，且不能包含账号名。',
+            },
+          }
+        }
       }
 
       const localProfile = getStudentProfile()

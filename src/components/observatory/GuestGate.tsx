@@ -139,7 +139,7 @@ export function GuestGate({ reason, adapter, opener, onDismiss, onAuthenticated 
           type={showPassword ? 'text' : 'password'}
           maxLength={128}
           autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
-          placeholder={mode === 'register' ? '至少 8 位字符' : '输入账号密码'}
+          placeholder={mode === 'register' ? '至少 8 位，需含字母与数字或符号组合' : '输入账号密码'}
           {...fieldState('password')}
         />
         <button className="lvo-icon" type="button" aria-label={showPassword ? '隐藏密码' : '显示密码'} onClick={() => setShowPassword(value => !value)}>

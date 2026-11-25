@@ -67,7 +67,7 @@ async def get_captcha(
 ) -> CaptchaResponse:
     container = get_app_state(request)
     allowed, _, retry_after = await container.redis.sliding_window_allow(
-        f"rl:captcha:{client_ip}", window_seconds=60, limit=30
+        f"rl:captcha:{client_ip}", window_seconds=60, limit=10
     )
     if not allowed:
         raise HTTPException(
@@ -80,7 +80,6 @@ async def get_captcha(
     response.headers["Cache-Control"] = "no-store"
     return CaptchaResponse(
         captcha_id=challenge.captcha_id,
-        image_svg=challenge.svg,
         image_data_url=challenge.data_url,
         expires_in=challenge.expires_in,
     )
@@ -95,7 +94,7 @@ async def register(
 ) -> AuthTokenResponse:
     container = get_app_state(request)
     allowed, _, retry_after = await container.redis.sliding_window_allow(
-        f"rl:register:{client_ip}", window_seconds=60, limit=10
+        f"rl:register:{client_ip}", window_seconds=300, limit=6
     )
     if not allowed:
         raise HTTPException(
@@ -110,6 +109,11 @@ async def register(
     ):
         raise HTTPException(
             status_code=400, detail="图形验证码错误或已过期，请刷新后重试。"
+        )
+
+    if payload.username.lower() in payload.password.lower():
+        raise HTTPException(
+            status_code=422, detail="注册密码不能包含账号名，请换用更强的密码。"
         )
 
     password_hash = await container.password_hasher.hash_password(payload.password)
@@ -177,7 +181,7 @@ async def login(
 ) -> AuthTokenResponse:
     container = get_app_state(request)
     allowed, _, retry_after = await container.redis.sliding_window_allow(
-        f"rl:login:{client_ip}", window_seconds=60, limit=15
+        f"rl:login:{client_ip}", window_seconds=60, limit=8
     )
     if not allowed:
         raise HTTPException(
@@ -186,14 +190,22 @@ async def login(
             headers={"Retry-After": str(retry_after)},
         )
 
+    account = payload.account.strip()
+    acct_lock_key = f"rl:login_fail_acct:{account.lower()}"
+    raw_fails = await container.redis.get(acct_lock_key)
+    if raw_fails and int(raw_fails) >= 6:
+        raise HTTPException(
+            status_code=429,
+            detail="该账号连续登录失败次数过多，请 15 分钟后再试。",
+            headers={"Retry-After": "900"},
+        )
+
     if not await container.captcha.verify_once(
         payload.captcha_id, payload.captcha_code
     ):
         raise HTTPException(
             status_code=400, detail="图形验证码错误或已过期，请刷新后重试。"
         )
-
-    account = payload.account.strip()
 
     def _lookup_account_sync() -> dict[str, Any] | None:
         with container.db.read_connection() as conn:
@@ -217,7 +229,10 @@ async def login(
         payload.password, stored_hash
     )
     if not verified or user_row is None:
+        await container.redis.incr_with_ttl(acct_lock_key, 900)
         raise HTTPException(status_code=401, detail="账号或密码错误。")
+
+    await container.redis.delete(acct_lock_key)
 
     token, _, expires_in = create_jwt_token(
         user_id=int(user_row["id"]),

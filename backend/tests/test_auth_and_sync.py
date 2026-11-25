@@ -48,15 +48,31 @@ class TestAuthAndLazySync(unittest.TestCase):
         return data["access_token"]
 
     def test_captcha_endpoint_and_single_use_anti_replay(self) -> None:
-        # 1. Public endpoint returns distorted SVG and data URL
+        # 1. Public endpoint returns rasterized PNG bitmap data URL with ZERO plaintext SVG/<text>
         resp = self.client.get("/api/auth/captcha")
         self.assertEqual(resp.status_code, 200)
         body = resp.json()
         self.assertEqual(len(body["captcha_id"]), 32)
-        self.assertIn("<svg", body["image_svg"])
-        self.assertTrue(body["image_data_url"].startswith("data:image/svg+xml;base64,"))
+        self.assertNotIn("image_svg", body)
+        self.assertTrue(body["image_data_url"].startswith("data:image/png;base64,"))
+        raw_png = base64.b64decode(body["image_data_url"].split(",", 1)[1])
+        self.assertTrue(raw_png.startswith(b"\x89PNG\r\n\x1a\n"))
 
-        # 2. Single-use atomic GETDEL test: even a valid captcha cannot be replayed twice
+        # 2. Weak password on registration is rejected (422)
+        cid_w, code_w = self._issue_captcha_pair()
+        weak_resp = self.client.post(
+            "/api/auth/register",
+            json={
+                "username": "weak_user",
+                "email": "weak@example.com",
+                "password": "password",
+                "captcha_id": cid_w,
+                "captcha_code": code_w,
+            },
+        )
+        self.assertEqual(weak_resp.status_code, 422)
+
+        # 3. Single-use atomic GETDEL test: even a valid captcha cannot be replayed twice
         cid, code = self._issue_captcha_pair()
         r1 = self.client.post(
             "/api/auth/register",
@@ -83,6 +99,35 @@ class TestAuthAndLazySync(unittest.TestCase):
         )
         self.assertEqual(r2.status_code, 400)
         self.assertIn("验证码", r2.json()["detail"])
+
+        # 4. Distributed per-account brute-force lockout triggers identically for existent and nonexistent accounts (no enumeration)
+        for idx_acct, acct in enumerate(("user_one", "no_such_user_99")):
+            xff_ip = f"198.51.100.{10 + idx_acct}"
+            for attempt in range(6):
+                cid_l, code_l = self._issue_captcha_pair()
+                r_fail = self.client.post(
+                    "/api/auth/login",
+                    headers={"X-Forwarded-For": xff_ip},
+                    json={
+                        "account": acct,
+                        "password": "WrongPassword999!",
+                        "captcha_id": cid_l,
+                        "captcha_code": code_l,
+                    },
+                )
+                self.assertEqual(r_fail.status_code, 401, f"{acct} attempt {attempt}: {r_fail.text}")
+            cid_blk, code_blk = self._issue_captcha_pair()
+            r_locked = self.client.post(
+                "/api/auth/login",
+                headers={"X-Forwarded-For": xff_ip},
+                json={
+                    "account": acct,
+                    "password": "WrongPassword999!",
+                    "captcha_id": cid_blk,
+                    "captcha_code": code_blk,
+                },
+            )
+            self.assertEqual(r_locked.status_code, 429)
 
     def test_login_jwt_security_alg_none_and_logout_revocation(self) -> None:
         token = self._register_and_login("bob_sec", "bob@example.com")

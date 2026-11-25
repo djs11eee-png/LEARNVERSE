@@ -167,13 +167,7 @@ def create_app(
 
     @application.get("/api/health", tags=["system"])
     async def health_check() -> dict[str, object]:
-        return {
-            "status": "ok",
-            "courses_count": len(catalog.courses),
-            "rooms_count": len(catalog.valid_rooms),
-            "cards_count": len(catalog.cards_by_id),
-            "sandbox": container.sandbox_service.status(),
-        }
+        return {"status": "ok"}
 
     application.include_router(auth.router)
     application.include_router(sync.router)

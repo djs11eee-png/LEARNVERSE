@@ -29,9 +29,13 @@ def _sandbox_json(content: dict[str, Any], status_code: int = 200) -> JSONRespon
 
 
 @router.get("/api/sandbox/status")
-async def get_sandbox_status(request: Request) -> JSONResponse:
+async def get_sandbox_status(
+    request: Request,
+    user: dict[str, Any] = Depends(get_current_user),
+) -> JSONResponse:
     container = get_app_state(request)
-    return _sandbox_json(container.sandbox_service.status())
+    is_admin = user.get("role") == "admin"
+    return _sandbox_json(container.sandbox_service.status(include_limits=is_admin))
 
 
 @router.post("/api/sandbox/execute", response_model=SandboxRunResponse)
