@@ -1,6 +1,7 @@
 import { ArrowDown, ArrowRight, ArrowUpRight, BookOpen, ChartNoAxesCombined, Compass, Cpu, FlaskConical, Layers3, MoveHorizontal, Orbit, Play, Satellite, Shield } from 'lucide-react'
 import { Link } from 'react-router-dom'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
+import { FounderAnnouncement, FounderAnnouncementDialog, FounderAnnouncementPill } from '../components/FounderAnnouncement'
 import { SeoulGuardianBanner } from '../components/guardian/SeoulGuardianBanner'
 import { useStation } from '../components/observatory/StationProvider'
 import { getLearningRoute, routeMapPath, routes } from '../data/learning'
@@ -22,6 +23,8 @@ const selectedSources = ['python-tutorial-cn', 'mdn-javascript-cn', 'cs50']
 export function Home({ onReplay, introActive }: { onReplay: () => void; introActive: boolean }) {
   const hero = useRef<HTMLElement>(null)
   const missions = useRef<HTMLDivElement>(null)
+  const [noticeOpener, setNoticeOpener] = useState<HTMLElement | null>(null)
+  const [noticeOpen, setNoticeOpen] = useState(false)
   useHeroMotion(hero, introActive)
   useMissionMotion(missions)
   const station = useStation()
@@ -60,6 +63,12 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
             <span className="magnet-zone"><Link className="button button-light" to={startPath}>{nextCourse && nextCourse === currentCourse ? '继续学习' : nextCourse ? '开始学习' : '浏览课程'} <ArrowRight size={17} /></Link></span>
             <span className="magnet-zone"><Link className="button hero-secondary" to="/explore">探索知识星图 <ArrowUpRight size={16} /></Link></span>
           </div>
+          <FounderAnnouncementPill
+            onOpen={(opener) => {
+              setNoticeOpener(opener)
+              setNoticeOpen(true)
+            }}
+          />
         </div>
         <div className="hero-instruments">
           <span className="globe-hint"><MoveHorizontal size={16} /> 拖动地球旋转</span>
@@ -73,6 +82,7 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
         <a className="home-scroll" href="#study-route">查看学习路线 <ArrowDown size={15} /></a>
       </div>
       <div className="home-more">
+        <FounderAnnouncement />
         <SeoulGuardianBanner onStarSuccess={station.celebrateStar} />
         <section className="home-section" id="study-route">
           <div className="section-head">
@@ -151,6 +161,12 @@ export function Home({ onReplay, introActive }: { onReplay: () => void; introAct
           <Link className="button button-light" to="/lab">进入实验室 <ArrowUpRight size={16} /></Link>
         </section>
       </div>
+      {noticeOpen && (
+        <FounderAnnouncementDialog
+          opener={noticeOpener}
+          onClose={() => setNoticeOpen(false)}
+        />
+      )}
     </div>
   )
 }

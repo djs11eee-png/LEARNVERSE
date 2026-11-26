@@ -707,3 +707,34 @@ test('interactive chapter visualizers respond to touch and stay overflow-free on
     }
   } finally { await page.close() }
 })
+
+test('homepage founder announcement renders, opens dialog from hero pill, and persists collapse state', async () => {
+  const page = await browser.newPage({ viewport: { width: 1280, height: 860 }, reducedMotion: 'reduce' })
+  try {
+    await page.goto(url)
+    const section = page.locator('#founder-announcement')
+    await section.waitFor()
+    const text = await section.innerText()
+    assert.match(text, /站长想说的话/)
+    assert.match(text, /哇哇哇！恭喜进入这个网站的同学，这是一个完全公益的网站！/)
+    assert.match(text, /OS：token烧的是我的真金白银！！！/)
+    assert.match(text, /最后的最后跪求star！！！/)
+
+    await page.locator('.fn-hero-pill').click()
+    const dialog = page.getByRole('dialog', { name: '站长想说的话' })
+    await dialog.waitFor()
+    assert.match(await dialog.innerText(), /由于本人只是一个大一生/)
+    await page.keyboard.press('Escape')
+    await dialog.waitFor({ state: 'hidden' })
+
+    await section.getByRole('button', { name: '收起' }).click()
+    await section.getByRole('button', { name: '展开公告' }).waitFor()
+    await page.reload()
+    await section.getByRole('button', { name: '展开公告' }).waitFor()
+    await section.getByRole('button', { name: '展开公告' }).click()
+    await section.getByRole('button', { name: '收起' }).waitFor()
+
+    await page.setViewportSize({ width: 390, height: 844 })
+    assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1))
+  } finally { await page.close() }
+})

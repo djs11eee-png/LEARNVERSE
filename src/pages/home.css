@@ -115,7 +115,8 @@
   .home-hero[data-enter] h1 > span:nth-child(2) > span { animation-delay: 70ms; }
   .home-hero[data-enter] .hero-kicker, .home-hero[data-enter] .hero-intro { animation: home-lead-in 480ms var(--ease-enter) both; }
   .home-hero[data-enter] .hero-actions { animation: home-lead-in 440ms 140ms var(--ease-enter) both; }
-  .home-hero[data-enter] .hero-actions:focus-within { animation: none; }
+  .home-hero[data-enter] .fn-hero-pill { animation: home-lead-in 440ms 200ms var(--ease-enter) both; }
+  .home-hero[data-enter] .hero-actions:focus-within, .home-hero[data-enter] .fn-hero-pill:focus-visible { animation: none; }
   .home-hero[data-enter] .hero-planet { animation: home-planet-in 760ms var(--ease-enter) both; }
   @keyframes home-title-in { from { opacity: 0; transform: translateY(.24em); } to { opacity: 1; transform: none; } }
   @keyframes home-lead-in { from { opacity: .3; translate: 0 9px; } to { opacity: 1; translate: 0 0; } }
