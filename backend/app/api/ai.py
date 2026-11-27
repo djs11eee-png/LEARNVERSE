@@ -1,15 +1,16 @@
 from __future__ import annotations
 
 import time
-from typing import Any
+from typing import Any, Callable
 
 import anyio
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
 from starlette.types import Receive, Scope, Send
 
+from ..core.network import verify_same_origin
 from ..db import DatabaseManager
-from ..schemas.ai import AIChatRequest
+from ..schemas.ai import AIChatRequest, GuestAIChatRequest
 from ..services import ai_quota
 from .deps import get_app_state, get_client_ip, get_current_user
 
@@ -53,10 +54,19 @@ async def get_ai_quota_status(
 
 class ChatResponse(StreamingResponse):
     """Own the lease until ASGI has sent the last event, including disconnects."""
-    def __init__(self, stream, *, db: DatabaseManager, lease: ai_quota.Admission, headers: dict[str, str]):
+    def __init__(
+        self,
+        stream,
+        *,
+        db: DatabaseManager,
+        lease: Any,
+        headers: dict[str, str],
+        on_finish: Callable[[DatabaseManager, Any], None] = ai_quota.finish,
+    ):
         super().__init__(stream, media_type="text/event-stream; charset=utf-8", headers=headers)
         self.db = db
         self.lease = lease
+        self.on_finish = on_finish
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send) -> None:
         try:
@@ -67,7 +77,7 @@ class ChatResponse(StreamingResponse):
                 try:
                     await self.body_iterator.aclose()
                 finally:
-                    await self.db.run_sync(ai_quota.finish, self.db, self.lease)
+                    await self.db.run_sync(self.on_finish, self.db, self.lease)
 
 
 @router.post("/chat")
@@ -155,6 +165,87 @@ async def ai_chat_sse(
             "X-Content-Type-Options": "nosniff",
             "X-Genesis-Guardian": "1" if is_guardian else "0",
             "X-AI-Daily-Limit": str(daily_limit),
+            "X-AI-Daily-Used": str(lease.used_today),
+            "X-AI-Daily-Remaining": str(remaining_today),
+        },
+    )
+
+
+@router.post("/guest/chat")
+async def ai_guest_chat_sse(
+    payload: GuestAIChatRequest,
+    request: Request,
+    client_ip: str = Depends(get_client_ip),
+) -> StreamingResponse:
+    """
+    CORS-enabled unauthenticated guest relay SSE endpoint for competition/demo embeds.
+    Protected by origin allowlist check (when Origin header is sent), 4s per-IP cooldown,
+    per-IP sliding-window & daily caps, global guest daily cap, and shared SQLite token budget.
+    """
+    container = get_app_state(request)
+    settings = container.settings
+
+    if not settings.ai_guest_enabled:
+        raise HTTPException(403, "游客体验接口已关闭，请登录主站账号后使用 Vesper。")
+    if request.query_params:
+        raise HTTPException(422, "请仅通过 JSON 正文提交提问。")
+    if request.headers.get("origin") and not verify_same_origin(request, settings.allowed_origins):
+        raise HTTPException(403, "未授权的站点来源请求。")
+
+    ok_cd, _, retry_cd = await container.redis.sliding_window_allow(
+        f"rl:ai:guest:cd:{client_ip}", window_seconds=ai_quota.COOLDOWN_SECONDS, limit=1
+    )
+    if not ok_cd:
+        raise HTTPException(
+            status_code=429,
+            detail="请等待 4 秒后再提问。",
+            headers={"Retry-After": str(retry_cd)},
+        )
+
+    ok_min, _, retry_min = await container.redis.sliding_window_allow(
+        f"rl:ai:guest:min:{client_ip}",
+        window_seconds=60,
+        limit=max(1, settings.ai_guest_rate_limit_ip_per_minute),
+    )
+    if not ok_min:
+        raise HTTPException(
+            status_code=429,
+            detail="游客体验提问过于频繁，请稍等片刻再试。",
+            headers={"Retry-After": str(retry_min)},
+        )
+
+    prepared = container.ai_service.prepare(
+        payload,
+        max_tokens=settings.ai_guest_max_tokens,
+        guest_mode=True,
+    )
+    lease = await container.db.run_sync(
+        ai_quota.admit_guest,
+        container.db,
+        client_ip,
+        max(1, settings.ai_guest_rate_limit_ip_per_day),
+        max(1, settings.ai_guest_daily_global_limit),
+        prepared.reserved,
+        settings.ai_daily_token_budget,
+    )
+    remaining_today = max(0, lease.daily_limit - lease.used_today)
+    stream = container.ai_service.stream_chat(
+        user_id=None,
+        client_ip=client_ip,
+        req=payload,
+        prepared=prepared,
+        lease=lease,
+    )
+    return ChatResponse(
+        stream,
+        db=container.db,
+        lease=lease,
+        on_finish=ai_quota.finish_guest,
+        headers={
+            "Cache-Control": "no-cache, no-store",
+            "X-Accel-Buffering": "no",
+            "X-Content-Type-Options": "nosniff",
+            "X-AI-Daily-Limit": str(lease.daily_limit),
             "X-AI-Daily-Used": str(lease.used_today),
             "X-AI-Daily-Remaining": str(remaining_today),
         },

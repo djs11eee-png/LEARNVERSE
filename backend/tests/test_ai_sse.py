@@ -4,6 +4,9 @@ import asyncio
 import json
 import unittest
 import time
+from unittest.mock import patch
+
+import httpx
 
 from tests.conftest import make_test_context
 
@@ -182,6 +185,105 @@ class TestAISSEProxyAndZeroCostInterceptor(unittest.TestCase):
             json={"language": "python", "code": "if True\n    pass", "question": "q"},
         )
         self.assertEqual(r_user2_ip_limited.status_code, 429)
+
+    def test_guest_chat_sse_qoder_contract_origin_and_quota_guards(self) -> None:
+        qoder_origin = "https://learnverse-station-jrnjfyznx8q.qoder.zone"
+        ctx = make_test_context(
+            env="production",
+            debug=False,
+            allowed_origins=[qoder_origin],
+            llm_base_url="http://127.0.0.1:8787/v1",
+            llm_api_key="test-relay-key",
+            ai_guest_rate_limit_ip_per_minute=5,
+            ai_guest_rate_limit_ip_per_day=2,
+            ai_guest_daily_global_limit=10,
+            ai_daily_token_budget=50000,
+        )
+        try:
+            async def fake_stream_chunks():
+                yield 'data: {"choices":[{"delta":{"content":"for 循环先执行"}}]}\n\n'.encode("utf-8")
+                yield 'data: {"choices":[{"delta":{"content":"初始化表达式。"}}],"usage":{"total_tokens":36}}\n\n'.encode("utf-8")
+                yield b"data: [DONE]\n\n"
+
+            captured_payloads: list[dict] = []
+
+            class FakeStream(httpx.AsyncByteStream):
+                async def __aiter__(self):
+                    async for chunk in fake_stream_chunks():
+                        yield chunk
+
+            def respond(request: httpx.Request) -> httpx.Response:
+                captured_payloads.append(json.loads(request.content))
+                return httpx.Response(200, stream=FakeStream())
+
+            mock_http = httpx.AsyncClient(transport=httpx.MockTransport(respond))
+            with patch.object(
+                ctx.app.state.container.ai_service,
+                "_get_http_client",
+                return_value=mock_http,
+            ):
+                # 1. Exact Qoder frontend request works without auth cookie
+                r1 = ctx.client.post(
+                    "/api/ai/guest/chat",
+                    headers={
+                        "Origin": qoder_origin,
+                        "Accept": "text/event-stream",
+                    },
+                    json={
+                        "question": "for 循环的执行顺序是什么？",
+                        "language": "c",
+                        "history": [
+                            {"role": "user", "content": "你好"},
+                            {"role": "assistant", "content": "你好，请问有什么问题？"},
+                        ],
+                    },
+                )
+                self.assertEqual(r1.status_code, 200, r1.text)
+                self.assertEqual(r1.headers.get("access-control-allow-origin"), qoder_origin)
+                events = _parse_sse_stream(r1.text)
+                deltas = [d["delta"] for ev, d in events if ev == "text_delta"]
+                self.assertEqual("".join(deltas), "for 循环先执行初始化表达式。")
+                self.assertEqual(captured_payloads[0]["max_tokens"], 768)
+
+                # 2. Rapid burst within 4s cooldown is rejected with 429
+                r_cd = ctx.client.post(
+                    "/api/ai/guest/chat",
+                    headers={"Origin": qoder_origin},
+                    json={"question": "再来一次", "language": "c"},
+                )
+                self.assertEqual(r_cd.status_code, 429)
+
+                # 3. Foreign unauthorized Origin is rejected with 403
+                r_evil = ctx.client.post(
+                    "/api/ai/guest/chat",
+                    headers={"Origin": "https://evil.example.net"},
+                    json={"question": "偷额度", "language": "c"},
+                )
+                self.assertEqual(r_evil.status_code, 403)
+
+                # 4. Daily per-IP cap (limit=2) triggers after second allowed call
+                time.sleep(4.05)
+                r2 = ctx.client.post(
+                    "/api/ai/guest/chat",
+                    headers={"Origin": qoder_origin},
+                    json={"question": "break 和 continue 区别", "language": "c"},
+                )
+                self.assertEqual(r2.status_code, 200, r2.text)
+
+                time.sleep(4.05)
+                r3 = ctx.client.post(
+                    "/api/ai/guest/chat",
+                    headers={"Origin": qoder_origin},
+                    json={"question": "第三次应该超日限", "language": "c"},
+                )
+                self.assertEqual(r3.status_code, 429)
+
+            with ctx.app.state.container.db.read_connection() as conn:
+                self.assertEqual(conn.execute("SELECT tokens FROM ai_token_day").fetchone()[0], 72)
+                self.assertEqual(conn.execute("SELECT COUNT(*) FROM ai_qa_logs").fetchone()[0], 0)
+        finally:
+            asyncio.run(mock_http.aclose())
+            ctx.close()
 
 
 if __name__ == "__main__":

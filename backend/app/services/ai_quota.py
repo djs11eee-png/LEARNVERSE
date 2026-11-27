@@ -25,6 +25,18 @@ class Admission:
     daily_limit: int = 0
 
 
+@dataclass
+class GuestAdmission:
+    owner: str
+    client_ip: str
+    day: int
+    reserved: int
+    deadline: float
+    reported_tokens: int | None = None
+    used_today: int = 0
+    daily_limit: int = 0
+
+
 def get_daily_usage(db: DatabaseManager, user_id: int) -> tuple[int, int]:
     """Returns `(used_today, seconds_until_shanghai_midnight_reset)`."""
     now = time.time()
@@ -101,3 +113,93 @@ def finish(db: DatabaseManager, lease: Admission) -> None:
         if changed and lease.reserved and lease.reported_tokens is not None:
             conn.execute("UPDATE ai_token_day SET tokens=tokens+? WHERE day=?",
                          (lease.reported_tokens - lease.reserved, lease.day))
+
+
+_GUEST_GLOBAL_BUCKET = "__global__"
+
+
+def admit_guest(
+    db: DatabaseManager,
+    client_ip: str,
+    ip_daily_limit: int,
+    global_daily_limit: int,
+    reserved: int,
+    budget: int,
+) -> GuestAdmission:
+    with db.write_transaction() as conn:
+        now = time.time()
+        day = int((now + 8 * 3600) // 86400)
+        reset = math.ceil((day + 1) * 86400 - 8 * 3600 - now)
+
+        global_row = conn.execute(
+            "SELECT calls FROM ai_guest_day WHERE day=? AND client_ip=?",
+            (day, _GUEST_GLOBAL_BUCKET),
+        ).fetchone()
+        global_before = int(global_row["calls"]) if global_row else 0
+        if global_before >= global_daily_limit:
+            raise HTTPException(
+                429,
+                "今日游客体验总配额已满，注册或登录主站账号即可使用每日个人免费额度。",
+                headers={"Retry-After": str(reset)},
+            )
+
+        ip_row = conn.execute(
+            "SELECT calls FROM ai_guest_day WHERE day=? AND client_ip=?",
+            (day, client_ip),
+        ).fetchone()
+        ip_before = int(ip_row["calls"]) if ip_row else 0
+        if ip_before >= ip_daily_limit:
+            raise HTTPException(
+                429,
+                f"当前网络今日 {ip_daily_limit} 次游客 AI 体验额度已用完，登录主站账号可继续提问。",
+                headers={
+                    "Retry-After": str(reset),
+                    "X-AI-Daily-Limit": str(ip_daily_limit),
+                    "X-AI-Daily-Used": str(ip_before),
+                    "X-AI-Daily-Remaining": "0",
+                },
+            )
+
+        if reserved:
+            tok_row = conn.execute("SELECT tokens FROM ai_token_day WHERE day=?", (day,)).fetchone()
+            if (tok_row["tokens"] if tok_row else 0) + reserved > budget:
+                raise HTTPException(
+                    503,
+                    "Vesper 今日 AI 预算暂时不足，请先使用本地代码诊断或稍后再试。",
+                    headers={"Retry-After": str(reset)},
+                )
+            conn.execute(
+                """INSERT INTO ai_token_day VALUES (?, ?)
+                   ON CONFLICT(day) DO UPDATE SET tokens=tokens+excluded.tokens""",
+                (day, reserved),
+            )
+
+        conn.execute(
+            """INSERT INTO ai_guest_day VALUES (?, ?, 1)
+               ON CONFLICT(day,client_ip) DO UPDATE SET calls=calls+1""",
+            (day, client_ip),
+        )
+        conn.execute(
+            """INSERT INTO ai_guest_day VALUES (?, ?, 1)
+               ON CONFLICT(day,client_ip) DO UPDATE SET calls=calls+1""",
+            (day, _GUEST_GLOBAL_BUCKET),
+        )
+        return GuestAdmission(
+            owner=uuid.uuid4().hex,
+            client_ip=client_ip,
+            day=day,
+            reserved=reserved,
+            deadline=time.monotonic() + min(STREAM_SECONDS, 45),
+            used_today=ip_before + 1,
+            daily_limit=ip_daily_limit,
+        )
+
+
+def finish_guest(db: DatabaseManager, lease: GuestAdmission) -> None:
+    if not lease.reserved or lease.reported_tokens is None:
+        return
+    with db.write_transaction() as conn:
+        conn.execute(
+            "UPDATE ai_token_day SET tokens=tokens+? WHERE day=?",
+            (lease.reported_tokens - lease.reserved, lease.day),
+        )

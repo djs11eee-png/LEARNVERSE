@@ -94,8 +94,11 @@ def verify_same_origin(request: Request, allowed_origins: list[str] | None = Non
     origin = request.headers.get("origin")
     if not origin:
         return True
-    if allowed_origins and origin in allowed_origins:
-        return True
+    normalized_origin = origin.strip().rstrip("/")
+    if allowed_origins:
+        allowed_set = {item.strip().rstrip("/") for item in allowed_origins if item.strip()}
+        if normalized_origin in allowed_set:
+            return True
     try:
         parsed_origin = urlparse(origin)
     except ValueError:

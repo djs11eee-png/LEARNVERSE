@@ -13,9 +13,9 @@ import httpx
 
 from ..config import Settings
 from ..db import DatabaseManager
-from ..schemas.ai import AIChatRequest, AICodeReference, AIDiagnosticCard
+from ..schemas.ai import AIChatRequest, AICodeReference, AIDiagnosticCard, GuestAIChatRequest
 
-from .ai_quota import Admission
+from .ai_quota import Admission, GuestAdmission
 
 MODEL = "learnverse-chat"
 MAX_TOKENS = 1024
@@ -482,6 +482,7 @@ class PreparedChat:
     interception: InterceptionResult
     messages: list[dict[str, str]]
     reserved: int
+    max_tokens: int = MAX_TOKENS
 
 
 class AIService:
@@ -573,7 +574,13 @@ class AIService:
             )
             return int(cursor.lastrowid or 0)
 
-    def prepare(self, req: AIChatRequest) -> PreparedChat:
+    def prepare(
+        self,
+        req: AIChatRequest | GuestAIChatRequest,
+        *,
+        max_tokens: int = MAX_TOKENS,
+        guest_mode: bool = False,
+    ) -> PreparedChat:
         # 1. Enforce strict input length truncation
         q_limit = max(100, int(self.settings.ai_max_question_chars))
         c_limit = max(200, int(self.settings.ai_max_code_chars))
@@ -592,10 +599,17 @@ class AIService:
         interception = inspect_zero_cost_diagnostics(
             req.language, code, error_output, question
         )
-        system_prompt = (
-            "你是 LEARNVERSE 学习站的编程与计算机科学助教 Vesper。仅回答与编程、课程和学习有关的问题。"
-            "请用简洁、准确的简体中文启发式引导学员定位问题，优先指出具体行号与边界条件，不要直接替学员代写整道大题。"
-        )
+        if guest_mode:
+            system_prompt = (
+                "你是 LEARNVERSE 学习观测站的编程与计算机科学伴学助手 Vesper（游客体验模式）。"
+                "主要围绕 C 语言循环与基础语法、编程学习、以及 Learnverse 的学习实验台、积分与 3D 知识卡包玩法耐心作答。"
+                "请用简洁、清晰的简体中文分点解释，必要时给出短小可运行的示例。"
+            )
+        else:
+            system_prompt = (
+                "你是 LEARNVERSE 学习站的编程与计算机科学助教 Vesper。仅回答与编程、课程和学习有关的问题。"
+                "请用简洁、准确的简体中文启发式引导学员定位问题，优先指出具体行号与边界条件，不要直接替学员代写整道大题。"
+            )
         messages: list[dict[str, str]] = [{"role": "system", "content": system_prompt}]
         for turn in req.history[-6:]:
             messages.append({"role": turn.role, "content": turn.content[:1000]})
@@ -612,23 +626,33 @@ class AIService:
         user_prompt_parts.append(f"【学员提问】\n{question}")
         messages.append({"role": "user", "content": "\n\n".join(user_prompt_parts)})
 
+        bounded_max_tokens = max(128, min(MAX_TOKENS, int(max_tokens)))
         reserved = 0
         if ((not interception.matched or self.settings.ai_intercept_passthrough)
                 and self.settings.llm_api_key and self.settings.llm_base_url):
             # UTF-8 byte upper estimate plus per-message framing and the full completion allowance.
-            reserved = MAX_TOKENS + 256 + sum(
+            reserved = bounded_max_tokens + 256 + sum(
                 len(m["content"].encode("utf8")) + 32 for m in messages
             )
-        return PreparedChat(question, code, error_output, truncated, interception, messages, reserved)
+        return PreparedChat(
+            question,
+            code,
+            error_output,
+            truncated,
+            interception,
+            messages,
+            reserved,
+            max_tokens=bounded_max_tokens,
+        )
 
     async def stream_chat(
         self,
         *,
-        user_id: int,
+        user_id: int | None,
         client_ip: str,
-        req: AIChatRequest,
+        req: AIChatRequest | GuestAIChatRequest,
         prepared: PreparedChat,
-        lease: Admission,
+        lease: Admission | GuestAdmission,
     ) -> AsyncIterator[str]:
         start_time = time.perf_counter()
 
@@ -662,22 +686,26 @@ class AIService:
                 collected_text_parts.append(interception.answer_markdown)
                 yield _sse_event("text_delta", {"delta": interception.answer_markdown})
                 latency_ms = int((time.perf_counter() - start_time) * 1000)
-                log_id = await self.db.run_sync(
-                    self._record_log,
-                    user_id=user_id,
-                    client_ip=client_ip,
-                    course_id=req.course_id,
-                    lesson_id=req.lesson_id,
-                    language=req.language,
-                    question=question,
-                    code_snippet=code,
-                    error_input=error_output,
-                    intercepted=True,
-                    diagnostics=collected_cards,
-                    answer_text="".join(collected_text_parts),
-                    model="zero-cost-rule-engine",
-                    status="intercepted",
-                    latency_ms=latency_ms,
+                log_id = (
+                    await self.db.run_sync(
+                        self._record_log,
+                        user_id=user_id,
+                        client_ip=client_ip,
+                        course_id=req.course_id,
+                        lesson_id=req.lesson_id,
+                        language=req.language,
+                        question=question,
+                        code_snippet=code,
+                        error_input=error_output,
+                        intercepted=True,
+                        diagnostics=collected_cards,
+                        answer_text="".join(collected_text_parts),
+                        model="zero-cost-rule-engine",
+                        status="intercepted",
+                        latency_ms=latency_ms,
+                    )
+                    if user_id is not None
+                    else 0
                 )
                 yield _sse_event(
                     "done",
@@ -708,22 +736,26 @@ class AIService:
             collected_text_parts.append(fallback_msg)
             yield _sse_event("text_delta", {"delta": fallback_msg})
             latency_ms = int((time.perf_counter() - start_time) * 1000)
-            log_id = await self.db.run_sync(
-                self._record_log,
-                user_id=user_id,
-                client_ip=client_ip,
-                course_id=req.course_id,
-                lesson_id=req.lesson_id,
-                language=req.language,
-                question=question,
-                code_snippet=code,
-                error_input=error_output,
-                intercepted=interception.matched,
-                diagnostics=collected_cards,
-                answer_text="".join(collected_text_parts),
-                model=MODEL,
-                status="unconfigured_fallback",
-                latency_ms=latency_ms,
+            log_id = (
+                await self.db.run_sync(
+                    self._record_log,
+                    user_id=user_id,
+                    client_ip=client_ip,
+                    course_id=req.course_id,
+                    lesson_id=req.lesson_id,
+                    language=req.language,
+                    question=question,
+                    code_snippet=code,
+                    error_input=error_output,
+                    intercepted=interception.matched,
+                    diagnostics=collected_cards,
+                    answer_text="".join(collected_text_parts),
+                    model=MODEL,
+                    status="unconfigured_fallback",
+                    latency_ms=latency_ms,
+                )
+                if user_id is not None
+                else 0
             )
             yield _sse_event(
                 "done",
@@ -747,7 +779,7 @@ class AIService:
             "messages": prepared.messages,
             "stream": True,
             "stream_options": {"include_usage": True},
-            "max_tokens": MAX_TOKENS,
+            "max_tokens": prepared.max_tokens,
             "temperature": TEMPERATURE,
         }
 
@@ -817,22 +849,26 @@ class AIService:
             )
 
         latency_ms = int((time.perf_counter() - start_time) * 1000)
-        log_id = await self.db.run_sync(
-            self._record_log,
-            user_id=user_id,
-            client_ip=client_ip,
-            course_id=req.course_id,
-            lesson_id=req.lesson_id,
-            language=req.language,
-            question=question,
-            code_snippet=code,
-            error_input=error_output,
-            intercepted=interception.matched,
-            diagnostics=collected_cards,
-            answer_text="".join(collected_text_parts),
-            model=MODEL,
-            status=status,
-            latency_ms=latency_ms,
+        log_id = (
+            await self.db.run_sync(
+                self._record_log,
+                user_id=user_id,
+                client_ip=client_ip,
+                course_id=req.course_id,
+                lesson_id=req.lesson_id,
+                language=req.language,
+                question=question,
+                code_snippet=code,
+                error_input=error_output,
+                intercepted=interception.matched,
+                diagnostics=collected_cards,
+                answer_text="".join(collected_text_parts),
+                model=MODEL,
+                status=status,
+                latency_ms=latency_ms,
+            )
+            if user_id is not None
+            else 0
         )
         yield _sse_event(
             "done",

@@ -238,6 +238,21 @@ class Settings:
     ai_rate_limit_ip_per_minute: int = field(
         default_factory=lambda: _env_int("AI_RATE_LIMIT_IP_PER_MINUTE", 20)
     )
+    ai_guest_enabled: bool = field(
+        default_factory=lambda: _env_bool("AI_GUEST_ENABLED", True)
+    )
+    ai_guest_rate_limit_ip_per_minute: int = field(
+        default_factory=lambda: _env_int("AI_GUEST_RATE_LIMIT_IP_PER_MINUTE", 5)
+    )
+    ai_guest_rate_limit_ip_per_day: int = field(
+        default_factory=lambda: _env_int("AI_GUEST_RATE_LIMIT_IP_PER_DAY", 20)
+    )
+    ai_guest_daily_global_limit: int = field(
+        default_factory=lambda: _env_int("AI_GUEST_DAILY_GLOBAL_LIMIT", 400)
+    )
+    ai_guest_max_tokens: int = field(
+        default_factory=lambda: _env_int("AI_GUEST_MAX_TOKENS", 768)
+    )
 
     # GitHub Star Guardian (Seoul Genesis Node)
     github_client_id: str = field(
