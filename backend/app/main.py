@@ -149,21 +149,32 @@ def create_app(
     )
     application.state.container = container
 
+    application.add_middleware(SecurityMiddleware)
+
+    cors_origins: list[str] = []
     if cfg.debug or cfg.env != "production":
-        application.add_middleware(
-            CORSMiddleware,
-            allow_origins=[
+        cors_origins.extend(
+            [
                 "http://127.0.0.1:5173",
                 "http://localhost:5173",
                 "http://127.0.0.1:4173",
                 "http://localhost:4173",
-            ],
-            allow_credentials=True,
-            allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-            allow_headers=["*"],
+            ]
         )
+    for origin in cfg.allowed_origins:
+        normalized = origin.strip().rstrip("/")
+        if normalized and normalized not in cors_origins:
+            cors_origins.append(normalized)
 
-    application.add_middleware(SecurityMiddleware)
+    if cors_origins:
+        application.add_middleware(
+            CORSMiddleware,
+            allow_origins=cors_origins,
+            allow_credentials=True,
+            allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+            allow_headers=["*"],
+            expose_headers=["Retry-After"],
+        )
 
     @application.get("/api/health", tags=["system"])
     async def health_check() -> dict[str, object]:

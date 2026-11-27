@@ -554,6 +554,55 @@ class TestAuthAndLazySync(unittest.TestCase):
         self.assertEqual(sorted(phone_body["vault"]["owned"]), sorted(expanded_pack))
         self.assertIsNotNone(phone_body["ai_quota"])
 
+    def test_production_cors_allows_configured_origins_and_blocks_others(self) -> None:
+        prod_ctx = make_test_context(
+            env="production",
+            debug=False,
+            allowed_origins=[
+                "https://golearnverse.com",
+                "https://partner.example.org/",
+            ],
+        )
+        try:
+            preflight_ok = prod_ctx.client.options(
+                "/api/ai/chat",
+                headers={
+                    "Origin": "https://partner.example.org",
+                    "Access-Control-Request-Method": "POST",
+                    "Access-Control-Request-Headers": "content-type,authorization",
+                },
+            )
+            self.assertEqual(preflight_ok.status_code, 200, preflight_ok.text)
+            self.assertEqual(
+                preflight_ok.headers.get("access-control-allow-origin"),
+                "https://partner.example.org",
+            )
+            self.assertEqual(
+                preflight_ok.headers.get("access-control-allow-credentials"),
+                "true",
+            )
+
+            get_ok = prod_ctx.client.get(
+                "/api/health",
+                headers={"Origin": "https://partner.example.org"},
+            )
+            self.assertEqual(get_ok.status_code, 200)
+            self.assertEqual(
+                get_ok.headers.get("access-control-allow-origin"),
+                "https://partner.example.org",
+            )
+
+            preflight_denied = prod_ctx.client.options(
+                "/api/ai/chat",
+                headers={
+                    "Origin": "https://evil.example.net",
+                    "Access-Control-Request-Method": "POST",
+                },
+            )
+            self.assertNotIn("access-control-allow-origin", preflight_denied.headers)
+        finally:
+            prod_ctx.close()
+
 
 if __name__ == "__main__":
     unittest.main()
